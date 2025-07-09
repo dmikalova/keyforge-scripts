@@ -5,7 +5,8 @@
   "scripts": {
     "build": "shx rm -rf dist && tsc -b",
     "lint": "eslint . --ext .ts",
-    "gen": "tsx ./src/generate-images.ts"
+    "gen": "tsx ./src/generate-images.ts",
+    "rotato": "tsx ./src/rotato.ts"
   },
   "devDependencies": {
     "@types/node": "^22.15.3",

@@ -1,3 +1,4 @@
+// Vault Warrior: for name at the top
 // TODO: refactor image generation
 // TODO: add CLI
 // TODO: add 1 night vs weekend mode
