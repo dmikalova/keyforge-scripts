@@ -1,0 +1,31 @@
+{
+  "name": "keyforge-amasser",
+  "version": "1.0.0",
+  "description": "Sync KeyForge decks from the Master Vault to Decks of KeyForge",
+  "scripts": {
+    "pack": "npm run pack:chrome && npm run pack:firefox",
+    "pack:chrome": "zip -r keyforge-amasser-chrome.zip . -x '*.git*' 'node_modules/*' '*.zip' 'package*.json'",
+    "pack:firefox": "zip -r keyforge-amasser-firefox.zip . -x '*.git*' 'node_modules/*' '*.zip' 'package*.json'"
+  },
+  "keywords": [
+    "keyforge",
+    "browser-extension",
+    "web-extensions",
+    "chrome",
+    "firefox",
+    "data-collection"
+  ],
+  "author": "David Mikalova",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dmikalova/keyforge-scripts"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.246",
+    "@types/webextension-polyfill": "^0.10.0"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

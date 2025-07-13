@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeyForge Amasser</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <img src="icons/icon-32.png" alt="KeyForge Amasser" class="logo">
+      <h1>KeyForge Amasser</h1>
+    </header>
+
+    <main>
+      <section class="stats">
+        <div class="stat-item">
+          <span class="stat-label">Decks Amassed:</span>
+          <span class="stat-value" id="deck-count">0</span>
+        </div>
+      </section>
+
+      <section class="actions">
+        <button id="sync-decks" class="btn btn-secondary">Sync Decks</button>
+      </section>
+
+      <section class="actions">
+        <button id="clear-data" class="btn btn-secondary">Clear All Data</button>
+      </section>
+
+      <section class="recent-data">
+        <h3>Latest deck:</h3>
+        <div id="recent-list" class="recent-list">
+          <!-- Recent items will be populated here -->
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

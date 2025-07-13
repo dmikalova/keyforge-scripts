@@ -1,0 +1,238 @@
+/* Popup styles for KeyForge Amasser extension */
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  width: 350px;
+  /* min-height: 400px; */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-size: 14px;
+  /* background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); */
+  color: #333;
+}
+
+.container {
+  background: white;
+  border-radius: 8px;
+  margin: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.logo {
+  width: 24px;
+  height: 24px;
+}
+
+h1 {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+main {
+  padding: 16px;
+}
+
+.stats {
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #f8f9fa;
+  border-radius: 6px;
+}
+
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.stat-item:last-child {
+  margin-bottom: 0;
+  padding-top: 8px;
+  border-top: 1px solid #e9ecef;
+  font-weight: 600;
+}
+
+.stat-label {
+  color: #6c757d;
+  font-size: 13px;
+}
+
+.stat-value {
+  font-weight: 600;
+  color: #495057;
+}
+
+.controls {
+  margin-bottom: 20px;
+}
+
+.control-group {
+  margin-bottom: 12px;
+}
+
+.control-group:last-child {
+  margin-bottom: 0;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+}
+
+.toggle input[type="checkbox"] {
+  display: none;
+}
+
+.toggle-slider {
+  width: 40px;
+  height: 20px;
+  background: #ccc;
+  border-radius: 20px;
+  position: relative;
+  transition: background 0.3s;
+  margin-right: 10px;
+}
+
+.toggle-slider::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.3s;
+}
+
+.toggle input[type="checkbox"]:checked + .toggle-slider {
+  background: #667eea;
+}
+
+.toggle input[type="checkbox"]:checked + .toggle-slider::after {
+  transform: translateX(20px);
+}
+
+.toggle-label {
+  font-size: 13px;
+  color: #495057;
+}
+
+.actions {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.btn-primary {
+  background: #667eea;
+  color: white;
+}
+
+.btn-primary:hover {
+  background: #5a67d8;
+}
+
+.btn-secondary {
+  background: #e9ecef;
+  color: #495057;
+}
+
+.btn-secondary:hover {
+  background: #dee2e6;
+}
+
+.recent-data h3 {
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #495057;
+}
+
+.recent-list {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.recent-item {
+  padding: 8px;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-size: 12px;
+}
+
+.recent-item:last-child {
+  margin-bottom: 0;
+}
+
+.recent-item-type {
+  font-weight: 600;
+  color: #667eea;
+}
+
+.recent-item-name {
+  color: #495057;
+  margin-top: 2px;
+}
+
+.recent-item-time {
+  color: #6c757d;
+  font-size: 11px;
+  margin-top: 2px;
+}
+
+.empty-state {
+  text-align: center;
+  color: #6c757d;
+  font-size: 12px;
+  padding: 20px;
+}
+
+/* Scrollbar styling */
+.recent-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.recent-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.recent-list::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 2px;
+}
+
+.recent-list::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

@@ -1,0 +1,29 @@
+# KeyForge Amasser Extension - .gitignore
+
+# Distribution files
+dist/
+*.zip
+
+# Node modules (if using development tools)
+node_modules/
+package-lock.json
+yarn.lock
+
+# Development files
+.DS_Store
+.vscode/
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+manifest-v3-backup.json
+
+# IDE files
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+ehthumbs.db
