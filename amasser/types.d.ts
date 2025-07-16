@@ -1,100 +1,143 @@
-// Type definitions for Chrome Extension APIs
-// This file provides basic type definitions to resolve TypeScript errors
+// // Type definitions for Chrome Extension APIs
+// // This file provides basic type definitions to resolve TypeScript errors
 
-declare namespace chrome {
-  namespace runtime {
-    interface InstalledDetails {
-      reason: string
-      previousVersion?: string
-    }
+// declare namespace chrome {
+//   namespace runtime {
+//     interface InstalledDetails {
+//       reason: string
+//       previousVersion?: string
+//     }
 
-    interface MessageSender {
-      tab?: chrome.tabs.Tab
-      frameId?: number
-      id?: string
-      url?: string
-      nativeApplication?: string
-    }
+//     interface MessageSender {
+//       tab?: chrome.tabs.Tab
+//       frameId?: number
+//       id?: string
+//       url?: string
+//       nativeApplication?: string
+//     }
 
-    interface onInstalledEvent {
-      addListener(callback: (details: InstalledDetails) => void): void
-    }
+//     interface onInstalledEvent {
+//       addListener(callback: (details: InstalledDetails) => void): void
+//     }
 
-    interface onMessageEvent {
-      addListener(
-        callback: (
-          message: any,
-          sender: MessageSender,
-          sendResponse: (response?: any) => void,
-        ) => void | boolean,
-      ): void
-    }
+//     interface onMessageEvent {
+//       addListener(
+//         callback: (
+//           message: any,
+//           sender: MessageSender,
+//           sendResponse: (response?: any) => void,
+//         ) => void | boolean,
+//       ): void
+//     }
 
-    const onInstalled: onInstalledEvent
-    const onMessage: onMessageEvent
+//     const onInstalled: onInstalledEvent
+//     const onMessage: onMessageEvent
 
-    function sendMessage(
-      message: any,
-      responseCallback?: (response: any) => void,
-    ): void
-  }
+//     function sendMessage(
+//       message: any,
+//       responseCallback?: (response: any) => void,
+//     ): void
+//   }
 
-  namespace storage {
-    interface StorageArea {
-      get(
-        keys?: string | string[] | object | null,
-        callback?: (items: { [key: string]: any }) => void,
-      ): Promise<{ [key: string]: any }>
-      set(items: { [key: string]: any }, callback?: () => void): Promise<void>
-      clear(callback?: () => void): Promise<void>
-    }
+//   namespace storage {
+//     interface StorageArea {
+//       get(
+//         keys?: string | string[] | object | null,
+//         callback?: (items: { [key: string]: any }) => void,
+//       ): Promise<{ [key: string]: any }>
+//       set(items: { [key: string]: any }, callback?: () => void): Promise<void>
+//       clear(callback?: () => void): Promise<void>
+//     }
 
-    const sync: StorageArea
-    const local: StorageArea
-  }
+//     const sync: StorageArea
+//     const local: StorageArea
+//   }
 
-  namespace action {
-    function setBadgeText(details: { text: string; tabId?: number }): void
-    function setBadgeBackgroundColor(details: {
-      color: string
-      tabId?: number
-    }): void
-  }
+//   namespace action {
+//     function setBadgeText(details: { text: string; tabId?: number }): void
+//     function setBadgeBackgroundColor(details: {
+//       color: string
+//       tabId?: number
+//     }): void
+//   }
 
-  namespace tabs {
-    interface Tab {
-      id?: number
-      index: number
-      windowId: number
-      highlighted: boolean
-      active: boolean
-      pinned: boolean
-      url?: string
-      title?: string
-      favIconUrl?: string
-      status?: string
-      incognito: boolean
-      width?: number
-      height?: number
-      sessionId?: string
-    }
-  }
-}
+//   namespace tabs {
+//     interface Tab {
+//       id?: number
+//       index: number
+//       windowId: number
+//       highlighted: boolean
+//       active: boolean
+//       pinned: boolean
+//       url?: string
+//       title?: string
+//       favIconUrl?: string
+//       status?: string
+//       incognito: boolean
+//       width?: number
+//       height?: number
+//       sessionId?: string
+//     }
+//   }
 
-// Global window extensions for injected scripts
-interface Window {
-  gameState?: any
-  matchData?: any
-  gameLog?: any
-  deckList?: any
-  currentDeck?: any
-  deckInfo?: any
-  currentPlayer?: any
-  players?: any
-  userProfile?: any
-}
+//   namespace cookies {
+//     interface Cookie {
+//       name: string
+//       value: string
+//       domain?: string
+//       hostOnly?: boolean
+//       path?: string
+//       secure?: boolean
+//       httpOnly?: boolean
+//       sameSite?: string
+//       session?: boolean
+//       expirationDate?: number
+//       storeId?: string
+//     }
 
-// React internal instance (for accessing React component data)
-interface Element {
-  _reactInternalInstance?: any
-}
+//     interface CookieDetails {
+//       url: string
+//       name: string
+//       storeId?: string
+//     }
+
+//     function get(
+//       details: CookieDetails,
+//       callback: (cookie: Cookie | null) => void,
+//     ): void
+//     function getAll(
+//       details: Partial<Cookie> & { url?: string },
+//       callback: (cookies: Cookie[]) => void,
+//     ): void
+//     function set(
+//       details: Partial<Cookie> & { url: string },
+//       callback?: (cookie: Cookie | null) => void,
+//     ): void
+//     function remove(
+//       details: CookieDetails,
+//       callback?: (details: {
+//         url: string
+//         name: string
+//         storeId: string
+//       }) => void,
+//     ): void
+//   }
+// }
+
+// // Global window extensions for injected scripts
+// interface Window {
+//   gameState?: any
+//   matchData?: any
+//   gameLog?: any
+//   deckList?: any
+//   currentDeck?: any
+//   deckInfo?: any
+//   currentPlayer?: any
+//   players?: any
+//   userProfile?: any
+// }
+
+// // React internal instance (for accessing React component data)
+// interface Element {
+//   _reactInternalInstance?: any
+// }

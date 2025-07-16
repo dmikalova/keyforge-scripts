@@ -10,10 +10,8 @@
   "keywords": [
     "keyforge",
     "browser-extension",
-    "web-extensions",
     "chrome",
-    "firefox",
-    "data-collection"
+    "firefox"
   ],
   "author": "David Mikalova",
   "license": "Apache-2.0",
