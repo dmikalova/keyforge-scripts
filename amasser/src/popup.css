@@ -5,7 +5,7 @@
   --color-purple: #8b6391;
   --color-yellow: #f8ef24;
   --color-black: #373134;
-  --color-black-trans: #37313499;
+  --color-black-trans: #37313477;
 }
 
 * {
@@ -87,7 +87,7 @@ h1 {
 
 .stats {
   margin-top: 16px;
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   /* padding: 12px; */
   display: flex;
   align-items: center; /* Vertically center content */
@@ -95,12 +95,12 @@ h1 {
 }
 
 .stat-label {
-  font-size: 14px;
+  font-size: 16px;
   padding: 0px 8px;
 }
 
 .stat-value {
-  font-size: 24px;
+  font-size: 28px;
 }
 
 .controls {
@@ -193,7 +193,7 @@ hr {
 }
 
 .btn-primary:hover {
-  background: color-mix(in srgb, var(--color-pink), black 20%);
+  background: color-mix(in srgb, var(--color-pink), white 20%);
 }
 
 .actions {

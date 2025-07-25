@@ -4,13 +4,13 @@ document.addEventListener('DOMContentLoaded', async () => {
   setupEventListeners()
 
   // Load initial data
-  await refreshStats()
-  await loadRecentData()
+  await loadState()
 })
 
 // TODO: stop all clicks while running
 // TODO: don't allow clicks while bg syncing
 // TODO: check if logged in first
+// TODO: show MV/DoK/TCO username
 
 function setupEventListeners() {
   // Button event listeners
@@ -23,6 +23,7 @@ function setupEventListeners() {
     clearDataBtn.addEventListener('click', clearData)
   }
 
+  // Background gradient effect
   const body = document.querySelector('body')
   const main = document.querySelector('main')
   if (body && main) {
@@ -50,78 +51,118 @@ async function getStorage() {
   })
 }
 
-async function refreshStats() {
+async function loadState() {
   const data = await getStorage()
-  const entries = Object.entries(data)
-
-  const deckCount = entries.filter(([key]) => key.startsWith('deck_')).length
 
   const deckCountElem = document.getElementById('deck-count')
   if (deckCountElem) {
-    deckCountElem.textContent = deckCount.toString()
+    deckCountElem.textContent = Object.keys(data.decks || {}).length.toString()
   }
-}
 
-async function loadRecentData() {
-  const data = await getStorage()
-  const entries = Object.entries(data)
-    .filter(([key]) => key.startsWith('deck_'))
-    .map(([key, value]) => ({ key, ...value }))
-    .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-    .slice(0, 1)
-
-  const recentList = document.getElementById('recent-list')
-
-  if (entries.length === 0) {
-    if (recentList) {
-      recentList.innerHTML = '<div class="empty-state">No amassed decks</div>'
-    }
+  const syncDokToggle = document.getElementById('sync-dok-toggle')
+  const syncTcoToggle = document.getElementById('sync-tco-toggle')
+  const syncDailyToggle = document.getElementById('sync-daily-toggle')
+  if (!syncDokToggle || !syncTcoToggle || !syncDailyToggle) {
+    console.error('Sync toggles not found in popup')
     return
   }
-
-  if (recentList) {
-    recentList.innerHTML = entries
-      .map(item => {
-        const type = item.key.startsWith('deck_') ? 'Deck' : 'Game'
-        const name = item.name || item.id || 'Unknown'
-        const time = item.timestamp
-          ? new Date(item.timestamp).toLocaleString()
-          : 'Unknown time'
-
-        return `
-        <div class="recent-item">
-          <div class="recent-item-type">${type}</div>
-          <div class="recent-item-name">${name}</div>
-          <div class="recent-item-time">${time}</div>
-        </div>
-      `
-      })
-      .join('')
+  // Set toggle states based on stored data
+  if (data.syncDok === undefined) {
+    // Default to true if not set
+    data.syncDok = true
   }
-}
+  if (data.syncTco === undefined) {
+    // Default to true if not set
+    data.syncTco = false
+  }
+  if (data.syncDaily === undefined) {
+    // Default to true if not set
+    data.syncDaily = false
+  }
+  // Update toggle states
+  console.log('Setting sync toggles:', {
+    syncDok: data.syncDok,
+    syncTco: data.syncTco,
+    syncDaily: data.syncDaily,
+  })
 
-async function clearData() {
-  if (
-    confirm(
-      'Are you sure you want to clear all collected data? This action cannot be undone.',
-    )
-  ) {
-    chrome.storage.local.clear(() => {
-      console.log('All data cleared')
-      refreshStats()
-      loadRecentData()
-
-      // Reset badge
-      chrome.action.setBadgeText({ text: '' })
-    })
+  // Set toggle states
+  if (syncDokToggle) {
+    syncDokToggle instanceof HTMLInputElement &&
+      (syncDokToggle.checked = data.syncDok || false)
+  }
+  if (syncTcoToggle) {
+    syncTcoToggle instanceof HTMLInputElement &&
+      (syncTcoToggle.checked = data.syncTco || false)
+  }
+  if (syncDailyToggle) {
+    syncDailyToggle instanceof HTMLInputElement &&
+      (syncDailyToggle.checked = data.syncDaily || false)
   }
 
-  // console.log('Reloading...');
-  // chrome.runtime.reload();
+  console.log('Current value: ', Object.keys(data.decks).length)
 }
+
+// async function refreshStats() {
+//   const data = await getStorage()
+//   const entries = Object.entries(data)
+
+//   const deckCount = entries.filter(([key]) => key.startsWith('deck_')).length
+
+//   const deckCountElem = document.getElementById('deck-count')
+//   if (deckCountElem) {
+//     deckCountElem.textContent = deckCount.toString()
+//   }
+// }
+
+// async function loadRecentData() {
+//   const data = await getStorage()
+//   const entries = Object.entries(data)
+//     .filter(([key]) => key.startsWith('deck_'))
+//     .map(([key, value]) => ({ key, ...value }))
+//     .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+//     .slice(0, 1)
+
+//   const recentList = document.getElementById('recent-list')
+
+//   if (entries.length === 0) {
+//     if (recentList) {
+//       recentList.innerHTML = '<div class="empty-state">No amassed decks</div>'
+//     }
+//     return
+//   }
+
+//   if (recentList) {
+//     recentList.innerHTML = entries
+//       .map(item => {
+//         const type = item.key.startsWith('deck_') ? 'Deck' : 'Game'
+//         const name = item.name || item.id || 'Unknown'
+//         const time = item.timestamp
+//           ? new Date(item.timestamp).toLocaleString()
+//           : 'Unknown time'
+
+//         return `
+//         <div class="recent-item">
+//           <div class="recent-item-type">${type}</div>
+//           <div class="recent-item-name">${name}</div>
+//           <div class="recent-item-time">${time}</div>
+//         </div>
+//       `
+//       })
+//       .join('')
+//   }
+// }
 
 // Trigger a deck sync
 function syncDecks() {
   console.log('Syncing decks from popup..')
   chrome.runtime.sendMessage({ type: 'DECK_SYNC' })
+}
+
+// Clear all data from local storage
+async function clearData() {
+  chrome.storage.local.clear(() => {
+    console.log('All data cleared')
+    loadState()
+  })
 }
