@@ -22,6 +22,24 @@ function setupEventListeners() {
   if (clearDataBtn) {
     clearDataBtn.addEventListener('click', clearData)
   }
+
+  const body = document.querySelector('body')
+  const main = document.querySelector('main')
+  if (body && main) {
+    document.addEventListener('mousemove', e => {
+      const x = e.clientX
+      const y = e.clientY
+
+      // Calculate angle in degrees
+      const angle = Math.atan2(x + 2 * y, y - 2 * x) * (180 / Math.PI) * 4
+
+      body.style.setProperty(
+        '--gradient-angle-body',
+        `${(angle * 2 + x + y) % 360}deg`,
+      )
+      main.style.setProperty('--gradient-angle-main', `${angle}deg`)
+    })
+  }
 }
 
 async function getStorage() {
@@ -102,7 +120,7 @@ async function clearData() {
   // chrome.runtime.reload();
 }
 
-// Add the missing syncDecks function
+// Trigger a deck sync
 function syncDecks() {
   console.log('Syncing decks from popup..')
   chrome.runtime.sendMessage({ type: 'DECK_SYNC' })
