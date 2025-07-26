@@ -24,7 +24,7 @@ export const handleDokSync = async () => {
 /**
  * Get authentication cookie from Decks of KeyForge
  */
-const getDokToken = async () => {
+export const getDokToken = async () => {
   // Check for token in local storage
   let { dokAuth: token } = await chrome.storage.local.get(['dokAuth'])
   if (!token) {
@@ -37,7 +37,7 @@ const getDokToken = async () => {
     console.log('tabid', tabId)
 
     const tokenPromise = new Promise(resolve => {
-      chrome.storage.onChanged.addListener(function (changes, namespace) {
+      chrome.storage.onChanged.addListener((changes, namespace) => {
         if (
           namespace === 'local' &&
           changes.dokAuth &&
@@ -62,6 +62,28 @@ const getDokToken = async () => {
   }
 
   return token
+}
+
+export const getDokUser = async token => {
+  const response = await fetch(
+    'https://decksofkeyforge.com/api/users/secured/your-user',
+    {
+      credentials: 'include',
+      headers: {
+        accept: 'application/json',
+        'accept-language': 'en-us',
+        authorization: token,
+        'x-authorization': token,
+      },
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch user: ${response.status}`)
+  }
+
+  const user = await response.json()
+  return user.username
 }
 
 /**
@@ -115,3 +137,5 @@ const importDecksToDok = async decks => {
   }
   return decks
 }
+
+// TODO: load dok token in iframe

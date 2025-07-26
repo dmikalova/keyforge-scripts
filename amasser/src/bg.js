@@ -41,7 +41,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 })
 
 // Get extension settings
-async function getSettings() {
+const getSettings = async () => {
   try {
     const settings = await chrome.storage.sync.get([
       'enabled',
@@ -59,7 +59,7 @@ async function getSettings() {
 // TODO: run daily https://stackoverflow.com/questions/36241436/chrome-extension-use-javascript-to-run-periodically-and-log-data-permanently
 
 // Add the missing syncDecks function
-async function handleDeckSync() {
+const handleDeckSync = async () => {
   console.log('Syncing decks from bg...')
   // TODO: Add toggles for each of these based on settings
   await handleMvSync()

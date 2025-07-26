@@ -99,7 +99,7 @@ hr {
 }
 
 .setting-group:last-child {
-  margin-bottom: 0;
+  margin-bottom: 8px;
 }
 
 .toggle {
@@ -112,6 +112,10 @@ hr {
 }
 
 .toggle input[type='checkbox'] {
+  display: none;
+}
+
+.toggle-user {
   display: none;
 }
 
@@ -173,7 +177,7 @@ hr {
   text-shadow: 0px 0px 5px var(--color-black), 0px 0px 10px var(--color-black),
     0px 0px 15px var(--color-black), 0px 0px 20px var(--color-black);
   transition: all 0.2s;
-  width: 120px;
+  width: 130px;
 }
 
 .button:hover {

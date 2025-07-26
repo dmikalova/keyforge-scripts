@@ -1,15 +1,20 @@
+import { getDokToken, getDokUser } from './bg-dok.js'
+import { getMvAuth } from './bg-mv.js'
+
 // Popup script for KeyForge Amasser extension
 document.addEventListener('DOMContentLoaded', async () => {
   // Set up event listeners
   setupEventListeners()
 
   // Load initial data
-  await loadState()
+  const state = await loadState()
 
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener(message => {
     handleBackgroundMessage(message)
   })
+
+  await loadUsers(state)
 })
 
 // TODO: stop all clicks while running
@@ -17,12 +22,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 // TODO: check if logged in first
 // TODO: show MV/DoK/TCO username
 
-function setupEventListeners() {
+const setupEventListeners = async () => {
   // Toggle event listners
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle) {
     syncDokToggle.addEventListener('change', async () => {
-      await chrome.storage.local.set({
+      await chrome.storage.sync.set({
         syncDok:
           syncDokToggle instanceof HTMLInputElement && syncDokToggle.checked,
       })
@@ -31,7 +36,7 @@ function setupEventListeners() {
   const syncTcoToggle = document.getElementById('sync-tco-toggle')
   if (syncTcoToggle) {
     syncTcoToggle.addEventListener('change', async () => {
-      await chrome.storage.local.set({
+      await chrome.storage.sync.set({
         syncTco:
           syncTcoToggle instanceof HTMLInputElement && syncTcoToggle.checked,
       })
@@ -40,7 +45,7 @@ function setupEventListeners() {
   const syncDailyToggle = document.getElementById('sync-daily-toggle')
   if (syncDailyToggle) {
     syncDailyToggle.addEventListener('change', async () => {
-      await chrome.storage.local.set({
+      await chrome.storage.sync.set({
         syncDaily:
           syncDailyToggle instanceof HTMLInputElement &&
           syncDailyToggle.checked,
@@ -78,7 +83,7 @@ function setupEventListeners() {
   }
 }
 
-async function getStorage() {
+const getStorage = async () => {
   return new Promise(resolve => {
     chrome.storage.local.get(null, result => {
       resolve(result)
@@ -86,7 +91,7 @@ async function getStorage() {
   })
 }
 
-async function loadState() {
+const loadState = async () => {
   const data = await getStorage()
 
   const deckCountElem = document.getElementById('deck-count')
@@ -136,10 +141,12 @@ async function loadState() {
   }
 
   console.log('Current value: ', Object.keys(data.decks || {}).length)
+
+  return data
 }
 
 // Trigger a deck sync
-function syncDecks() {
+const syncDecks = () => {
   console.log('Syncing decks from popup..')
 
   // Update button state
@@ -149,7 +156,7 @@ function syncDecks() {
 }
 
 // Clear all data from local storage
-async function clearData() {
+const clearData = () => {
   chrome.storage.local.clear(() => {
     console.log('All data cleared')
     loadState()
@@ -168,7 +175,7 @@ async function clearData() {
 /**
  * Handle messages from background script
  */
-function handleBackgroundMessage(message) {
+const handleBackgroundMessage = message => {
   switch (message.type) {
     case 'SYNC_COMPLETE':
       updateDeckCount(message.totalDecks)
@@ -196,7 +203,7 @@ function handleBackgroundMessage(message) {
 /**
  * Update the deck count display
  */
-function updateDeckCount(count) {
+const updateDeckCount = count => {
   const deckCountElement = document.getElementById('deck-count')
   if (deckCountElement) {
     deckCountElement.textContent = count || '0'
@@ -206,7 +213,7 @@ function updateDeckCount(count) {
 /**
  * Reset sync button to default state
  */
-function resetButtons() {
+const resetButtons = () => {
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle && syncDokToggle instanceof HTMLInputElement) {
     syncDokToggle.disabled = false
@@ -237,7 +244,7 @@ function resetButtons() {
 /**
  * Reset sync button to default state
  */
-function handleSyncStatus(message) {
+const handleSyncStatus = message => {
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
     if (toggle instanceof HTMLInputElement) {
       toggle.disabled = true
@@ -263,9 +270,67 @@ function handleSyncStatus(message) {
         getComputedStyle(body)
           .getPropertyValue('--count')
           .trim()
-          .replace('deg', '')
+          .replace('deg', ''),
       ) || 0
     const newCount = currentCount + Math.floor(Math.random() * 240) + 60
     body.style.setProperty('--count', `${newCount % 360}deg`)
   }
+}
+
+const loadUsers = async state => {
+  const { username: userMv } = await getMvAuth()
+  if (userMv) {
+    console.log('Master Vault user found:', userMv)
+    const mvUsernameElem = document.getElementById('mv-username')
+    if (mvUsernameElem) {
+      mvUsernameElem.textContent = `: ${userMv}`
+      mvUsernameElem.style.display = 'inline'
+    }
+  } else {
+    console.error('No MV user found')
+    const syncButton = document.getElementById('sync-decks')
+    if (syncButton && syncButton instanceof HTMLButtonElement) {
+      syncButton.replaceWith(syncButton.cloneNode(true))
+      const newSyncButton = document.getElementById('sync-decks')
+      newSyncButton.addEventListener('click', () => {
+        chrome.tabs.create({ url: 'https://www.keyforgegame.com/my-decks' })
+      })
+      newSyncButton.textContent = 'Login to MV'
+      if (newSyncButton instanceof HTMLButtonElement) {
+        newSyncButton.disabled = false
+      }
+    }
+    return
+  }
+
+  if (state.syncDok) {
+    console.log('Getting DoK username')
+    const token = await getDokToken()
+    if (token) {
+      const user = await getDokUser(token)
+      const dokUsernameElem = document.getElementById('dok-username')
+      if (dokUsernameElem) {
+        dokUsernameElem.textContent = `: ${user}`
+        dokUsernameElem.style.display = 'inline'
+      }
+    } else {
+      console.error('No DoK user found')
+      const syncButton = document.getElementById('sync-decks')
+      if (syncButton && syncButton instanceof HTMLButtonElement) {
+        syncButton.replaceWith(syncButton.cloneNode(true))
+        const newSyncButton = document.getElementById('sync-decks')
+        newSyncButton.addEventListener('click', () => {
+          chrome.tabs.create({ url: 'https://decksofkeyforge.com/' })
+        })
+        newSyncButton.textContent = 'Login to DoK'
+        if (newSyncButton instanceof HTMLButtonElement) {
+          newSyncButton.disabled = false
+        }
+      }
+      return
+    }
+  }
+
+  console.log('Logged in!')
+  resetButtons()
 }

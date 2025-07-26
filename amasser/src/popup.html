@@ -29,6 +29,7 @@
               >
                 Sync Master Vault
               </span>
+              <span class="toggle-user" id="mv-username"></span>
             </label>
           </div>
 
@@ -37,6 +38,7 @@
               <input type="checkbox" id="sync-dok-toggle" />
               <span class="toggle-slider"></span>
               <span class="toggle-label">Sync Decks of KeyForge</span>
+              <span class="toggle-user" id="dok-username">: user</span>
             </label>
           </div>
 
@@ -45,6 +47,7 @@
               <input type="checkbox" id="sync-tco-toggle" />
               <span class="toggle-slider"></span>
               <span class="toggle-label">Sync The Crucible Online</span>
+              <span class="toggle-user" id="tco-username">: user</span>
             </label>
           </div>
 
@@ -59,11 +62,11 @@
       </section>
 
       <section class="buttons">
-        <button id="sync-decks" class="button">Sync Decks</button>
+        <button id="sync-decks" class="button" disabled>Logging in...</button>
         <button id="clear-data" class="button">Clear Data</button>
       </section>
     </main>
 
-    <script src="popup.js"></script>
+    <script src="popup.js" type="module"></script>
   </body>
 </html>

@@ -25,18 +25,18 @@ export const handleMvSync = async () => {
   }
 }
 
-const getMvAuth = async () => {
+export const getMvAuth = async () => {
   const authCookie = await getMvAuthCookie()
   if (!authCookie) {
-    alert('You must login to Master Vault first')
-    throw new Error(`Failed to get auth cookie: ${authCookie}`)
+    console.log('You must login to Master Vault first')
+    return { token: null, userId: null, username: null }
   }
   console.log('Master Vault auth cookie loaded...')
 
-  const userId = await getMvUser(authCookie.value)
-  console.log('Master Vault user ID:', userId)
+  const user = await getMvUser(authCookie.value)
+  console.log('Master Vault user ID:', user.id)
 
-  return { token: authCookie.value, userId: userId }
+  return { token: authCookie.value, userId: user.id, username: user.username }
 }
 
 /**
@@ -89,7 +89,7 @@ const getMvUser = async token => {
   }
 
   const user = await response.json()
-  return user.data.id
+  return { id: user.data.id, username: user.data.username }
 }
 
 /**
@@ -226,9 +226,7 @@ const favoriteLegacyDecks = async decks => {
 }
 
 // TODO: fail forward if TCO asks for more deck info
-// TODO: options: sync dok, sync tco, sync mv, sync legacy, favorite unowned legacy
-// TODO: add little i bubbles for more info on each option
-// TODO: add content scripts to import decks from MV to DoK
+// TODO: add content scripts to import decks from MV to DoK on each MV load / scan
 // TODO: convert to TypeScript
 // TODO: random quotes
 // TODO: add little i bubbles for more info on each option
