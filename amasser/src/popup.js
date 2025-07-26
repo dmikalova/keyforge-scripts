@@ -13,6 +13,36 @@ document.addEventListener('DOMContentLoaded', async () => {
 // TODO: show MV/DoK/TCO username
 
 function setupEventListeners() {
+  // Toggle event listners
+  const syncDokToggle = document.getElementById('sync-dok-toggle')
+  if (syncDokToggle) {
+    syncDokToggle.addEventListener('change', async () => {
+      await chrome.storage.local.set({
+        syncDok:
+          syncDokToggle instanceof HTMLInputElement && syncDokToggle.checked,
+      })
+    })
+  }
+  const syncTcoToggle = document.getElementById('sync-tco-toggle')
+  if (syncTcoToggle) {
+    syncTcoToggle.addEventListener('change', async () => {
+      await chrome.storage.local.set({
+        syncTco:
+          syncTcoToggle instanceof HTMLInputElement && syncTcoToggle.checked,
+      })
+    })
+  }
+  const syncDailyToggle = document.getElementById('sync-daily-toggle')
+  if (syncDailyToggle) {
+    syncDailyToggle.addEventListener('change', async () => {
+      await chrome.storage.local.set({
+        syncDaily:
+          syncDailyToggle instanceof HTMLInputElement &&
+          syncDailyToggle.checked,
+      })
+    })
+  }
+
   // Button event listeners
   const syncDecksBtn = document.getElementById('sync-decks')
   if (syncDecksBtn) {
@@ -31,7 +61,7 @@ function setupEventListeners() {
       const x = e.clientX
       const y = e.clientY
 
-      // Calculate angle in degrees
+      // Obfuscate angle
       const angle = Math.atan2(x + 2 * y, y - 2 * x) * (180 / Math.PI) * 4
 
       body.style.setProperty(
@@ -102,56 +132,6 @@ async function loadState() {
 
   console.log('Current value: ', Object.keys(data.decks).length)
 }
-
-// async function refreshStats() {
-//   const data = await getStorage()
-//   const entries = Object.entries(data)
-
-//   const deckCount = entries.filter(([key]) => key.startsWith('deck_')).length
-
-//   const deckCountElem = document.getElementById('deck-count')
-//   if (deckCountElem) {
-//     deckCountElem.textContent = deckCount.toString()
-//   }
-// }
-
-// async function loadRecentData() {
-//   const data = await getStorage()
-//   const entries = Object.entries(data)
-//     .filter(([key]) => key.startsWith('deck_'))
-//     .map(([key, value]) => ({ key, ...value }))
-//     .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
-//     .slice(0, 1)
-
-//   const recentList = document.getElementById('recent-list')
-
-//   if (entries.length === 0) {
-//     if (recentList) {
-//       recentList.innerHTML = '<div class="empty-state">No amassed decks</div>'
-//     }
-//     return
-//   }
-
-//   if (recentList) {
-//     recentList.innerHTML = entries
-//       .map(item => {
-//         const type = item.key.startsWith('deck_') ? 'Deck' : 'Game'
-//         const name = item.name || item.id || 'Unknown'
-//         const time = item.timestamp
-//           ? new Date(item.timestamp).toLocaleString()
-//           : 'Unknown time'
-
-//         return `
-//         <div class="recent-item">
-//           <div class="recent-item-type">${type}</div>
-//           <div class="recent-item-name">${name}</div>
-//           <div class="recent-item-time">${time}</div>
-//         </div>
-//       `
-//       })
-//       .join('')
-//   }
-// }
 
 // Trigger a deck sync
 function syncDecks() {
