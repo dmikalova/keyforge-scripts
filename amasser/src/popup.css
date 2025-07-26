@@ -1,17 +1,9 @@
-/* Popup styles for KeyForge Amasser extension */
-
 :root {
+  --color-black-trans: #37313477;
+  --color-black: #373134;
   --color-pink: #d4265f;
   --color-purple: #8b6391;
   --color-yellow: #f8ef24;
-  --color-black: #373134;
-  --color-black-trans: #37313477;
-}
-
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
 }
 
 @font-face {
@@ -21,77 +13,69 @@
   src: url('../fonts/TeutonFett-Regular.woff') format('woff');
 }
 
+@property --count {
+  inherits: true;
+  initial-value: 0deg;
+  syntax: '<angle>';
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
 body {
-  /* min-width: 280px; */
-  /* max-width: 100vw; */
-  /* min-height: 400px; */
-  font-family: 'Teuton Fett Regular';
-  font-size: 16px;
   background: linear-gradient(
-    var(--gradient-angle-body, 0deg),
+    calc(var(--gradient-angle-body, 0deg) + var(--count, 0deg)),
     var(--color-pink) 0%,
     var(--color-purple) 100%
   );
   color: var(--color-yellow);
+  font-family: 'Teuton Fett Regular';
+  font-size: 16px;
   text-shadow: 0px 0px 5px var(--color-black), 0px 0px 10px var(--color-black),
     0px 0px 15px var(--color-black), 0px 0px 20px var(--color-black);
 }
 
-.container {
-  /* background: var(--color-black); */
-  border-radius: 8px;
-  margin: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  /* overflow: hidden; */
-}
-
 main {
   align-items: center;
-  border-radius: 8px;
-
-  padding: 16px;
-  /* background: var(--color-black); */
   background: linear-gradient(
-    var(--gradient-angle-main, 0deg),
+    calc(var(--gradient-angle-main, 0deg) - var(--count, 0deg)),
     var(--color-pink) 0%,
     var(--color-purple) 100%
   );
+  border-radius: 8px;
+  margin: 16px;
+  padding: 16px;
   text-align: center;
 }
 
 h1 {
-  /* padding: 16px; */
-
-  margin: -12px;
+  color: var(--color-yellow);
   font-size: 32px;
   font-weight: 100;
-  color: var(--color-yellow);
-  /* text-shadow: 0px 0px 5px var(--color-black), 0px 0px 10px var(--color-black),
-    0px 0px 15px var(--color-black), 0px 0px 20px var(--color-black); */
-  /* margin: 10px; */
+  margin: -12px;
   text-align: center;
-
-  white-space: nowrap;
   text-overflow: ellipsis;
-  /* overflow: hidden; */
+  white-space: nowrap;
 }
 
 .contents {
   background: var(--color-black-trans);
   border-radius: 6px;
   color: var(--color-yellow);
-  padding: 8px 16px;
   margin-bottom: 16px;
   min-width: 280px;
+  padding: 8px 16px;
 }
 
 .stats {
-  margin-top: 16px;
-  margin-bottom: 16px;
-  /* padding: 12px; */
+  align-items: center;
   display: flex;
-  align-items: center; /* Vertically center content */
-  justify-content: center; /* Horizontally center content (optional) */
+  justify-content: center;
+  margin-bottom: 16px;
+  margin-top: 16px;
 }
 
 .stat-label {
@@ -104,15 +88,14 @@ h1 {
 }
 
 hr {
-  border-top: 1px solid var(--color-pink);
-  border-color: var(--color-pink);
   background-color: var(--color-pink);
+  border-color: var(--color-pink);
+  border-top: 1px solid var(--color-pink);
   color: var(--color-pink);
   margin: 16px;
 }
 
 .controls {
-  /* margin-top: 8px; */
   margin-bottom: 16px;
 }
 
@@ -125,12 +108,12 @@ hr {
 }
 
 .toggle {
-  display: flex;
   align-items: center;
   cursor: pointer;
+  display: flex;
+  text-overflow: ellipsis;
   user-select: none;
   white-space: nowrap;
-  text-overflow: ellipsis;
 }
 
 .toggle input[type='checkbox'] {
@@ -138,25 +121,25 @@ hr {
 }
 
 .toggle-slider {
-  width: 32px;
-  height: 16px;
   background: var(--color-purple);
   border-radius: 16px;
+  height: 16px;
+  margin-right: 10px;
   position: relative;
   transition: background 0.2s;
-  margin-right: 10px;
+  width: 32px;
 }
 
 .toggle-slider::after {
-  content: '';
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 12px;
-  height: 12px;
   background: var(--color-black);
   border-radius: 50%;
+  content: '';
+  height: 12px;
+  left: 2px;
+  position: absolute;
+  top: 2px;
   transition: transform 0.2s;
+  width: 12px;
 }
 
 .toggle input[type='checkbox']:checked + .toggle-slider {
@@ -167,42 +150,43 @@ hr {
   transform: translateX(16px);
 }
 
-.btn {
-  font-family: 'Teuton Fett Regular';
-  padding: 8px 16px;
-  /* border: none; */
-  width: auto;
-  min-width: 80px;
-  display: block;
-  margin-left: auto;
-  margin-right: auto;
-  border-radius: 4px;
-  font-size: 16px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  text-align: center;
-  text-shadow: 0px 0px 5px var(--color-black), 0px 0px 10px var(--color-black),
-    0px 0px 15px var(--color-black), 0px 0px 20px var(--color-black);
-}
-
-.btn-primary {
-  background: color-mix(in srgb, var(--color-purple), black 20%);
-  color: var(--color-yellow);
-  border: 2px solid var(--color-yellow);
-}
-
-.btn-primary:hover {
-  background: color-mix(in srgb, var(--color-pink), white 20%);
+.toggle input[type='checkbox']:disabled + .toggle-slider,
+.toggle input[type='checkbox']:disabled + .toggle-slider + .toggle-label {
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 
 .actions {
-  margin-bottom: 16px;
   display: flex;
   flex-direction: row;
-  gap: 8px;
 }
 
-.actions:last-child {
-  margin-bottom: 0;
+.btn {
+  background: color-mix(in srgb, var(--color-purple), black 20%);
+  border-radius: 4px;
+  border: 2px solid var(--color-yellow);
+  color: var(--color-yellow);
+  cursor: pointer;
+  display: block;
+  font-family: 'Teuton Fett Regular';
+  font-size: 16px;
+  font-weight: 500;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 8px 16px;
+  text-align: center;
+  text-shadow: 0px 0px 5px var(--color-black), 0px 0px 10px var(--color-black),
+    0px 0px 15px var(--color-black), 0px 0px 20px var(--color-black);
+  transition: all 0.2s;
+  width: 120px;
+}
+
+.btn:hover {
+  background: color-mix(in srgb, var(--color-pink), white 20%);
+}
+
+.btn:disabled {
+  background: var(--color-black);
+  border: 2px solid var(--color-black);
+  cursor: not-allowed;
 }

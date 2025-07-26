@@ -64,4 +64,7 @@ async function handleDeckSync() {
   // TODO: Add toggles for each of these based on settings
   await handleMvSync()
   await handleDokSync()
+
+  // Notify popup that sync is complete
+  chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
 }

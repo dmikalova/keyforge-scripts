@@ -1,13 +1,24 @@
-import { getLocalDecks, setLoadingState, setLocalDecks } from './lib.js'
+import { getLocalDecks, setLocalDecks } from './lib.js'
 
 // Decks of KeyForge configuration
 const DOK_BASE_URL = 'https://decksofkeyforge.com'
+const SYNC_MSGS = ['Syncing DoK..', 'Syncing DoK...', 'Syncing DoK.']
 
 export const handleDokSync = async () => {
-  setLoadingState(true)
-  let localDecks = await getLocalDecks()
-  const dokDecks = await importDecksToDok(localDecks)
-  await setLocalDecks(dokDecks)
+  console.log('DoK deck sync started')
+  try {
+    const localDecks = await getLocalDecks()
+    const dokDecks = await importDecksToDok(localDecks)
+    await setLocalDecks(dokDecks)
+  } catch (error) {
+    console.error('Error syncing DoK decks:', error)
+    chrome.runtime
+      .sendMessage({
+        type: 'SYNC_ERROR',
+        error: error.message,
+      })
+      .catch(() => {})
+  }
 }
 
 /**
@@ -47,33 +58,10 @@ const getDokToken = async () => {
 
   if (!token) {
     console.log('You must login to Decks of KeyForge first')
-    setLoadingState(false)
     return { token: null, userId: null }
   }
 
   return token
-}
-
-const getDokUser = async token => {
-  const response = await fetch(
-    'https://decksofkeyforge.com/api/users/secured/your-user',
-    {
-      credentials: 'include',
-      headers: {
-        accept: 'application/json',
-        'accept-language': 'en-us',
-        authorization: token,
-        'x-authorization': token,
-      },
-    },
-  )
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch user: ${response.status}`)
-  }
-
-  const user = await response.json()
-  return user.username
 }
 
 /**
@@ -100,8 +88,12 @@ const importDecksToDok = async decks => {
     deck => deck.mv && !deck.dok,
   )
 
-  for (const deck of decksToImport) {
-    console.log(`Importing deck ${JSON.stringify(deck)} to DoK...`)
+  for (const [i, deck] of decksToImport.entries()) {
+    console.log(
+      `Importing deck ${i + 1}/${decksToImport.length}: ${JSON.stringify(
+        deck,
+      )} to DoK...`,
+    )
     const response = await fetch(
       `https://decksofkeyforge.com/api/decks/${deck.id}/import-and-add`,
       createDokRequestConfig(token),
@@ -113,6 +105,13 @@ const importDecksToDok = async decks => {
     } else {
       console.error(`Failed to import ${deck.id}: ${response.status}`)
     }
+
+    chrome.runtime
+      .sendMessage({
+        type: 'SYNC_STATUS',
+        button: SYNC_MSGS[i % SYNC_MSGS.length],
+      })
+      .catch(() => {})
   }
   return decks
 }

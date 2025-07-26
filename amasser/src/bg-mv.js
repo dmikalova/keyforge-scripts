@@ -1,22 +1,27 @@
-import { getLocalDecks, setLoadingState, setLocalDecks } from './lib.js'
+import { getLocalDecks, setLocalDecks } from './lib.js'
 
-// Master Vault configuration
+// Master Vault API configuration
 const MV_BASE_URL = 'https://www.keyforgegame.com'
+const SYNC_MSGS = ['Syncing MV..', 'Syncing MV...', 'Syncing MV.']
 
 /**
  * Main entry point for Master Vault synchronization
  */
 export const handleMvSync = async () => {
+  console.log('MV deck sync started')
   try {
-    setLoadingState(true)
     const localDecks = await getLocalDecks()
     const mvDecks = await getMvDecks(localDecks)
     // await favoriteLegacyDecks(mvDecks)
     await setLocalDecks(mvDecks)
   } catch (error) {
-    console.error('Error syncing Master Vault decks:', error)
-  } finally {
-    setLoadingState(false)
+    console.error('Error syncing MV decks:', error)
+    chrome.runtime
+      .sendMessage({
+        type: 'SYNC_ERROR',
+        error: error.message,
+      })
+      .catch(() => {})
   }
 }
 
@@ -40,7 +45,7 @@ const getMvAuth = async () => {
 const getMvAuthCookie = () => {
   return new Promise(resolve => {
     if (!chrome.cookies) {
-      alert('ERROR: Chrome cookies API is not available.')
+      console.error('ERROR: Chrome cookies API is not available.')
       resolve(null)
       return
     }
@@ -126,6 +131,15 @@ const getMvDecks = async decks => {
         }
       }
     })
+
+    // Notify popup of new decks added
+    chrome.runtime
+      .sendMessage({
+        type: 'SYNC_STATUS',
+        decks: Object.keys(decks).length,
+        button: SYNC_MSGS[Object.keys(decks).length % SYNC_MSGS.length],
+      })
+      .catch(() => {})
 
     if (Object.keys(decks).length === data.count) {
       console.log(
@@ -216,4 +230,5 @@ const favoriteLegacyDecks = async decks => {
 // TODO: add little i bubbles for more info on each option
 // TODO: add content scripts to import decks from MV to DoK
 // TODO: convert to TypeScript
-// TODO: random quote
+// TODO: random quotes
+// TODO: add little i bubbles for more info on each option

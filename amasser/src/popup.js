@@ -5,6 +5,11 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // Load initial data
   await loadState()
+
+  // Listen for messages from background script
+  chrome.runtime.onMessage.addListener(message => {
+    handleBackgroundMessage(message)
+  })
 })
 
 // TODO: stop all clicks while running
@@ -68,7 +73,7 @@ function setupEventListeners() {
         '--gradient-angle-body',
         `${(angle * 2 + x + y) % 360}deg`,
       )
-      main.style.setProperty('--gradient-angle-main', `${angle}deg`)
+      main.style.setProperty('--gradient-angle-main', `${angle % 360}deg`)
     })
   }
 }
@@ -130,12 +135,16 @@ async function loadState() {
       (syncDailyToggle.checked = data.syncDaily || false)
   }
 
-  console.log('Current value: ', Object.keys(data.decks).length)
+  console.log('Current value: ', Object.keys(data.decks || {}).length)
 }
 
 // Trigger a deck sync
 function syncDecks() {
   console.log('Syncing decks from popup..')
+
+  // Update button state
+  handleSyncStatus('Syncing...')
+
   chrome.runtime.sendMessage({ type: 'DECK_SYNC' })
 }
 
@@ -145,4 +154,116 @@ async function clearData() {
     console.log('All data cleared')
     loadState()
   })
+  const clearDataButton = document.getElementById('clear-data')
+  if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
+    clearDataButton.textContent = 'Data Cleared!'
+    clearDataButton.disabled = true
+    setTimeout(() => {
+      clearDataButton.textContent = 'Clear Data'
+      clearDataButton.disabled = false
+    }, 1000)
+  }
+}
+
+/**
+ * Handle messages from background script
+ */
+function handleBackgroundMessage(message) {
+  switch (message.type) {
+    case 'SYNC_COMPLETE':
+      updateDeckCount(message.totalDecks)
+      resetButtons()
+      console.log('Sync completed successfully!')
+      break
+
+    case 'SYNC_ERROR':
+      resetButtons()
+      console.error(`Sync failed: ${message.error}`)
+      break
+
+    case 'SYNC_STATUS':
+      handleSyncStatus(message.button)
+      if (message.decks !== undefined) {
+        updateDeckCount(message.decks)
+      }
+      break
+
+    default:
+      console.log('Unknown message type:', message.type)
+  }
+}
+
+/**
+ * Update the deck count display
+ */
+function updateDeckCount(count) {
+  const deckCountElement = document.getElementById('deck-count')
+  if (deckCountElement) {
+    deckCountElement.textContent = count || '0'
+  }
+}
+
+/**
+ * Reset sync button to default state
+ */
+function resetButtons() {
+  const syncDokToggle = document.getElementById('sync-dok-toggle')
+  if (syncDokToggle && syncDokToggle instanceof HTMLInputElement) {
+    syncDokToggle.disabled = false
+  }
+
+  const syncTcoToggle = document.getElementById('sync-tco-toggle')
+  if (syncTcoToggle && syncTcoToggle instanceof HTMLInputElement) {
+    syncTcoToggle.disabled = false
+  }
+
+  const syncDailyToggle = document.getElementById('sync-daily-toggle')
+  if (syncDailyToggle && syncDailyToggle instanceof HTMLInputElement) {
+    syncDailyToggle.disabled = false
+  }
+
+  const syncButton = document.getElementById('sync-decks')
+  if (syncButton && syncButton instanceof HTMLButtonElement) {
+    syncButton.disabled = false
+    syncButton.textContent = 'Sync Decks'
+  }
+
+  const clearDataButton = document.getElementById('clear-data')
+  if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
+    clearDataButton.disabled = false
+  }
+}
+
+/**
+ * Reset sync button to default state
+ */
+function handleSyncStatus(message) {
+  document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
+    if (toggle instanceof HTMLInputElement) {
+      toggle.disabled = true
+    }
+  })
+
+  document.querySelectorAll('button').forEach(btn => {
+    if (btn instanceof HTMLButtonElement) {
+      btn.disabled = true
+    }
+  })
+
+  const syncButton = document.getElementById('sync-decks')
+  if (syncButton && syncButton instanceof HTMLButtonElement) {
+    syncButton.textContent = message
+  }
+
+  // Randomly rotate the background gradients
+  const body = document.querySelector('body')
+  if (body) {
+    // Get current value of the @property --count
+    const currentCountValue = getComputedStyle(body)
+      .getPropertyValue('--count')
+      .trim()
+    const currentCount = parseFloat(currentCountValue.replace('deg', '')) || 0
+    const newCount = currentCount + Math.floor(Math.random() * 240) + 60
+    body.style.setProperty('--count', `${newCount}deg`)
+  }
 }

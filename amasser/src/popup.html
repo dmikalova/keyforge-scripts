@@ -7,53 +7,62 @@
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body>
-    <div class="container">
-      <main>
-        <h1>KeyForge Amasser</h1>
+    <main>
+      <h1>KeyForge Amasser</h1>
 
-        <section class="contents">
-          <section class="stats">
-            <div>
-              <span class="stat-value" id="deck-count"></span>
-              <span class="stat-label">Decks Amassed</span>
-            </div>
-          </section>
-
-          <hr />
-
-          <section class="controls">
-            <div class="control-group">
-              <label class="toggle">
-                <input type="checkbox" id="sync-dok-toggle" />
-                <span class="toggle-slider"></span>
-                <span class="toggle-label">Sync Decks of KeyForge</span>
-              </label>
-            </div>
-
-            <div class="control-group">
-              <label class="toggle">
-                <input type="checkbox" id="sync-tco-toggle" />
-                <span class="toggle-slider"></span>
-                <span class="toggle-label">Sync The Crucible Online</span>
-              </label>
-            </div>
-
-            <div class="control-group">
-              <label class="toggle">
-                <input type="checkbox" id="sync-daily-toggle" />
-                <span class="toggle-slider"></span>
-                <span class="toggle-label">Sync daily</span>
-              </label>
-            </div>
-          </section>
+      <section class="contents">
+        <section class="stats">
+          <div>
+            <span class="stat-value" id="deck-count"></span>
+            <span class="stat-label">Decks Amassed</span>
+          </div>
         </section>
 
-        <section class="actions">
-          <button id="sync-decks" class="btn btn-primary">Sync Decks</button>
-          <button id="clear-data" class="btn btn-primary">Clear Data</button>
+        <hr />
+
+        <section class="controls">
+          <div class="control-group">
+            <label class="toggle" style="cursor: default">
+              <span
+                class="toggle-label"
+                style="display: inline-block; margin-left: 42px"
+              >
+                Sync Master Vault
+              </span>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label class="toggle">
+              <input type="checkbox" id="sync-dok-toggle" />
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Sync Decks of KeyForge</span>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label class="toggle">
+              <input type="checkbox" id="sync-tco-toggle" />
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Sync The Crucible Online</span>
+            </label>
+          </div>
+
+          <div class="control-group">
+            <label class="toggle">
+              <input type="checkbox" id="sync-daily-toggle" />
+              <span class="toggle-slider"></span>
+              <span class="toggle-label">Sync daily</span>
+            </label>
+          </div>
         </section>
-      </main>
-    </div>
+      </section>
+
+      <section class="actions">
+        <button id="sync-decks" class="btn">Sync Decks</button>
+        <button id="clear-data" class="btn">Clear Data</button>
+      </section>
+    </main>
 
     <script src="popup.js"></script>
   </body>
