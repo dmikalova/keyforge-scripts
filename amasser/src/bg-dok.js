@@ -34,7 +34,7 @@ export const getDokToken = async () => {
       url: DOK_BASE_URL,
     })
 
-    console.log('tabid', tabId)
+    console.log('Open DOK tabid:', tabId)
 
     const tokenPromise = new Promise(resolve => {
       chrome.storage.onChanged.addListener((changes, namespace) => {
@@ -58,7 +58,7 @@ export const getDokToken = async () => {
 
   if (!token) {
     console.log('You must login to Decks of KeyForge first')
-    return { token: null, userId: null }
+    return null
   }
 
   return token

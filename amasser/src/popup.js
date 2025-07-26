@@ -1,5 +1,7 @@
 import { getDokToken, getDokUser } from './bg-dok.js'
 import { getMvAuth } from './bg-mv.js'
+import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
+import { getLocalDecks } from './lib.js'
 
 // Popup script for KeyForge Amasser extension
 document.addEventListener('DOMContentLoaded', async () => {
@@ -14,7 +16,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     handleBackgroundMessage(message)
   })
 
-  await loadUsers(state)
+  await loadUsers(state.settings)
 })
 
 // TODO: stop all clicks while running
@@ -83,20 +85,24 @@ const setupEventListeners = async () => {
   }
 }
 
-const getStorage = async () => {
+const getSettings = async () => {
   return new Promise(resolve => {
-    chrome.storage.local.get(null, result => {
+    chrome.storage.sync.get(null, result => {
       resolve(result)
     })
   })
 }
 
 const loadState = async () => {
-  const data = await getStorage()
+  const settings = await getSettings()
+  console.log('loaded settings:', settings)
+
+  const decks = await getLocalDecks()
+  console.log('loaded decks:', decks)
 
   const deckCountElem = document.getElementById('deck-count')
   if (deckCountElem) {
-    deckCountElem.textContent = Object.keys(data.decks || {}).length.toString()
+    deckCountElem.textContent = Object.keys(decks || {}).length.toString()
   }
 
   const syncDokToggle = document.getElementById('sync-dok-toggle')
@@ -107,42 +113,42 @@ const loadState = async () => {
     return
   }
   // Set toggle states based on stored data
-  if (data.syncDok === undefined) {
+  if (settings.syncDok === undefined) {
     // Default to true if not set
-    data.syncDok = true
+    settings.syncDok = true
   }
-  if (data.syncTco === undefined) {
+  if (settings.syncTco === undefined) {
     // Default to true if not set
-    data.syncTco = false
+    settings.syncTco = false
   }
-  if (data.syncDaily === undefined) {
+  if (settings.syncDaily === undefined) {
     // Default to true if not set
-    data.syncDaily = false
+    settings.syncDaily = false
   }
   // Update toggle states
   console.log('Setting sync toggles:', {
-    syncDok: data.syncDok,
-    syncTco: data.syncTco,
-    syncDaily: data.syncDaily,
+    syncDok: settings.syncDok,
+    syncTco: settings.syncTco,
+    syncDaily: settings.syncDaily,
   })
 
   // Set toggle states
   if (syncDokToggle) {
     syncDokToggle instanceof HTMLInputElement &&
-      (syncDokToggle.checked = data.syncDok || false)
+      (syncDokToggle.checked = settings.syncDok || false)
   }
   if (syncTcoToggle) {
     syncTcoToggle instanceof HTMLInputElement &&
-      (syncTcoToggle.checked = data.syncTco || false)
+      (syncTcoToggle.checked = settings.syncTco || false)
   }
   if (syncDailyToggle) {
     syncDailyToggle instanceof HTMLInputElement &&
-      (syncDailyToggle.checked = data.syncDaily || false)
+      (syncDailyToggle.checked = settings.syncDaily || false)
   }
 
-  console.log('Current value: ', Object.keys(data.decks || {}).length)
+  console.log('Current value: ', Object.keys(decks || {}).length)
 
-  return data
+  return { decks, settings }
 }
 
 // Trigger a deck sync
@@ -277,7 +283,7 @@ const handleSyncStatus = message => {
   }
 }
 
-const loadUsers = async state => {
+const loadUsers = async settings => {
   const { username: userMv } = await getMvAuth()
   if (userMv) {
     console.log('Master Vault user found:', userMv)
@@ -303,7 +309,7 @@ const loadUsers = async state => {
     return
   }
 
-  if (state.syncDok) {
+  if (settings.syncDok) {
     console.log('Getting DoK username')
     const token = await getDokToken()
     if (token) {
@@ -331,6 +337,36 @@ const loadUsers = async state => {
     }
   }
 
+  if (settings.syncTco) {
+    console.log('Getting TCO username')
+    const token = await getTcoRefreshToken()
+    if (token) {
+      const { username } = await getTcoUser(token)
+      const tcoUsernameElem = document.getElementById('tco-username')
+      if (tcoUsernameElem) {
+        tcoUsernameElem.textContent = `: ${username}`
+        tcoUsernameElem.style.display = 'inline'
+      }
+    } else {
+      console.error('No TCO user found')
+      const syncButton = document.getElementById('sync-decks')
+      if (syncButton && syncButton instanceof HTMLButtonElement) {
+        syncButton.replaceWith(syncButton.cloneNode(true))
+        const newSyncButton = document.getElementById('sync-decks')
+        newSyncButton.addEventListener('click', () => {
+          chrome.tabs.create({ url: 'https://thecrucible.online/' })
+        })
+        newSyncButton.textContent = 'Login to TCO'
+        if (newSyncButton instanceof HTMLButtonElement) {
+          newSyncButton.disabled = false
+        }
+      }
+      return
+    }
+  }
+
   console.log('Logged in!')
   resetButtons()
 }
+
+// TODO: validate that usernames match existing data

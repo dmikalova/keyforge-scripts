@@ -3,6 +3,7 @@ console.log('KeyForge Amasser background script loaded')
 
 import { handleDokSync } from './bg-dok.js'
 import { handleMvSync } from './bg-mv.js'
+import { handleTcoSync } from './bg-tco.js'
 
 chrome.commands.onCommand.addListener(shortcut => {
   console.log('lets reload')
@@ -13,14 +14,16 @@ chrome.commands.onCommand.addListener(shortcut => {
 })
 
 // Extension installation/startup
-chrome.runtime.onInstalled.addListener(details => {
+chrome.runtime.onInstalled.addListener(async details => {
   console.log('Extension installed:', details)
+
+  const settings = await chrome.storage.sync.get()
 
   // Initialize default settings
   chrome.storage.sync.set({
-    syncDok: true,
-    syncTco: false,
-    autoSync: false,
+    syncDok: settings.syncDok || true,
+    syncTco: settings.syncTco || false,
+    autoSync: settings.autoSync || false,
   })
 })
 
@@ -64,6 +67,7 @@ const handleDeckSync = async () => {
   // TODO: Add toggles for each of these based on settings
   await handleMvSync()
   await handleDokSync()
+  await handleTcoSync()
 
   // Notify popup that sync is complete
   chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})

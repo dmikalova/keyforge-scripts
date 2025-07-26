@@ -17,6 +17,16 @@
       "matches": ["https://decksofkeyforge.com/"],
       "js": ["src/content-dok.js"],
       "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://keyforgegame.com/"],
+      "js": ["src/content-mv.js"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["https://thecrucible.online/"],
+      "js": ["src/content-tco.js"],
+      "run_at": "document_idle"
     }
   ],
   "description": "An unofficial extension for syncing KeyForge decks from the Master Vault",
