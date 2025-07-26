@@ -258,12 +258,14 @@ function handleSyncStatus(message) {
   // Randomly rotate the background gradients
   const body = document.querySelector('body')
   if (body) {
-    // Get current value of the @property --count
-    const currentCountValue = getComputedStyle(body)
-      .getPropertyValue('--count')
-      .trim()
-    const currentCount = parseFloat(currentCountValue.replace('deg', '')) || 0
+    const currentCount =
+      parseFloat(
+        getComputedStyle(body)
+          .getPropertyValue('--count')
+          .trim()
+          .replace('deg', '')
+      ) || 0
     const newCount = currentCount + Math.floor(Math.random() * 240) + 60
-    body.style.setProperty('--count', `${newCount}deg`)
+    body.style.setProperty('--count', `${newCount % 360}deg`)
   }
 }

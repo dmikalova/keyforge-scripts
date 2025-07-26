@@ -70,7 +70,7 @@ h1 {
   padding: 8px 16px;
 }
 
-.stats {
+.decks {
   align-items: center;
   display: flex;
   justify-content: center;
@@ -78,12 +78,11 @@ h1 {
   margin-top: 16px;
 }
 
-.stat-label {
-  font-size: 16px;
+.decks-label {
   padding: 0px 8px;
 }
 
-.stat-value {
+.decks-value {
   font-size: 28px;
 }
 
@@ -95,15 +94,11 @@ hr {
   margin: 16px;
 }
 
-.controls {
+.setting-group {
   margin-bottom: 16px;
 }
 
-.control-group {
-  margin-bottom: 16px;
-}
-
-.control-group:last-child {
+.setting-group:last-child {
   margin-bottom: 0;
 }
 
@@ -156,12 +151,12 @@ hr {
   opacity: 0.8;
 }
 
-.actions {
+.buttons {
   display: flex;
   flex-direction: row;
 }
 
-.btn {
+.button {
   background: color-mix(in srgb, var(--color-purple), black 20%);
   border-radius: 4px;
   border: 2px solid var(--color-yellow);
@@ -181,11 +176,11 @@ hr {
   width: 120px;
 }
 
-.btn:hover {
+.button:hover {
   background: color-mix(in srgb, var(--color-pink), white 20%);
 }
 
-.btn:disabled {
+.button:disabled {
   background: var(--color-black);
   border: 2px solid var(--color-black);
   cursor: not-allowed;
