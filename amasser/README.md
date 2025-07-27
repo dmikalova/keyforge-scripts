@@ -10,7 +10,7 @@ A browser extension for Chrome and Firefox that collects KeyForge decks from the
 - It is bright enoough to be seen from space.
 
 <!-- markdownlint-disable-next-line MD033 -->
-<img src="assets/screenshot.png" alt="KeyForge Amasser Extension Screenshot" style="max-width: 240px; height: auto;">
+<img src="assets/screenshot.png" alt="KeyForge Amasser Extension Screenshot" width="300">
 
 ## Installation
 
