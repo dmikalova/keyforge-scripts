@@ -21,8 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
 // TODO: stop all clicks while running
 // TODO: don't allow clicks while bg syncing
-// TODO: check if logged in first
-// TODO: show MV/DoK/TCO username
 
 const setupEventListeners = async () => {
   // Toggle event listners
@@ -184,6 +182,7 @@ const clearData = () => {
 const handleBackgroundMessage = message => {
   switch (message.type) {
     case 'SYNC_COMPLETE':
+      console.log('Deck sync complete in popup')
       resetButtons()
       console.log('Sync completed successfully!')
       break
@@ -311,7 +310,7 @@ const loadUsers = async settings => {
           }
         }
       }
-    })()
+    })(),
   )
 
   if (settings.syncDok) {
@@ -341,7 +340,7 @@ const loadUsers = async settings => {
             }
           }
         }
-      })()
+      })(),
     )
   }
 
@@ -372,7 +371,7 @@ const loadUsers = async settings => {
             }
           }
         }
-      })()
+      })(),
     )
   }
 

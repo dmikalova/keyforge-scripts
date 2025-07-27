@@ -78,6 +78,7 @@ const handleDeckSync = async () => {
     }
 
     // Notify popup that sync is complete
+    console.log('Deck sync complete in bg')
     chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
   } catch (error) {
     console.error('Error during deck sync:', error)
