@@ -107,8 +107,6 @@ export const getTcoUser = async token => {
     throw new Error(`Failed to fetch user: ${respJson.error}`)
   }
 
-  console.log('TCO user info fetched:', respJson)
-
   return {
     username: respJson.user.username,
     token: respJson.token,
@@ -117,8 +115,6 @@ export const getTcoUser = async token => {
 }
 
 const importDecksToTco = async decks => {
-  const { token } = await getTcoUser(await getTcoRefreshToken())
-
   // Filter out decks that already have tco=true
   let decksToImport = Object.values(decks).filter(deck => deck.mv && !deck.tco)
 
@@ -127,6 +123,8 @@ const importDecksToTco = async decks => {
     return decks
   }
 
+  // Refresh token before fetching TCO decks
+  const { token } = await getTcoUser(await getTcoRefreshToken())
   const { decks: tcoDecks } = await fetch(
     `${TCO_BASE_URL}/api/decks?pageSize=100000&page=1`,
     {
@@ -147,8 +145,6 @@ const importDecksToTco = async decks => {
     .catch(error => {
       throw new Error(`Failed to fetch TCO decks: ${error.message}`)
     })
-
-  console.log('Fetched TCO decks:', tcoDecks.length)
   tcoDecks.forEach(tcoDeck => {
     if (decks[tcoDeck.uuid]) {
       decks[tcoDeck.uuid].tco = true
@@ -161,11 +157,13 @@ const importDecksToTco = async decks => {
   console.log('Decks to import to TCO: ', decksToImport.length)
 
   for (const [i, deck] of decksToImport.entries()) {
+    // Refresh token before each import to avoid unauthorized errors
     console.log(
       `Importing deck to ${i + 1}/${decksToImport.length}: ${
         deck.id
       } to TCO...`,
     )
+    const { token } = await getTcoUser(await getTcoRefreshToken())
     const response = await fetch(`${TCO_BASE_URL}/api/decks/`, {
       credentials: 'include',
       headers: {
@@ -185,7 +183,6 @@ const importDecksToTco = async decks => {
       method: 'POST',
     })
 
-    
     const respJson = await response.json()
 
     const tcoImportErrorMessages = [

@@ -4,3 +4,5 @@ chrome.storage.local.set(
     console.log('KF Amasser: Saved TCO refresh token to extension local storage')
   },
 )
+
+// TODO: button for prophecy assignments
