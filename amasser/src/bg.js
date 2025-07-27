@@ -34,12 +34,15 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case 'DECK_SYNC':
       handleDeckSync()
+        .then(() => sendResponse({ success: true }))
+        .catch(error => sendResponse({ success: false, error: error.message }))
       return true
     case 'GET_SETTINGS':
       getSettings().then(sendResponse)
       return true
     default:
       console.warn('Unknown message type:', message.type)
+      return false
   }
 })
 
