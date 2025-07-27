@@ -222,8 +222,14 @@ const favoriteLegacyDecks = async decks => {
   }
 }
 
-// TODO: fail forward if TCO asks for more deck info
-// TODO: add content scripts to import decks from MV to DoK on each MV load / scan
 // TODO: convert to TypeScript
 // TODO: random quotes
-// TODO: add little i bubbles for more info on each option
+// TODO: run daily https://stackoverflow.com/questions/36241436/chrome-extension-use-javascript-to-run-periodically-and-log-data-permanently
+// TODO: validate that usernames match existing data
+// TODO: while syncing change clear data to stop sync - probably by restarting the extension?
+// TODO: implement a mutex in the sync by storing a timestamp on each sync, and if a sync doesn't happen in a minute or whatever release it
+
+// TODO: stop all clicks while running
+// TODO: don't allow clicks while bg syncing
+// TODO: load dok token in iframe
+// TODO: load tco token in iframe

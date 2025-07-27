@@ -19,9 +19,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await loadUsers(state.settings)
 })
 
-// TODO: stop all clicks while running
-// TODO: don't allow clicks while bg syncing
-
 const setupEventListeners = async () => {
   // Toggle event listners
   const syncDokToggle = document.getElementById('sync-dok-toggle')
@@ -379,7 +376,3 @@ const loadUsers = async settings => {
   console.log('Logged in!')
   resetButtons()
 }
-
-// TODO: validate that usernames match existing data
-// TODO: while syncing change clear data to stop sync - probably by restarting the extension?
-// TODO: implement a mutex in the sync by storing a timestamp on each sync, and if a sync doesn't happen in a minute or whatever release it

@@ -135,5 +135,3 @@ const importDecksToDok = async decks => {
       .catch(() => {})
   }
 }
-
-// TODO: load dok token in iframe

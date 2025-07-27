@@ -62,13 +62,10 @@ const getSettings = async () => {
   }
 }
 
-// TODO: run daily https://stackoverflow.com/questions/36241436/chrome-extension-use-javascript-to-run-periodically-and-log-data-permanently
-
 // Add the missing syncDecks function
 const handleDeckSync = async () => {
   console.log('Syncing decks from bg...')
   try {
-    // TODO: Add toggles for each of these based on settings
     await handleMvSync()
     if ((await chrome.storage.sync.get('syncDok')).syncDok) {
       await handleDokSync()
