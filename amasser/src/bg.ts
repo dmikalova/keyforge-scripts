@@ -62,7 +62,6 @@ const getSettings = async () => {
   }
 }
 
-// Add the missing syncDecks function
 const handleDeckSync = async () => {
   console.log('Syncing decks from bg...')
   try {

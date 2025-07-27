@@ -235,3 +235,4 @@ const favoriteLegacyDecks = async decks => {
 // TODO: don't allow clicks while bg syncing
 // TODO: load dok token in iframe
 // TODO: load tco token in iframe
+// TODO: quote of the day

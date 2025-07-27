@@ -75,21 +75,3 @@ interface SyncMessage {
   totalDecks?: number
   error?: string
 }
-
-// Global window extensions for injected scripts
-interface Window {
-  gameState?: any
-  matchData?: any
-  gameLog?: any
-  deckList?: any
-  currentDeck?: any
-  deckInfo?: any
-  currentPlayer?: any
-  players?: any
-  userProfile?: any
-}
-
-// React internal instance (for accessing React component data)
-interface Element {
-  _reactInternalInstance?: any
-}
