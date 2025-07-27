@@ -1,11 +1,11 @@
 #!/bin/bash
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-rm "$SCRIPT_DIR/icons/"*
+rm "$SCRIPT_DIR/icons/"* || true
 
 for SIZE in 48 96 128; do
-  magick "${SCRIPT_DIR}/amasser-orig.png" \
+  magick "${SCRIPT_DIR}/assets/amasser.png" \
     -resize "${SIZE}x${SIZE}" \
     "${SCRIPT_DIR}/icons/amasser-${SIZE}.png"
 done

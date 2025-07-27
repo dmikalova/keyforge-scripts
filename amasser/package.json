@@ -4,11 +4,12 @@
   "description": "Sync KeyForge decks from the Master Vault to Decks of KeyForge",
   "scripts": {
     "build": "tsc",
-    "watch": "tsc --watch",
     "clean": "rm -rf dist",
+    "generate-icons": "bash scripts/generate-icons.sh",
     "pack": "npm run build && npm run pack:chrome && npm run pack:firefox",
     "pack:chrome": "zip -r keyforge-amasser-chrome.zip dist manifest.json *.html *.css icons -x '*.git*' 'node_modules/*' '*.zip' 'package*.json'",
-    "pack:firefox": "cp manifest.json manifest-v3.json && cp manifest-v2.json manifest.json && zip -r keyforge-amasser-firefox.zip dist manifest.json *.html *.css icons -x '*.git*' 'node_modules/*' '*.zip' 'package*.json' && mv manifest-v3.json manifest.json"
+    "pack:firefox": "cp manifest.json manifest-v3.json && cp manifest-v2.json manifest.json && zip -r keyforge-amasser-firefox.zip dist manifest.json *.html *.css icons -x '*.git*' 'node_modules/*' '*.zip' 'package*.json' && mv manifest-v3.json manifest.json",
+    "watch": "tsc --watch"
   },
   "keywords": [
     "keyforge",
