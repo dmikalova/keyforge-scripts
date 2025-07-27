@@ -1,4 +1,4 @@
-import { getLocalDecks, setLocalDecks } from './lib.js'
+import { getLocalDecks } from './lib.js'
 
 // Decks of KeyForge configuration
 const DOK_BASE_URL = 'https://decksofkeyforge.com'
@@ -7,9 +7,7 @@ const SYNC_MSGS = ['Syncing DoK..', 'Syncing DoK...', 'Syncing DoK.']
 export const handleDokSync = async () => {
   console.log('DoK deck sync started')
   try {
-    const localDecks = await getLocalDecks()
-    const dokDecks = await importDecksToDok(localDecks)
-    await setLocalDecks(dokDecks)
+    await importDecksToDok(await getLocalDecks())
   } catch (error) {
     console.error('Error syncing DoK decks:', error)
     chrome.runtime
@@ -124,6 +122,7 @@ const importDecksToDok = async decks => {
     if (response.ok) {
       console.log(`Imported ${deck.id}`)
       decks[deck.id].dok = true
+      chrome.storage.local.set({ decks: decks })
     } else {
       console.error(`Failed to import ${deck.id}: ${response.status}`)
     }
@@ -135,7 +134,6 @@ const importDecksToDok = async decks => {
       })
       .catch(() => {})
   }
-  return decks
 }
 
 // TODO: load dok token in iframe

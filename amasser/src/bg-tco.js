@@ -1,4 +1,4 @@
-import { getLocalDecks, setLocalDecks } from './lib.js'
+import { getLocalDecks } from './lib.js'
 
 // The Crucible Online API configuration
 const TCO_BASE_URL = 'https://thecrucible.online'
@@ -7,9 +7,7 @@ const SYNC_MSGS = ['Syncing TCO..', 'Syncing TCO...', 'Syncing TCO.']
 export const handleTcoSync = async () => {
   console.log('TCO deck sync started')
   try {
-    const localDecks = await getLocalDecks()
-    const tcoDecks = await importDecksToTco(localDecks)
-    await setLocalDecks(tcoDecks)
+    await importDecksToTco(await getLocalDecks())
   } catch (error) {
     console.error('Error syncing TCO decks:', error)
     chrome.runtime
@@ -147,7 +145,7 @@ const importDecksToTco = async decks => {
   )
     .then(response => response.json())
     .catch(error => {
-      throw new Error(`Failed to fetch TCO decks: ${tcoDecks.error}`)
+      throw new Error(`Failed to fetch TCO decks: ${error.message}`)
     })
 
   console.log('Fetched TCO decks:', tcoDecks.length)
@@ -157,6 +155,7 @@ const importDecksToTco = async decks => {
     }
   })
 
+  chrome.storage.local.set({ decks: decks })
   decksToImport = Object.values(decks).filter(deck => deck.mv && !deck.tco)
 
   console.log('Decks to import to TCO: ', decksToImport.length)
@@ -186,6 +185,7 @@ const importDecksToTco = async decks => {
       method: 'POST',
     })
 
+    
     const respJson = await response.json()
 
     const tcoImportErrorMessages = [
@@ -196,6 +196,7 @@ const importDecksToTco = async decks => {
     if (response.ok && respJson.success) {
       console.log(`Imported ${deck.id}`)
       decks[deck.id].tco = true
+      chrome.storage.local.set({ decks: decks })
     } else if (
       response.ok &&
       !respJson.success &&
@@ -203,13 +204,7 @@ const importDecksToTco = async decks => {
     ) {
       console.log(`Deck already imported to TCO ${deck.id}`)
       decks[deck.id].tco = true
-    } else if (
-      response.ok &&
-      !respJson.success &&
-      respJson.message === 'Invalid response from Api. Please try again later.'
-    ) {
-      console.log(`Rate limiting hit, pausing`)
-      await new Promise(resolve => setTimeout(resolve, 60000))
+      chrome.storage.local.set({ decks: decks })
     } else if (
       response.ok &&
       !respJson.success &&
@@ -217,13 +212,20 @@ const importDecksToTco = async decks => {
     ) {
       console.log(`Failed to import to TCO with known error ${deck.id}`)
       decks[deck.id].tco = 'import error'
+      chrome.storage.local.set({ decks: decks })
+    } else if (
+      response.ok &&
+      !respJson.success &&
+      respJson.message === 'Invalid response from Api. Please try again later.'
+    ) {
+      console.log(`Rate limiting hit, pausing`)
+      await new Promise(resolve => setTimeout(resolve, 60000))
     } else {
       console.error(
         `Failed to import to TCO with unknown error ${deck.id}: ${
           response.status
         } ${JSON.stringify(respJson)}`,
       )
-      return decks
     }
 
     chrome.runtime
@@ -236,5 +238,4 @@ const importDecksToTco = async decks => {
     console.log(`Waiting before next import due to rate limits...`)
     await new Promise(resolve => setTimeout(resolve, 10000))
   }
-  return decks
 }

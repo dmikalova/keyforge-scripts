@@ -283,87 +283,100 @@ const handleSyncStatus = message => {
 }
 
 const loadUsers = async settings => {
-  const { username: userMv } = await getMvAuth()
-  if (userMv) {
-    console.log('Master Vault user found:', userMv)
-    const mvUsernameElem = document.getElementById('mv-username')
-    if (mvUsernameElem) {
-      mvUsernameElem.textContent = `: ${userMv}`
-      mvUsernameElem.style.display = 'inline'
-    }
-  } else {
-    console.error('No MV user found')
-    const syncButton = document.getElementById('sync-decks')
-    if (syncButton && syncButton instanceof HTMLButtonElement) {
-      syncButton.replaceWith(syncButton.cloneNode(true))
-      const newSyncButton = document.getElementById('sync-decks')
-      newSyncButton.addEventListener('click', () => {
-        chrome.tabs.create({ url: 'https://www.keyforgegame.com/my-decks' })
-      })
-      newSyncButton.textContent = 'Login to MV'
-      if (newSyncButton instanceof HTMLButtonElement) {
-        newSyncButton.disabled = false
-      }
-    }
-    return
-  }
+  const userPromises = []
 
-  if (settings.syncDok) {
-    console.log('Getting DoK username')
-    const token = await getDokToken()
-    if (token) {
-      const user = await getDokUser(token)
-      const dokUsernameElem = document.getElementById('dok-username')
-      if (dokUsernameElem) {
-        dokUsernameElem.textContent = `: ${user}`
-        dokUsernameElem.style.display = 'inline'
-      }
-    } else {
-      console.error('No DoK user found')
-      const syncButton = document.getElementById('sync-decks')
-      if (syncButton && syncButton instanceof HTMLButtonElement) {
-        syncButton.replaceWith(syncButton.cloneNode(true))
-        const newSyncButton = document.getElementById('sync-decks')
-        newSyncButton.addEventListener('click', () => {
-          chrome.tabs.create({ url: 'https://decksofkeyforge.com/' })
-        })
-        newSyncButton.textContent = 'Login to DoK'
-        if (newSyncButton instanceof HTMLButtonElement) {
-          newSyncButton.disabled = false
+  // MV user
+  userPromises.push(
+    (async () => {
+      const { username: userMv } = await getMvAuth()
+      if (userMv) {
+        console.log('Master Vault user found:', userMv)
+        const mvUsernameElem = document.getElementById('mv-username')
+        if (mvUsernameElem) {
+          mvUsernameElem.textContent = `: ${userMv}`
+          mvUsernameElem.style.display = 'inline'
+        }
+      } else {
+        console.error('No MV user found')
+        const syncButton = document.getElementById('sync-decks')
+        if (syncButton && syncButton instanceof HTMLButtonElement) {
+          syncButton.replaceWith(syncButton.cloneNode(true))
+          const newSyncButton = document.getElementById('sync-decks')
+          newSyncButton.addEventListener('click', () => {
+            chrome.tabs.create({ url: 'https://www.keyforgegame.com/my-decks' })
+          })
+          newSyncButton.textContent = 'Login to MV'
+          if (newSyncButton instanceof HTMLButtonElement) {
+            newSyncButton.disabled = false
+          }
         }
       }
-      return
-    }
+    })()
+  )
+
+  if (settings.syncDok) {
+    userPromises.push(
+      (async () => {
+        console.log('Getting DoK username')
+        const token = await getDokToken()
+        if (token) {
+          const user = await getDokUser(token)
+          const dokUsernameElem = document.getElementById('dok-username')
+          if (dokUsernameElem) {
+            dokUsernameElem.textContent = `: ${user}`
+            dokUsernameElem.style.display = 'inline'
+          }
+        } else {
+          console.error('No DoK user found')
+          const syncButton = document.getElementById('sync-decks')
+          if (syncButton && syncButton instanceof HTMLButtonElement) {
+            syncButton.replaceWith(syncButton.cloneNode(true))
+            const newSyncButton = document.getElementById('sync-decks')
+            newSyncButton.addEventListener('click', () => {
+              chrome.tabs.create({ url: 'https://decksofkeyforge.com/' })
+            })
+            newSyncButton.textContent = 'Login to DoK'
+            if (newSyncButton instanceof HTMLButtonElement) {
+              newSyncButton.disabled = false
+            }
+          }
+        }
+      })()
+    )
   }
 
   if (settings.syncTco) {
-    console.log('Getting TCO username')
-    const token = await getTcoRefreshToken()
-    if (token) {
-      const { username } = await getTcoUser(token)
-      const tcoUsernameElem = document.getElementById('tco-username')
-      if (tcoUsernameElem) {
-        tcoUsernameElem.textContent = `: ${username}`
-        tcoUsernameElem.style.display = 'inline'
-      }
-    } else {
-      console.error('No TCO user found')
-      const syncButton = document.getElementById('sync-decks')
-      if (syncButton && syncButton instanceof HTMLButtonElement) {
-        syncButton.replaceWith(syncButton.cloneNode(true))
-        const newSyncButton = document.getElementById('sync-decks')
-        newSyncButton.addEventListener('click', () => {
-          chrome.tabs.create({ url: 'https://thecrucible.online/' })
-        })
-        newSyncButton.textContent = 'Login to TCO'
-        if (newSyncButton instanceof HTMLButtonElement) {
-          newSyncButton.disabled = false
+    userPromises.push(
+      (async () => {
+        console.log('Getting TCO username')
+        const token = await getTcoRefreshToken()
+        if (token) {
+          const { username } = await getTcoUser(token)
+          const tcoUsernameElem = document.getElementById('tco-username')
+          if (tcoUsernameElem) {
+            tcoUsernameElem.textContent = `: ${username}`
+            tcoUsernameElem.style.display = 'inline'
+          }
+        } else {
+          console.error('No TCO user found')
+          const syncButton = document.getElementById('sync-decks')
+          if (syncButton && syncButton instanceof HTMLButtonElement) {
+            syncButton.replaceWith(syncButton.cloneNode(true))
+            const newSyncButton = document.getElementById('sync-decks')
+            newSyncButton.addEventListener('click', () => {
+              chrome.tabs.create({ url: 'https://thecrucible.online/' })
+            })
+            newSyncButton.textContent = 'Login to TCO'
+            if (newSyncButton instanceof HTMLButtonElement) {
+              newSyncButton.disabled = false
+            }
+          }
         }
-      }
-      return
-    }
+      })()
+    )
   }
 
+  await Promise.all(userPromises)
   console.log('Logged in!')
   resetButtons()
 }

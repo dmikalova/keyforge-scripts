@@ -1,4 +1,4 @@
-import { getLocalDecks, setLocalDecks } from './lib.js'
+import { getLocalDecks } from './lib.js'
 
 // Master Vault API configuration
 const MV_BASE_URL = 'https://www.keyforgegame.com'
@@ -10,10 +10,7 @@ const SYNC_MSGS = ['Syncing MV..', 'Syncing MV...', 'Syncing MV.']
 export const handleMvSync = async () => {
   console.log('MV deck sync started')
   try {
-    const localDecks = await getLocalDecks()
-    const mvDecks = await getMvDecks(localDecks)
-    // await favoriteLegacyDecks(mvDecks)
-    await setLocalDecks(mvDecks)
+    await getMvDecks(await getLocalDecks())
   } catch (error) {
     console.error('Error syncing MV decks:', error)
     chrome.runtime
@@ -131,6 +128,7 @@ const getMvDecks = async decks => {
         }
       }
     })
+    chrome.storage.local.set({ decks: decks })
 
     // Notify popup of new decks added
     chrome.runtime
@@ -156,7 +154,6 @@ const getMvDecks = async decks => {
       `Moving to page ${page}: ${Object.keys(decks).length}/${data.count}`,
     )
   }
-  return decks
 }
 
 const favoriteLegacyDecks = async decks => {
