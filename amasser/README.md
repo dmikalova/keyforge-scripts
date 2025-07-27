@@ -9,7 +9,8 @@ A browser extension for Chrome and Firefox that collects KeyForge decks from the
 - Syncing can automatically run daily as long as you are logged into MV, DoK, and TCO and the browser is left open.
 - It is bright enoough to be seen from space.
 
-![KeyForge Amasser Extension Screenshot](assets/screenshot.png)
+<!-- markdownlint-disable-next-line MD033 -->
+<img src="assets/screenshot.png" alt="KeyForge Amasser Extension Screenshot" style="max-width: 240px; height: auto;">
 
 ## Installation
 
