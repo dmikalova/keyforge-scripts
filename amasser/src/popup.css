@@ -41,7 +41,7 @@ body {
 main {
   align-items: center;
   background: linear-gradient(
-    calc(var(--gradient-angle-main, 0deg) - var(--count, 0deg)),
+    calc(var(--gradient-angle-main, 150deg) - var(--count, 0deg)),
     var(--color-pink) 0%,
     var(--color-purple) 100%
   );
@@ -189,4 +189,10 @@ hr {
   background: var(--color-black);
   border: 2px solid var(--color-black);
   cursor: not-allowed;
+}
+
+.quotes {
+  margin-top: 16px;
+  margin-bottom: 0px;
+  font-size: 12px;
 }

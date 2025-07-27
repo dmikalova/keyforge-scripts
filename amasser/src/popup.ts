@@ -2,9 +2,13 @@ import { getDokToken, getDokUser } from './bg-dok.js'
 import { getMvAuth } from './bg-mv.js'
 import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
 import { getLocalDecks } from './lib.js'
+import { quotes } from './quotes.js'
 
 // Popup script for KeyForge Amasser extension
 document.addEventListener('DOMContentLoaded', async () => {
+  // Load quotes
+  loadQuotes()
+
   // Set up event listeners
   setupEventListeners()
 
@@ -381,4 +385,13 @@ const loadUsers = async settings => {
   await Promise.all(userPromises)
   console.log('Logged in!')
   resetButtons()
+}
+
+const loadQuotes = () => {
+  console.log('Loading quote')
+  const quoteElem = document.getElementById('quote')
+  if (quoteElem) {
+    quoteElem.textContent = quotes[Math.floor(Math.random() * quotes.length)]
+    console.log('Quote should be loaded')
+  }
 }

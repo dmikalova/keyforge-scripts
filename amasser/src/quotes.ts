@@ -1,0 +1,22 @@
+export const quotes: string[] = [
+  '“Ingram, put that down! We\'re surrounded!” -Lieutenant Khrkhar',
+  '“We can learn so much from our animal friends.”',
+  '“I told you to stay off the furniture!”',
+  '“As far as oblivions go, it\'s in my bottom three.” -Dr. Escotera',
+  '“If you had seen what I have seen, you\'d be mad too.” -the Mad Prophet Gizelhart',
+  '“I\'ve explored thousands of possible futures. Somehow they all end up here.” -Qincan, Alliance outcast',
+  '“You! Æmber lover. You\'re next.”',
+  '“Do you want imps? This is how you get imps.”',
+  '“Was that you, or the cave?” -Captain Val Jericho',
+  '“History repeats itself.” -Human Proverb',
+  '“Always clear your search history.” -Dr. Escotera',
+  '“Enjoy your survival bonus of an extra quarter portion.”',
+
+  'Abolish ICE, defund police',
+  'Abortion access is a community responsibility',
+  'ACAB',
+  'Black lives matter',
+  'Chinga la migra',
+  'Hot rat summer',
+  'Trans rights are human rights',
+]

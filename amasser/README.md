@@ -2,15 +2,16 @@
 
 A browser extension for Chrome and Firefox that collects KeyForge decks from the Master Vault and syncs them to Decks of KeyForge or The Crucible Online.
 
+<!-- markdownlint-disable-next-line MD033 -->
+<img src="assets/screenshot.png" alt="KeyForge Amasser Extension Screenshot" width="400">
+
 ## Features
 
-- The deck list is stored by the extension - after the initial sync only new decks are synced.
-- Syncing happens in the background - once started the extension popup can be closed without interrupting the sync.
+- The deck list is stored by the extension - after the initial sync only newly scanned decks are synced.
+- Syncing runs in the background - once started the extension popup can be closed without interrupting the sync.
 - Syncing can automatically run daily as long as you are logged into MV, DoK, and TCO and the browser is left open.
+- Includes fun, inspiring, and thought-provoking quotes to ponder while waiting for the sync to complete.
 - It is bright enoough to be seen from space.
-
-<!-- markdownlint-disable-next-line MD033 -->
-<img src="assets/screenshot.png" alt="KeyForge Amasser Extension Screenshot" width="300">
 
 ## Installation
 
