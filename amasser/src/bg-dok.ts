@@ -22,7 +22,7 @@ export const handleDokSync = async () => {
 /**
  * Get authentication cookie from Decks of KeyForge
  */
-export const getDokToken = async () => {
+export const getDokToken = async (): Promise<string | null> => {
   // Check for token in local storage
   let { dokAuth: token } = await chrome.storage.local.get(['dokAuth'])
   if (!token) {
@@ -62,7 +62,7 @@ export const getDokToken = async () => {
   return token
 }
 
-export const getDokUser = async token => {
+export const getDokUser = async (token: string): Promise<string> => {
   const response = await fetch(
     'https://decksofkeyforge.com/api/users/secured/your-user',
     {
@@ -89,8 +89,8 @@ export const getDokUser = async token => {
  * @param {string} token - Authentication token
  * @returns {RequestInit} Fetch request configuration
  */
-const createDokRequestConfig = token => ({
-  credentials: 'include',
+const createDokRequestConfig = (token: string): RequestInit => ({
+  credentials: 'include' as RequestCredentials,
   headers: {
     accept: 'application/json',
     'accept-language': 'en-US',
@@ -100,12 +100,12 @@ const createDokRequestConfig = token => ({
   method: 'POST',
 })
 
-const importDecksToDok = async decks => {
+const importDecksToDok = async (decks: { [id: string]: Deck }) => {
   const token = await getDokToken()
 
   // Filter out decks that already have dok=true
   const decksToImport = Object.values(decks).filter(
-    deck => deck.mv && !deck.dok,
+    (deck: Deck) => deck.mv && !deck.dok,
   )
 
   for (const [i, deck] of decksToImport.entries()) {

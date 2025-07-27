@@ -9,23 +9,23 @@
     "default_title": "KeyForge Amasser"
   },
   "background": {
-    "service_worker": "src/bg.js",
+    "service_worker": "dist/bg.js",
     "type": "module"
   },
   "content_scripts": [
     {
       "matches": ["https://decksofkeyforge.com/"],
-      "js": ["src/content-dok.js"],
+      "js": ["dist/content-dok.js"],
       "run_at": "document_idle"
     },
     {
       "matches": ["https://keyforgegame.com/"],
-      "js": ["src/content-mv.js"],
+      "js": ["dist/content-mv.js"],
       "run_at": "document_idle"
     },
     {
       "matches": ["https://thecrucible.online/"],
-      "js": ["src/content-tco.js"],
+      "js": ["dist/content-tco.js"],
       "run_at": "document_idle"
     }
   ],

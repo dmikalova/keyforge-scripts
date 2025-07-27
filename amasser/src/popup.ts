@@ -89,7 +89,7 @@ const getSettings = async () => {
 }
 
 const loadState = async () => {
-  const settings = await getSettings()
+  const settings: any = await getSettings()
   console.log('loaded settings:', settings)
 
   const decks = await getLocalDecks()
@@ -100,9 +100,15 @@ const loadState = async () => {
     deckCountElem.textContent = Object.keys(decks || {}).length.toString()
   }
 
-  const syncDokToggle = document.getElementById('sync-dok-toggle')
-  const syncTcoToggle = document.getElementById('sync-tco-toggle')
-  const syncDailyToggle = document.getElementById('sync-daily-toggle')
+  const syncDokToggle = document.getElementById(
+    'sync-dok-toggle',
+  ) as HTMLInputElement
+  const syncTcoToggle = document.getElementById(
+    'sync-tco-toggle',
+  ) as HTMLInputElement
+  const syncDailyToggle = document.getElementById(
+    'sync-daily-toggle',
+  ) as HTMLInputElement
   if (!syncDokToggle || !syncTcoToggle || !syncDailyToggle) {
     console.error('Sync toggles not found in popup')
     return

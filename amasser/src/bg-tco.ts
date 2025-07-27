@@ -19,7 +19,7 @@ export const handleTcoSync = async () => {
   }
 }
 
-export const getTcoRefreshToken = async () => {
+export const getTcoRefreshToken = async (): Promise<string | null> => {
   // Check for token in local storage
   let { tcoRefreshToken: refreshToken } = await chrome.storage.local.get([
     'tcoRefreshToken',
@@ -61,7 +61,7 @@ export const getTcoRefreshToken = async () => {
   return JSON.parse(refreshToken)
 }
 
-export const getTcoUser = async token => {
+export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
   if (!token) {
     throw new Error('No TCO token provided')
   }
@@ -114,9 +114,11 @@ export const getTcoUser = async token => {
   }
 }
 
-const importDecksToTco = async decks => {
+const importDecksToTco = async (decks: { [id: string]: Deck }) => {
   // Filter out decks that already have tco=true
-  let decksToImport = Object.values(decks).filter(deck => deck.mv && !deck.tco)
+  let decksToImport = Object.values(decks).filter(
+    (deck: Deck) => deck.mv && !deck.tco,
+  )
 
   if (decksToImport.length === 0) {
     console.log('No new decks to import')

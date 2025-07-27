@@ -22,7 +22,9 @@ export const handleMvSync = async () => {
   }
 }
 
-export const getMvAuth = async () => {
+export const getMvAuth = async (): Promise<
+  MvAuth | { token: null; userId: null; username: null }
+> => {
   const authCookie = await getMvAuthCookie()
   if (!authCookie) {
     console.log('You must login to Master Vault first')
@@ -39,7 +41,7 @@ export const getMvAuth = async () => {
 /**
  * Get authentication cookie from Master Vault
  */
-const getMvAuthCookie = () => {
+const getMvAuthCookie = (): Promise<chrome.cookies.Cookie | null> => {
   return new Promise(resolve => {
     if (!chrome.cookies) {
       console.error('ERROR: Chrome cookies API is not available.')
@@ -62,8 +64,8 @@ const getMvAuthCookie = () => {
  * @param {string} token - Authentication token
  * @returns {RequestInit} Fetch request configuration
  */
-const createMvRequestConfig = token => ({
-  credentials: 'include',
+const createMvRequestConfig = (token: string): RequestInit => ({
+  credentials: 'include' as RequestCredentials,
   headers: {
     accept: 'application/json',
     'accept-language': 'en-us',
@@ -75,7 +77,7 @@ const createMvRequestConfig = token => ({
 /**
  * Fetch current user information from Master Vault
  */
-const getMvUser = async token => {
+const getMvUser = async (token: string): Promise<MvUser> => {
   const response = await fetch(
     `${MV_BASE_URL}/api/users/self/`,
     createMvRequestConfig(token),

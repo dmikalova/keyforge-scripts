@@ -3,9 +3,12 @@
   "version": "1.0.0",
   "description": "Sync KeyForge decks from the Master Vault to Decks of KeyForge",
   "scripts": {
-    "pack": "npm run pack:chrome && npm run pack:firefox",
-    "pack:chrome": "zip -r keyforge-amasser-chrome.zip . -x '*.git*' 'node_modules/*' '*.zip' 'package*.json'",
-    "pack:firefox": "zip -r keyforge-amasser-firefox.zip . -x '*.git*' 'node_modules/*' '*.zip' 'package*.json'"
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "clean": "rm -rf dist",
+    "pack": "npm run build && npm run pack:chrome && npm run pack:firefox",
+    "pack:chrome": "zip -r keyforge-amasser-chrome.zip dist manifest.json *.html *.css icons -x '*.git*' 'node_modules/*' '*.zip' 'package*.json'",
+    "pack:firefox": "cp manifest.json manifest-v3.json && cp manifest-v2.json manifest.json && zip -r keyforge-amasser-firefox.zip dist manifest.json *.html *.css icons -x '*.git*' 'node_modules/*' '*.zip' 'package*.json' && mv manifest-v3.json manifest.json"
   },
   "keywords": [
     "keyforge",
@@ -22,7 +25,8 @@
   "devDependencies": {
     "@types/chrome": "^0.0.246",
     "@types/node": "^24.1.0",
-    "@types/webextension-polyfill": "^0.10.0"
+    "@types/webextension-polyfill": "^0.10.0",
+    "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=16.0.0"
