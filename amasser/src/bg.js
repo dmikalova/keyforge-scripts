@@ -67,11 +67,27 @@ const getSettings = async () => {
 // Add the missing syncDecks function
 const handleDeckSync = async () => {
   console.log('Syncing decks from bg...')
-  // TODO: Add toggles for each of these based on settings
-  await handleMvSync()
-  await handleDokSync()
-  await handleTcoSync()
+  try {
+    // TODO: Add toggles for each of these based on settings
+    await handleMvSync()
+    if ((await chrome.storage.sync.get('syncDok')).syncDok) {
+      await handleDokSync()
+    }
+    if ((await chrome.storage.sync.get('syncTco')).syncTco) {
+      await handleTcoSync()
+    }
 
-  // Notify popup that sync is complete
-  chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
+    // Notify popup that sync is complete
+    chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
+  } catch (error) {
+    console.error('Error during deck sync:', error)
+    // Notify popup that sync failed
+    chrome.runtime
+      .sendMessage({
+        type: 'SYNC_ERROR',
+        error: error.message,
+      })
+      .catch(() => {})
+    throw error // Re-throw so the message handler can also handle it
+  }
 }

@@ -184,7 +184,6 @@ const clearData = () => {
 const handleBackgroundMessage = message => {
   switch (message.type) {
     case 'SYNC_COMPLETE':
-      updateDeckCount(message.totalDecks)
       resetButtons()
       console.log('Sync completed successfully!')
       break
