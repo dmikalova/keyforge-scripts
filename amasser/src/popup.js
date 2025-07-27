@@ -370,3 +370,5 @@ const loadUsers = async settings => {
 }
 
 // TODO: validate that usernames match existing data
+// TODO: while syncing change clear data to stop sync - probably by restarting the extension?
+// TODO: implement a mutex in the sync by storing a timestamp on each sync, and if a sync doesn't happen in a minute or whatever release it

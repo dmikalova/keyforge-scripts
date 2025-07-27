@@ -153,7 +153,6 @@ const importDecksToTco = async decks => {
   console.log('Fetched TCO decks:', tcoDecks.length)
   tcoDecks.forEach(tcoDeck => {
     if (decks[tcoDeck.uuid]) {
-      console.log(`Deck ${tcoDeck.uuid} already exists in local decks`)
       decks[tcoDeck.uuid].tco = true
     }
   })
@@ -164,9 +163,9 @@ const importDecksToTco = async decks => {
 
   for (const [i, deck] of decksToImport.entries()) {
     console.log(
-      `Importing deck to ${i + 1}/${decksToImport.length}: ${JSON.stringify(
-        deck,
-      )} to TCO...`,
+      `Importing deck to ${i + 1}/${decksToImport.length}: ${
+        deck.id
+      } to TCO...`,
     )
     const response = await fetch(`${TCO_BASE_URL}/api/decks/`, {
       credentials: 'include',
@@ -207,11 +206,16 @@ const importDecksToTco = async decks => {
     } else if (
       response.ok &&
       !respJson.success &&
+      respJson.message === 'Invalid response from Api. Please try again later.'
+    ) {
+      console.log(`Rate limiting hit, pausing`)
+      await new Promise(resolve => setTimeout(resolve, 60000))
+    } else if (
+      response.ok &&
+      !respJson.success &&
       tcoImportErrorMessages.some(msg => respJson.message.includes(msg))
     ) {
-      console.log(
-        `Failed to import to TCO with known error ${deck.id}`,
-      )
+      console.log(`Failed to import to TCO with known error ${deck.id}`)
       decks[deck.id].tco = 'import error'
     } else {
       console.error(
@@ -219,7 +223,7 @@ const importDecksToTco = async decks => {
           response.status
         } ${JSON.stringify(respJson)}`,
       )
-      return
+      return decks
     }
 
     chrome.runtime
@@ -229,8 +233,8 @@ const importDecksToTco = async decks => {
       })
       .catch(() => {})
 
-    console.log(`Waiting 5 seconds before next import due to rate limits...`)
-    await new Promise(resolve => setTimeout(resolve, 5000))
+    console.log(`Waiting before next import due to rate limits...`)
+    await new Promise(resolve => setTimeout(resolve, 10000))
   }
   return decks
 }
