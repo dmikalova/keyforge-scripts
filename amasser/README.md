@@ -8,10 +8,20 @@ An unofficial browser extension for Chrome and Firefox that collects KeyForge de
 ## Features
 
 - The deck list is stored by the extension - after the initial sync only newly scanned decks are synced.
+  - An initial sync of 1000 decks from MV to DoK takes less than 10 minutes.
+  - An initial sync of 1000 decks to TCO can take 5 hours due to rate limiting.
 - Syncing runs in the background - once started the extension popup can be closed without interrupting the sync.
 - Syncing can automatically run daily as long as you are logged into MV, DoK, and TCO and the browser is left open.
 - Includes fun, inspiring, and thought-provoking quotes to ponder while waiting for the sync to complete.
 - Brilliant graphic design that is bright enoough to be seen from space.
+
+## Known issues
+
+Syncing to TCO has the following issues with no plans to fix them:
+
+- Multiple syncs may be necessary to get every deck if a lot of decks are being imported.
+- Decks that require extra information such as Prophetic Visions will have default values set - delete and manually import the deck in TCO to set prophecies.
+- Decks from unsupported sets such as Crucible Clash will be skipped. Once the set is supported, clear data in the extension and run a new sync.
 
 ## Installation
 
@@ -19,13 +29,17 @@ Download the extension from the [Chrome Web Store](https://chrome.google.com/web
 
 ## Privacy and Permissions
 
-- Data is only gathered from Master Vault, stored locally, and sent to Decks of KeyForge or The Crucible Online.
-- Data can be cleared by the user.
-- Authentication for each site uses the existing browser sessions.
+- Authentication for each site uses the existing browser sessions for each site.
+- Deck and authentication data is gathered from Master Vault, Decks of KeyForge, and The Crucible Online and stored locally in the extension.
+- Deck data is sent to Decks of KeyForge or The Crucible Online based on sync settings.
+- Data can be cleared by the user at any time or by uninstalling the extension.
+- Extension settings are synced across browsers by Google or Firefox. This does not include deck or authentication data.
 
 ## Contributing
 
-1. Open an issue in GitHub to discuss your feature or bug fix.
-2. Fork the repository, create a feature branch, and make your changes.
-3. Test with both Chrome and Firefox.
-4. Submit a pull request.
+- Open an issue in GitHub to discuss your feature or bug fix.
+- Fork the repository, create a feature branch, and make your changes.
+  - Run `npm run install` and `npm run watch` to build the extension.
+- Test with both Chrome and Firefox.
+  - Load the unpacked extension in Chrome by navigating to `chrome://extensions`, enabling "Developer mode", and clicking "Load unpacked".
+- Submit a pull request.

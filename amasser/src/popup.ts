@@ -354,6 +354,12 @@ const loadUsers = async settings => {
         }
       })(),
     )
+  } else {
+    const dokUsernameElem = document.getElementById('dok-username')
+    if (dokUsernameElem) {
+      dokUsernameElem.textContent = ``
+      dokUsernameElem.style.display = 'inline'
+    }
   }
 
   if (settings.syncTco) {
@@ -386,6 +392,12 @@ const loadUsers = async settings => {
         }
       })(),
     )
+  } else {
+    const tcoUsernameElem = document.getElementById('tco-username')
+    if (tcoUsernameElem) {
+      tcoUsernameElem.textContent = ``
+      tcoUsernameElem.style.display = 'inline'
+    }
   }
 
   await Promise.all(userPromises)
