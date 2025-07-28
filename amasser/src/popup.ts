@@ -9,11 +9,11 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load quotes
   loadQuotes()
 
+  // Load state from storage
+  const state = await loadState()
+
   // Set up event listeners
   setupEventListeners()
-
-  // Load initial data
-  const state = await loadState()
 
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener(message => {
@@ -32,6 +32,7 @@ const setupEventListeners = async () => {
         syncDok:
           syncDokToggle instanceof HTMLInputElement && syncDokToggle.checked,
       })
+      loadState().then(state => loadUsers(state.settings))
     })
   }
   const syncTcoToggle = document.getElementById('sync-tco-toggle')
@@ -41,6 +42,7 @@ const setupEventListeners = async () => {
         syncTco:
           syncTcoToggle instanceof HTMLInputElement && syncTcoToggle.checked,
       })
+      loadState().then(state => loadUsers(state.settings))
     })
   }
   const syncDailyToggle = document.getElementById('sync-daily-toggle')
@@ -225,6 +227,7 @@ const updateDeckCount = count => {
  * Reset sync button to default state
  */
 const resetButtons = () => {
+  console.log('Resetting buttons to default state')
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle && syncDokToggle instanceof HTMLInputElement) {
     syncDokToggle.disabled = false
@@ -333,9 +336,10 @@ const loadUsers = async settings => {
             dokUsernameElem.style.display = 'inline'
           }
         } else {
-          console.error('No DoK user found')
           const syncButton = document.getElementById('sync-decks')
+          console.log('Sync button found?')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
+            console.log('Sync button found, replacing it')
             syncButton.replaceWith(syncButton.cloneNode(true))
             const newSyncButton = document.getElementById('sync-decks')
             newSyncButton.addEventListener('click', () => {
@@ -346,6 +350,7 @@ const loadUsers = async settings => {
               newSyncButton.disabled = false
             }
           }
+          throw new Error('No DoK user found')
         }
       })(),
     )
@@ -377,14 +382,21 @@ const loadUsers = async settings => {
               newSyncButton.disabled = false
             }
           }
+          throw new Error('No TCO user found')
         }
       })(),
     )
   }
 
   await Promise.all(userPromises)
-  console.log('Logged in!')
-  resetButtons()
+    .then(() => {
+      console.log('Logged in!')
+      resetButtons()
+    })
+    .catch(error => {
+      console.error('Error loading users:', error)
+      // Do not reset buttons if any promise fails
+    })
 }
 
 const loadQuotes = () => {

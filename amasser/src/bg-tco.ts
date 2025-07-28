@@ -24,34 +24,34 @@ export const getTcoRefreshToken = async (): Promise<string | null> => {
   let { tcoRefreshToken: refreshToken } = await chrome.storage.local.get([
     'tcoRefreshToken',
   ])
-  if (!refreshToken) {
-    console.log('No TCO auth found in local storage, loading page...')
+  // if (!refreshToken) {
+  //   console.log('No TCO auth found in local storage, loading page...')
 
-    const { id: tabId } = await chrome.tabs.create({
-      url: TCO_BASE_URL,
-    })
+  //   const { id: tabId } = await chrome.tabs.create({
+  //     url: TCO_BASE_URL,
+  //   })
 
-    console.log('Open TCO tabid:', tabId)
+  //   console.log('Open TCO tabid:', tabId)
 
-    const tokenPromise = new Promise(resolve => {
-      chrome.storage.onChanged.addListener((changes, namespace) => {
-        if (
-          namespace === 'local' &&
-          changes.tcoRefreshToken &&
-          changes.tcoRefreshToken.newValue
-        ) {
-          resolve(changes.tcoRefreshToken.newValue)
-        }
-      })
-    })
+  //   const tokenPromise = new Promise(resolve => {
+  //     chrome.storage.onChanged.addListener((changes, namespace) => {
+  //       if (
+  //         namespace === 'local' &&
+  //         changes.tcoRefreshToken &&
+  //         changes.tcoRefreshToken.newValue
+  //       ) {
+  //         resolve(changes.tcoRefreshToken.newValue)
+  //       }
+  //     })
+  //   })
 
-    refreshToken = await tokenPromise
+  //   refreshToken = await tokenPromise
 
-    if (tabId !== undefined) {
-      console.log(`Closing TCO tab ${tabId}`)
-      await chrome.tabs.remove(tabId)
-    }
-  }
+  //   if (tabId !== undefined) {
+  //     console.log(`Closing TCO tab ${tabId}`)
+  //     await chrome.tabs.remove(tabId)
+  //   }
+  // }
 
   if (!refreshToken) {
     console.log('You must login to The Crucible Online first')

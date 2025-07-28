@@ -66,18 +66,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         chrome.storage.local.set({ dokAuth: message.dokAuth }, () => {
           console.log('DoK auth token saved to storage from content script')
           sendResponse({ success: true })
-
-          // Close the offscreen document if it exists
-          chrome.offscreen.closeDocument().catch(() => {
-            // Ignore errors if no offscreen document exists
-            console.log('No offscreen document to close')
-          })
         })
       } else {
         console.warn('SAVE_DOK_AUTH message missing dokAuth token')
         sendResponse({ success: false, error: 'Missing dokAuth token' })
       }
       return true
+
+      case 'SAVE_TCO_REFRESH_TOKEN':
+        console.log('Received TCO refresh token from content script')
+        if (message.tcoRefreshToken) {
+          chrome.storage.local.set({ tcoRefreshToken: message.tcoRefreshToken }, () => {
+            console.log('TCO refresh token saved to storage from content script')
+            sendResponse({ success: true })
+          })
+        } else {
+          console.warn('SAVE_TCO_REFRESH_TOKEN message missing TCO refresh token')
+          sendResponse({ success: false, error: 'Missing TCO refresh token' })
+        }
+        return true
 
     default:
       console.warn('Unknown message type:', message.type)
