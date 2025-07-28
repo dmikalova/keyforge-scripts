@@ -163,7 +163,7 @@ const syncDecks = () => {
   // Update button state
   handleSyncStatus('Syncing...')
 
-  chrome.runtime.sendMessage({ type: 'DECK_SYNC' })
+  chrome.runtime.sendMessage({ type: 'SYNC_START' })
 }
 
 // Clear all data from local storage

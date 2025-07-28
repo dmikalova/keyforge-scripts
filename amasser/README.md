@@ -1,6 +1,6 @@
 # KeyForge Amasser Browser Extension
 
-A browser extension for Chrome and Firefox that collects KeyForge decks from the Master Vault and syncs them to Decks of KeyForge or The Crucible Online.
+An unofficial browser extension for Chrome and Firefox that collects KeyForge decks from the Master Vault and syncs them to Decks of KeyForge or The Crucible Online.
 
 <!-- markdownlint-disable-next-line MD033 -->
 <img src="assets/screenshot.png" alt="KeyForge Amasser Extension Screenshot" width="400">
@@ -11,31 +11,21 @@ A browser extension for Chrome and Firefox that collects KeyForge decks from the
 - Syncing runs in the background - once started the extension popup can be closed without interrupting the sync.
 - Syncing can automatically run daily as long as you are logged into MV, DoK, and TCO and the browser is left open.
 - Includes fun, inspiring, and thought-provoking quotes to ponder while waiting for the sync to complete.
-- It is bright enoough to be seen from space.
+- Brilliant graphic design that is bright enoough to be seen from space.
 
 ## Installation
 
 Download the extension from the [Chrome Web Store](https://chrome.google.com/webstore/detail/keyforge-amasser/your-extension-id) or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/keyforge-amasser/).
 
-## Permissions
+## Privacy and Permissions
 
-The extension requests the following permissions:
-
-- `storage`: For saving collected data and settings
-- `activeTab`: For accessing the current tab's content
-- `scripting`: For injecting content scripts
-- Host permissions for target KeyForge websites
-
-## Privacy
-
-- All data is stored locally in your browser
-- Data is only transmitted from Master Vault to Decks of KeyForge or The Crucible Online
-- Data can be cleared by the user
+- Data is only gathered from Master Vault, stored locally, and sent to Decks of KeyForge or The Crucible Online.
+- Data can be cleared by the user.
+- Authentication for each site uses the existing browser sessions.
 
 ## Contributing
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test with both Chrome and Firefox
-5. Submit a pull request
+1. Open an issue in GitHub to discuss your feature or bug fix.
+2. Fork the repository, create a feature branch, and make your changes.
+3. Test with both Chrome and Firefox.
+4. Submit a pull request.

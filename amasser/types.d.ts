@@ -64,12 +64,7 @@ interface StorageData {
 
 // Message types
 interface SyncMessage {
-  type:
-    | 'DECK_SYNC'
-    | 'SYNC_COMPLETE'
-    | 'SYNC_ERROR'
-    | 'SYNC_STATUS'
-    | 'GET_SETTINGS'
+  type: 'SYNC_START' | 'SYNC_COMPLETE' | 'SYNC_ERROR' | 'SYNC_STATUS'
   button?: string
   decks?: number
   totalDecks?: number

@@ -23,7 +23,7 @@ chrome.runtime.onInstalled.addListener(async details => {
   chrome.storage.sync.set({
     syncDok: settings.syncDok || true,
     syncTco: settings.syncTco || false,
-    autoSync: settings.autoSync || false,
+    syncDaily: settings.syncDaily || false,
   })
 })
 
@@ -32,35 +32,39 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Background received message:', message)
 
   switch (message.type) {
-    case 'DECK_SYNC':
+    case 'SYNC_COMPLETE':
+      console.log('Deck sync complete in bg')
+      handleRotateIcon(0)
+        .then(status => sendResponse({ success: true, status }))
+        .catch(error => sendResponse({ success: false, error: error.message }))
+      return true
+
+    case 'SYNC_ERROR':
+      handleRotateIcon(180)
+        .then(status => sendResponse({ success: true, status }))
+        .catch(error => sendResponse({ success: false, error: error.message }))
+
+    case 'SYNC_START':
+      handleRotateIcon(15)
+        .then(status => sendResponse({ success: true, status }))
+        .catch(error => sendResponse({ success: false, error: error.message }))
+
       handleDeckSync()
         .then(() => sendResponse({ success: true }))
         .catch(error => sendResponse({ success: false, error: error.message }))
       return true
-    case 'GET_SETTINGS':
-      getSettings().then(sendResponse)
+
+    case 'SYNC_STATUS':
+      handleRotateIcon()
+        .then(status => sendResponse({ success: true, status }))
+        .catch(error => sendResponse({ success: false, error: error.message }))
       return true
+
     default:
       console.warn('Unknown message type:', message.type)
       return false
   }
 })
-
-// Get extension settings
-const getSettings = async () => {
-  try {
-    const settings = await chrome.storage.sync.get([
-      'enabled',
-      'autoCollect',
-      'collectDecks',
-      'collectGames',
-    ])
-    return settings
-  } catch (error) {
-    console.error('Error getting settings:', error)
-    return {}
-  }
-}
 
 const handleDeckSync = async () => {
   console.log('Syncing decks from bg...')
@@ -87,4 +91,53 @@ const handleDeckSync = async () => {
       .catch(() => {})
     throw error // Re-throw so the message handler can also handle it
   }
+}
+
+const ICON_ROTATIONS = [
+  '../icons/amasser-128-0.png',
+  '../icons/amasser-128-15.png',
+  '../icons/amasser-128-30.png',
+  '../icons/amasser-128-45.png',
+  '../icons/amasser-128-60.png',
+  '../icons/amasser-128-75.png',
+  '../icons/amasser-128-90.png',
+  '../icons/amasser-128-105.png',
+  '../icons/amasser-128-120.png',
+  '../icons/amasser-128-135.png',
+  '../icons/amasser-128-150.png',
+  '../icons/amasser-128-165.png',
+  '../icons/amasser-128-180.png',
+  '../icons/amasser-128-195.png',
+  '../icons/amasser-128-210.png',
+  '../icons/amasser-128-225.png',
+  '../icons/amasser-128-240.png',
+  '../icons/amasser-128-255.png',
+  '../icons/amasser-128-270.png',
+  '../icons/amasser-128-285.png',
+  '../icons/amasser-128-300.png',
+  '../icons/amasser-128-315.png',
+  '../icons/amasser-128-330.png',
+  '../icons/amasser-128-345.png',
+]
+
+const handleRotateIcon = async (angle?: number) => {
+  console.log('Rotating icon to angle:', angle)
+
+  let iconPath: string
+  if (angle === undefined) {
+    // Keep a counter in chrome.storage.local and increment it each time
+    const { iconAngle = 0 } = await chrome.storage.local.get('iconAngle')
+    angle = iconAngle + 1
+    await chrome.storage.local.set({ iconAngle: angle })
+
+    iconPath = ICON_ROTATIONS[angle % ICON_ROTATIONS.length]
+  } else {
+    iconPath =
+      ICON_ROTATIONS.find(path => path.includes(`${angle}`)) ||
+      ICON_ROTATIONS[0]
+  }
+
+  chrome.action.setIcon({
+    path: iconPath,
+  })
 }
