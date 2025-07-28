@@ -29,7 +29,7 @@ chrome.runtime.onInstalled.addListener(async details => {
 
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Background received message:', message)
+  console.log('Background received message of type:', message.type)
 
   switch (message.type) {
     case 'SYNC_COMPLETE':
@@ -58,6 +58,25 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleRotateIcon()
         .then(status => sendResponse({ success: true, status }))
         .catch(error => sendResponse({ success: false, error: error.message }))
+      return true
+
+    case 'SAVE_DOK_AUTH':
+      console.log('Received DoK auth token from content script')
+      if (message.dokAuth) {
+        chrome.storage.local.set({ dokAuth: message.dokAuth }, () => {
+          console.log('DoK auth token saved to storage from content script')
+          sendResponse({ success: true })
+
+          // Close the offscreen document if it exists
+          chrome.offscreen.closeDocument().catch(() => {
+            // Ignore errors if no offscreen document exists
+            console.log('No offscreen document to close')
+          })
+        })
+      } else {
+        console.warn('SAVE_DOK_AUTH message missing dokAuth token')
+        sendResponse({ success: false, error: 'Missing dokAuth token' })
+      }
       return true
 
     default:
