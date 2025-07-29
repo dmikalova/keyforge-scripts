@@ -1,8 +1,8 @@
-import { getLocalDecks } from './lib.js'
+import { getDecksFromStorage } from './lib.js'
 
 // Master Vault API configuration
 const MV_BASE_URL = 'https://www.keyforgegame.com'
-const SYNC_MSGS = ['Syncing MV..', 'Syncing MV...', 'Syncing MV.']
+const SYNC_MSGS = ['Syncing MV.', 'Syncing MV..', 'Syncing MV...']
 
 /**
  * Main entry point for Master Vault synchronization
@@ -10,7 +10,8 @@ const SYNC_MSGS = ['Syncing MV..', 'Syncing MV...', 'Syncing MV.']
 export const handleMvSync = async () => {
   console.log('MV deck sync started')
   try {
-    await getMvDecks(await getLocalDecks())
+    const { mv: decks } = await getDecksFromStorage()
+    await getDecksFromMv(decks)
   } catch (error) {
     console.error('Error syncing MV decks:', error)
     chrome.runtime
@@ -92,13 +93,14 @@ const getMvUser = async (token: string): Promise<MvUser> => {
 }
 
 /**
- * Fetch decks from Master Vault with pagination
+ * Fetch new decks from Master Vault
  */
-const getMvDecks = async decks => {
+const getDecksFromMv = async (decks = {}) => {
   if (typeof decks !== 'object' || decks === null) {
     decks = {}
-    console.log('Initialized decks as an empty object')
   }
+
+  chrome.storage.local.set({ 'syncing-mv': Date.now() })
 
   const { token, userId } = await getMvAuth()
 
@@ -119,18 +121,11 @@ const getMvDecks = async decks => {
     const data = await response.json().then(data => {
       return { count: data.count, decks: data.data }
     })
-    console.log(`Fetched page ${page} with ${data.decks.length} decks`)
+    console.log(`KFA: MV: Fetched page ${page} with ${data.decks.length} decks`)
     data.decks.forEach(deck => {
-      if (decks[deck.id]) {
-        decks[deck.id].mv = true
-      } else {
-        decks[deck.id] = {
-          id: deck.id,
-          mv: true,
-        }
-      }
+      decks[deck.id] = true
+      chrome.storage.local.set({ [`zmv-${deck.id}`]: true })
     })
-    chrome.storage.local.set({ decks: decks })
 
     // Notify popup of new decks added
     chrome.runtime
@@ -226,9 +221,15 @@ const favoriteLegacyDecks = async decks => {
 
 // TODO: get existing DoK decks
 // TODO: import DoK/TCO decks just once
-// TODO: validate that usernames match existing data
+// TODO: switch to asynchronous data model:
+// store decks as zmv-$uuid: true
+// set sync status
+// have dok/tco worker syncing decks while mv is syncing or decks unsynced
 // TODO: implement a mutex in the sync by storing a timestamp on each sync, and if a sync doesn't happen in a minute or whatever release it
 // TODO: stop all clicks while running
 // TODO: don't allow clicks while bg syncing
 // TODO: while syncing change clear data to stop sync - probably by restarting the extension?
 // TODO: run daily https://stackoverflow.com/questions/36241436/chrome-extension-use-javascript-to-run-periodically-and-log-data-permanently
+// TODO: clearing data should restart the extension as well
+// TODO: amasser count per site
+// TODO: commas in amasser count

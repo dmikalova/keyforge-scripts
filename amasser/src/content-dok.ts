@@ -7,7 +7,7 @@ const dokObserver = new MutationObserver(mutations => {
         const dokAuth = window.localStorage.getItem('AUTH')
         if (dokAuth !== null) {
           chrome.runtime.sendMessage(
-            { type: 'SAVE_DOK_AUTH', dokAuth },
+            { type: 'SAVE_DOK_AUTH', 'dok-auth': dokAuth },
             response => {
               if (response && response.success) {
                 console.log(

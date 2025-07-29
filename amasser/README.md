@@ -8,16 +8,23 @@ An unofficial browser extension for Chrome and Firefox that collects KeyForge de
 ## Features
 
 - The deck list is stored by the extension - after the initial sync only newly scanned decks are synced.
-  - An initial sync of 1000 decks from MV to DoK takes less than 10 minutes.
-  - An initial sync of 1000 decks to TCO can take 5 hours due to rate limiting.
+  - An initial sync of 1000 decks to DoK can take 10 minutes.
+  - An initial sync of 1000 decks to TCO can take 6 hours due to rate limiting.
 - Syncing runs in the background - once started the extension popup can be closed without interrupting the sync.
-- Syncing can automatically run daily as long as you are logged into MV, DoK, and TCO and the browser is left open.
+- Syncing can automatically run daily as long as you are logged in to each site and the browser is left open.
 - Includes fun, inspiring, and thought-provoking quotes to ponder while waiting for the sync to complete.
 - Brilliant graphic design that is bright enoough to be seen from space.
 
 ## Known issues
 
-Syncing to TCO has the following issues with no plans to fix them:
+- Switching between accounts is not supported. After switching accounts clear data in the extension and run a sync in the other accounts.
+
+MV has the following issues:
+
+- Legacy decks are not synced - scan your legacy decks to claim ownership!
+- Decks that are traded away won't be removed from data stored data. Clear data in the extesion to remove them.
+
+TCO has the following issues:
 
 - Multiple syncs may be necessary to get every deck if a lot of decks are being imported.
 - Decks that require extra information such as Prophetic Visions will have default values set - delete and manually import the deck in TCO to set prophecies.

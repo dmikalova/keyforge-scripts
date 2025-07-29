@@ -62,29 +62,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'SAVE_DOK_AUTH':
       console.log('Received DoK auth token from content script')
-      if (message.dokAuth) {
-        chrome.storage.local.set({ dokAuth: message.dokAuth }, () => {
+      if (message['dok-auth']) {
+        chrome.storage.local.set({ 'dok-auth': message['dok-auth'] }, () => {
           console.log('DoK auth token saved to storage from content script')
           sendResponse({ success: true })
         })
       } else {
-        console.warn('SAVE_DOK_AUTH message missing dokAuth token')
-        sendResponse({ success: false, error: 'Missing dokAuth token' })
+        console.warn('SAVE_DOK_AUTH message missing dok-auth token')
+        sendResponse({ success: false, error: 'Missing dok-auth token' })
       }
       return true
 
-      case 'SAVE_TCO_REFRESH_TOKEN':
-        console.log('Received TCO refresh token from content script')
-        if (message.tcoRefreshToken) {
-          chrome.storage.local.set({ tcoRefreshToken: message.tcoRefreshToken }, () => {
-            console.log('TCO refresh token saved to storage from content script')
+    case 'SAVE_TCO_REFRESH_TOKEN':
+      console.log('Received TCO refresh token from content script')
+      if (message['tco-refresh-token']) {
+        chrome.storage.local.set(
+          { 'tco-refresh-token': message['tco-refresh-token'] },
+          () => {
+            console.log(
+              'TCO refresh token saved to storage from content script',
+            )
             sendResponse({ success: true })
-          })
-        } else {
-          console.warn('SAVE_TCO_REFRESH_TOKEN message missing TCO refresh token')
-          sendResponse({ success: false, error: 'Missing TCO refresh token' })
-        }
-        return true
+          },
+        )
+      } else {
+        console.warn('SAVE_TCO_REFRESH_TOKEN message missing TCO refresh token')
+        sendResponse({ success: false, error: 'Missing TCO refresh token' })
+      }
+      return true
 
     default:
       console.warn('Unknown message type:', message.type)

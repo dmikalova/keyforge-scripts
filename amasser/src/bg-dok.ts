@@ -1,4 +1,4 @@
-import { getLocalDecks } from './lib.js'
+import { getDecksFromStorage } from './lib.js'
 
 // Decks of KeyForge configuration
 const DOK_BASE_URL = 'https://decksofkeyforge.com'
@@ -7,7 +7,8 @@ const SYNC_MSGS = ['Syncing DoK..', 'Syncing DoK...', 'Syncing DoK.']
 export const handleDokSync = async () => {
   console.log('DoK deck sync started')
   try {
-    await importDecksToDok(await getLocalDecks())
+    const { dok: decks } = await getDecksFromStorage()
+    await importDecksToDok(decks)
   } catch (error) {
     console.error('Error syncing DoK decks:', error)
     chrome.runtime
@@ -24,35 +25,7 @@ export const handleDokSync = async () => {
  */
 export const getDokToken = async (): Promise<string | null> => {
   // Check for token in local storage
-  let { dokAuth: token } = await chrome.storage.local.get(['dokAuth'])
-  // if (!token) {
-  //   console.log('No DOK auth found in local storage, loading page...')
-
-  //   const { id: tabId } = await chrome.tabs.create({
-  //     url: DOK_BASE_URL,
-  //   })
-
-  //   console.log('Open DOK tabid:', tabId)
-
-  //   const tokenPromise = new Promise(resolve => {
-  //     chrome.storage.onChanged.addListener((changes, namespace) => {
-  //       if (
-  //         namespace === 'local' &&
-  //         changes.dokAuth &&
-  //         changes.dokAuth.newValue
-  //       ) {
-  //         resolve(changes.dokAuth.newValue)
-  //       }
-  //     })
-  //   })
-
-  //   token = await tokenPromise
-
-  //   if (tabId !== undefined) {
-  //     console.log(`Closing tab ${tabId}`)
-  //     await chrome.tabs.remove(tabId)
-  //   }
-  // }
+  let { 'dok-auth': token } = await chrome.storage.local.get(['dok-auth'])
 
   if (!token) {
     console.log('You must login to Decks of KeyForge first')

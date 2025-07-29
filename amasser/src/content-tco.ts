@@ -7,7 +7,10 @@ const tcoObserver = new MutationObserver(mutations => {
         const tcoRefreshToken = window.localStorage.getItem('refreshToken')
         if (tcoRefreshToken !== null) {
           chrome.runtime.sendMessage(
-            { type: 'SAVE_TCO_REFRESH_TOKEN', tcoRefreshToken },
+            {
+              type: 'SAVE_TCO_REFRESH_TOKEN',
+              'tco-refresh-token': tcoRefreshToken,
+            },
             response => {
               if (response && response.success) {
                 console.log(

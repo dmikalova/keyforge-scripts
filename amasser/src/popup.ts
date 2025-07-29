@@ -1,7 +1,7 @@
 import { getDokToken, getDokUser } from './bg-dok.js'
 import { getMvAuth } from './bg-mv.js'
 import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
-import { getLocalDecks } from './lib.js'
+import { getDecksFromStorage } from './lib.js'
 import { quotes } from './quotes.js'
 
 // Popup script for KeyForge Amasser extension
@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 })
 
 const setupEventListeners = async () => {
-  // Toggle event listners
+  // Toggle event listeners
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle) {
     syncDokToggle.addEventListener('change', async () => {
@@ -98,7 +98,7 @@ const loadState = async () => {
   const settings: any = await getSettings()
   console.log('loaded settings:', settings)
 
-  const decks = await getLocalDecks()
+  const { mv: decks } = await getDecksFromStorage()
   console.log('loaded decks:', decks)
 
   const deckCountElem = document.getElementById('deck-count')

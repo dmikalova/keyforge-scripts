@@ -16,6 +16,7 @@ export const quotes: string[] = [
   'ACAB',
   'Black lives matter',
   'Chinga la migra',
+  'Free Palestine',
   'Hot rat summer',
   'Trans rights are human rights',
 ]

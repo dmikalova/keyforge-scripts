@@ -1,4 +1,4 @@
-import { getLocalDecks } from './lib.js'
+import { getDecksFromStorage } from './lib.js'
 
 // The Crucible Online API configuration
 const TCO_BASE_URL = 'https://thecrucible.online'
@@ -7,7 +7,8 @@ const SYNC_MSGS = ['Syncing TCO..', 'Syncing TCO...', 'Syncing TCO.']
 export const handleTcoSync = async () => {
   console.log('TCO deck sync started')
   try {
-    await importDecksToTco(await getLocalDecks())
+    const { tco: decks } = await getDecksFromStorage()
+    await importDecksToTco(decks)
   } catch (error) {
     console.error('Error syncing TCO decks:', error)
     chrome.runtime
@@ -21,37 +22,9 @@ export const handleTcoSync = async () => {
 
 export const getTcoRefreshToken = async (): Promise<string | null> => {
   // Check for token in local storage
-  let { tcoRefreshToken: refreshToken } = await chrome.storage.local.get([
-    'tcoRefreshToken',
+  let { 'tco-refresh-token': refreshToken } = await chrome.storage.local.get([
+    'tco-refresh-token',
   ])
-  // if (!refreshToken) {
-  //   console.log('No TCO auth found in local storage, loading page...')
-
-  //   const { id: tabId } = await chrome.tabs.create({
-  //     url: TCO_BASE_URL,
-  //   })
-
-  //   console.log('Open TCO tabid:', tabId)
-
-  //   const tokenPromise = new Promise(resolve => {
-  //     chrome.storage.onChanged.addListener((changes, namespace) => {
-  //       if (
-  //         namespace === 'local' &&
-  //         changes.tcoRefreshToken &&
-  //         changes.tcoRefreshToken.newValue
-  //       ) {
-  //         resolve(changes.tcoRefreshToken.newValue)
-  //       }
-  //     })
-  //   })
-
-  //   refreshToken = await tokenPromise
-
-  //   if (tabId !== undefined) {
-  //     console.log(`Closing TCO tab ${tabId}`)
-  //     await chrome.tabs.remove(tabId)
-  //   }
-  // }
 
   if (!refreshToken) {
     console.log('You must login to The Crucible Online first')
@@ -196,6 +169,7 @@ const importDecksToTco = async (decks: { [id: string]: Deck }) => {
       console.log(`Imported ${deck.id}`)
       decks[deck.id].tco = true
       chrome.storage.local.set({ decks: decks })
+      // if isAlliance = false
     } else if (
       response.ok &&
       !respJson.success &&

@@ -56,9 +56,9 @@ interface TcoUser {
 interface StorageData {
   decks?: { [id: string]: Deck }
   settings?: Settings
-  mvAuth?: string
-  dokAuth?: string
-  tcoRefreshToken?: string
+  'mv-auth'?: string
+  'dok-auth'?: string
+  'tco-refresh-token'?: string
   [key: string]: any
 }
 
