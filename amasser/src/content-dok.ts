@@ -3,14 +3,14 @@ const dokObserver = new MutationObserver(mutations => {
   for (const mutation of mutations) {
     if (mutation.type === 'childList') {
       if (document.querySelector('a[href="/my-dok/my-profile"]')) {
-        console.log('KF Amasser: User is logged in to DoK')
+        console.debug('KF Amasser: User is logged in to DoK')
         const dokAuth = window.localStorage.getItem('AUTH')
         if (dokAuth !== null) {
           chrome.runtime.sendMessage(
             { type: 'SAVE_DOK_AUTH', 'token-dok': dokAuth },
             response => {
               if (response && response.success) {
-                console.log(
+                console.debug(
                   'KF Amasser: Sent DoK auth token to background script',
                 )
               } else {

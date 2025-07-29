@@ -1,13 +1,13 @@
 // Background service worker for the KeyForge Amasser extension
-console.log('KeyForge Amasser background script loaded')
+console.debug('KeyForge Amasser background script loaded')
 
 import { handleDokSync } from './bg-dok.js'
 import { handleMvSync } from './bg-mv.js'
 import { handleTcoSync } from './bg-tco.js'
 
 chrome.commands.onCommand.addListener(shortcut => {
-  console.log('lets reload')
-  console.log(shortcut)
+  console.debug('lets reload')
+  console.debug(shortcut)
   if (shortcut.includes('+I')) {
     chrome.runtime.reload()
   }
@@ -15,7 +15,7 @@ chrome.commands.onCommand.addListener(shortcut => {
 
 // Extension installation/startup
 chrome.runtime.onInstalled.addListener(async details => {
-  console.log('Extension installed:', details)
+  console.debug('Extension installed:', details)
 
   const settings: Settings = await chrome.storage.sync.get()
 
@@ -29,17 +29,11 @@ chrome.runtime.onInstalled.addListener(async details => {
 
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Background received message of type:', message.type)
+  console.debug('Background received message of type:', message.type)
 
   switch (message.type) {
     case 'SYNC_COMPLETE':
-      console.log('Deck sync complete in bg')
-      chrome.storage.local.remove(
-        ['syncing-dok', 'syncing-mv', 'syncing-tco'],
-        () => {
-          console.log('removed syncing')
-        },
-      )
+      console.debug('Deck sync complete in bg')
       handleRotateIcon(0)
         .then(status => sendResponse({ success: true, status }))
         .catch(error => sendResponse({ success: false, error: error.message }))
@@ -67,10 +61,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true
 
     case 'SAVE_DOK_AUTH':
-      console.log('Received DoK auth token from content script')
+      console.debug('Received DoK auth token from content script')
       if (message['token-dok']) {
         chrome.storage.local.set({ 'token-dok': message['token-dok'] }, () => {
-          console.log('DoK auth token saved to storage from content script')
+          console.debug('DoK auth token saved to storage from content script')
           sendResponse({ success: true })
         })
       } else {
@@ -80,10 +74,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true
 
     case 'SAVE_TCO_REFRESH_TOKEN':
-      console.log('Received TCO refresh token from content script')
+      console.debug('Received TCO refresh token from content script')
       if (message['token-tco']) {
         chrome.storage.local.set({ 'token-tco': message['token-tco'] }, () => {
-          console.log('TCO refresh token saved to storage from content script')
+          console.debug(
+            'TCO refresh token saved to storage from content script',
+          )
           sendResponse({ success: true })
         })
       } else {
@@ -99,7 +95,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 })
 
 const handleDeckSync = async () => {
-  console.log('Syncing decks from bg...')
+  console.debug('Syncing decks from bg...')
   const syncPromises = []
 
   chrome.storage.local.set({ 'syncing-mv': Date.now() })
@@ -115,26 +111,16 @@ const handleDeckSync = async () => {
     syncPromises.push(handleTcoSync())
   }
 
-  await Promise.all(syncPromises)
-    .then(≈() => {
-      // Notify popup that sync is complete
-      console.log('Deck sync promises complete in bg')
-      // Remove await to avoid background script termination before message is handled
-      chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {
-        console.log('Failed to send SYNC_COMPLETE message')
-      })
-    })
-    .catch(error => {
-      console.error('Error during deck sync:', error)
-      // Notify popup that sync failed
-      chrome.runtime
-        .sendMessage({
-          type: 'SYNC_ERROR',
-          error: error.message,
-        })
-        .catch(() => {})
-      throw error // Re-throw so the message handler can also handle it
-    })
+  try {
+    await Promise.all(syncPromises)
+
+    // Notify popup that sync is complete
+    console.debug('Deck sync promises complete in bg')
+    chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
+  } catch (error) {
+    console.error('Error during deck sync:', error)
+    throw error // Re-throw so the message handler can also handle it
+  }
 }
 
 const ICON_ROTATIONS = [
@@ -165,7 +151,7 @@ const ICON_ROTATIONS = [
 ]
 
 const handleRotateIcon = async (angle?: number) => {
-  console.log('Rotating icon to angle:', angle)
+  console.debug('Rotating icon to angle:', angle)
 
   let iconPath: string
   if (angle === undefined) {

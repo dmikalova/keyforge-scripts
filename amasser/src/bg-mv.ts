@@ -8,7 +8,7 @@ const SYNC_MSGS = ['Syncing MV.', 'Syncing MV..', 'Syncing MV...']
  * Main entry point for Master Vault synchronization
  */
 export const handleMvSync = async () => {
-  console.log('MV deck sync started')
+  console.debug('MV deck sync started')
   try {
     const { mv: decks } = await getDecksFromStorage()
     await getDecksFromMv(decks)
@@ -21,6 +21,8 @@ export const handleMvSync = async () => {
       })
       .catch(() => {})
   }
+
+  chrome.storage.local.remove(['syncing-mv'])
 }
 
 export const getMvAuth = async (): Promise<
@@ -28,13 +30,13 @@ export const getMvAuth = async (): Promise<
 > => {
   const authCookie = await getMvAuthCookie()
   if (!authCookie) {
-    console.log('You must login to Master Vault first')
+    console.debug('You must login to Master Vault first')
     return { token: null, userId: null, username: null }
   }
-  console.log('Master Vault auth cookie loaded...')
+  console.debug('Master Vault auth cookie loaded...')
 
   const user = await getMvUser(authCookie.value)
-  console.log('Master Vault user ID:', user.id)
+  console.debug('Master Vault user ID:', user.id)
 
   return { token: authCookie.value, userId: user.id, username: user.username }
 }
@@ -104,7 +106,7 @@ const getDecksFromMv = async (decks = {}) => {
 
   const { token, userId } = await getMvAuth()
 
-  console.log('Fetching Master Vault decks for user:', userId)
+  console.debug('Fetching Master Vault decks for user:', userId)
   const requestConfig = createMvRequestConfig(token)
   const pageSize = 10
   let page = 1
@@ -121,10 +123,12 @@ const getDecksFromMv = async (decks = {}) => {
     const data = await response.json().then(data => {
       return { count: data.count, decks: data.data }
     })
-    console.log(`KFA: MV: Fetched page ${page} with ${data.decks.length} decks`)
+    console.debug(
+      `KFA: MV: Fetched page ${page} with ${data.decks.length} decks`,
+    )
     data.decks.forEach(deck => {
       decks[deck.id] = true
-      chrome.storage.local.set({ [`zmv-${deck.id}`]: true })
+      chrome.storage.local.set({ [`zmv.${deck.id}`]: true })
     })
 
     // Notify popup of new decks added
@@ -137,7 +141,7 @@ const getDecksFromMv = async (decks = {}) => {
       .catch(() => {})
 
     if (Object.keys(decks).length === data.count) {
-      console.log(
+      console.debug(
         `All ${Object.keys(decks).length}/${
           data.count
         } decks fetched, breaking loop`,
@@ -147,7 +151,7 @@ const getDecksFromMv = async (decks = {}) => {
 
     hasMorePages = data.decks.length === pageSize
     page++
-    console.log(
+    console.debug(
       `Moving to page ${page}: ${Object.keys(decks).length}/${data.count}`,
     )
   }
@@ -156,12 +160,12 @@ const getDecksFromMv = async (decks = {}) => {
 const favoriteLegacyDecks = async decks => {
   if (typeof decks !== 'object' || decks === null) {
     decks = {}
-    console.log('Initialized decks as an empty object')
+    console.debug('Initialized decks as an empty object')
   }
 
   const { token, userId } = await getMvAuth()
 
-  console.log('Fetching Master Vault legacy decks for user:', userId)
+  console.debug('Fetching Master Vault legacy decks for user:', userId)
   const requestConfig = createMvRequestConfig(token)
   const pageSize = 10
   let page = 1
@@ -178,10 +182,10 @@ const favoriteLegacyDecks = async decks => {
     const data = await response.json().then(data => {
       return { count: data.count, decks: data.data }
     })
-    console.log(`Fetched legacy page ${page} with ${data.decks.length} decks`)
+    console.debug(`Fetched legacy page ${page} with ${data.decks.length} decks`)
     data.decks.forEach(async deck => {
       if (decks[deck.id]) {
-        console.log(`Legacy deck ${deck.id} is owned`)
+        console.debug(`Legacy deck ${deck.id} is owned`)
         await fetch(`${MV_BASE_URL}/api/users/${userId}/decks/favorites/`, {
           credentials: 'include',
           headers: {
@@ -195,7 +199,7 @@ const favoriteLegacyDecks = async decks => {
           body: JSON.stringify({ deck_id: deck.id }),
         })
       } else {
-        console.log(`Adding unowned legacy deck ${deck.id} to favorites`)
+        console.debug(`Adding unowned legacy deck ${deck.id} to favorites`)
         await fetch(`${MV_BASE_URL}/api/users/${userId}/decks/favorites/`, {
           credentials: 'include',
           headers: {
@@ -213,7 +217,7 @@ const favoriteLegacyDecks = async decks => {
 
     hasMorePages = data.decks.length === pageSize
     page++
-    console.log(
+    console.debug(
       `Moving to page ${page}: ${Object.keys(decks).length}/${data.count}`,
     )
   }
@@ -222,8 +226,6 @@ const favoriteLegacyDecks = async decks => {
 // TODO: get existing DoK decks
 // TODO: import DoK/TCO decks just once
 // TODO: switch to asynchronous data model:
-// store decks as zmv-$uuid: true
-// set sync status
 // have dok/tco worker syncing decks while mv is syncing or decks unsynced
 // TODO: implement a mutex in the sync by storing a timestamp on each sync, and if a sync doesn't happen in a minute or whatever release it
 // TODO: stop all clicks while running

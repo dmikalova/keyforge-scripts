@@ -5,10 +5,10 @@ const DOK_BASE_URL = 'https://decksofkeyforge.com'
 const SYNC_MSGS = ['Syncing DoK..', 'Syncing DoK...', 'Syncing DoK.']
 
 export const handleDokSync = async () => {
-  console.log('DoK deck sync started')
+  console.debug('DoK deck sync started')
   try {
-    const { dok: decks } = await getDecksFromStorage()
-    await importDecksToDok(decks)
+    const { mv, dok } = await getDecksFromStorage()
+    await importDecksToDok(mv, dok)
   } catch (error) {
     console.error('Error syncing DoK decks:', error)
     chrome.runtime
@@ -18,6 +18,8 @@ export const handleDokSync = async () => {
       })
       .catch(() => {})
   }
+
+  chrome.storage.local.remove(['syncing-dok'])
 }
 
 /**
@@ -28,7 +30,7 @@ export const getDokToken = async (): Promise<string | null> => {
   let { 'token-dok': token } = await chrome.storage.local.get(['token-dok'])
 
   if (!token) {
-    console.log('You must login to Decks of KeyForge first')
+    console.debug('You must login to Decks of KeyForge first')
     return null
   }
 
@@ -73,31 +75,31 @@ const createDokRequestConfig = (token: string): RequestInit => ({
   method: 'POST',
 })
 
-const importDecksToDok = async (decks: { [id: string]: Deck }) => {
+const importDecksToDok = async (mv: Decks, dok: Decks) => {
   const token = await getDokToken()
 
   // Filter out decks that already have dok=true
-  const decksToImport = Object.values(decks).filter(
-    (deck: Deck) => deck.mv && !deck.dok,
+  const decksToImport = Object.entries(mv).filter(
+    ([id, deck]) => deck === true && !dok[id],
   )
 
   for (const [i, deck] of decksToImport.entries()) {
-    console.log(
+    console.debug(
       `Importing deck ${i + 1}/${decksToImport.length}: ${JSON.stringify(
         deck,
       )} to DoK...`,
     )
     const response = await fetch(
-      `https://decksofkeyforge.com/api/decks/${deck.id}/import-and-add`,
+      `https://decksofkeyforge.com/api/decks/${deck[0]}/import-and-add`,
       createDokRequestConfig(token),
     )
 
     if (response.ok) {
-      console.log(`Imported ${deck.id}`)
-      decks[deck.id].dok = true
-      chrome.storage.local.set({ decks: decks })
+      console.debug(`Imported ${deck[0]}`)
+      dok[deck[0]] = true
+      chrome.storage.local.set({ [`zdok.${deck[0]}`]: true })
     } else {
-      console.error(`Failed to import ${deck.id}: ${response.status}`)
+      console.error(`Failed to import ${deck[0]}: ${response.status}`)
     }
 
     chrome.runtime

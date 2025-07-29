@@ -122,7 +122,7 @@ const loadState = async () => {
     settings['sync-auto'] = false
   }
   // Update toggle states
-  console.log('Setting sync toggles:', {
+  console.debug('Setting sync toggles:', {
     'sync-dok': settings['sync-dok'],
     'sync-tco': settings['sync-tco'],
     'sync-auto': settings['sync-auto'],
@@ -142,14 +142,14 @@ const loadState = async () => {
       (syncAutoToggle.checked = settings['sync-auto'] || false)
   }
 
-  console.log('Current value: ', Object.keys(decks || {}).length)
+  console.debug('Current value: ', Object.keys(decks || {}).length)
 
   return { decks, settings }
 }
 
 // Trigger a deck sync
 const syncDecks = () => {
-  console.log('Syncing decks from popup..')
+  console.debug('Syncing decks from popup..')
 
   // Update button state
   handleSyncStatus('Syncing...')
@@ -160,7 +160,7 @@ const syncDecks = () => {
 // Clear all data from local storage
 const clearData = () => {
   chrome.storage.local.clear(() => {
-    console.log('All data cleared')
+    console.debug('All data cleared')
     loadState()
   })
   const clearDataButton = document.getElementById('clear-data')
@@ -180,9 +180,9 @@ const clearData = () => {
 const handleBackgroundMessage = message => {
   switch (message.type) {
     case 'SYNC_COMPLETE':
-      console.log('Deck sync complete in popup')
+      console.debug('Deck sync complete in popup')
       resetButtons()
-      console.log('Sync completed successfully!')
+      console.debug('Sync completed successfully!')
       break
 
     case 'SYNC_ERROR':
@@ -198,7 +198,7 @@ const handleBackgroundMessage = message => {
       break
 
     default:
-      console.log('Unknown message type:', message.type)
+      console.debug('Unknown message type:', message.type)
   }
 }
 
@@ -216,7 +216,7 @@ const updateDeckCount = count => {
  * Reset sync button to default state
  */
 const resetButtons = () => {
-  console.log('Resetting buttons to default state')
+  console.debug('Resetting buttons to default state')
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle && syncDokToggle instanceof HTMLInputElement) {
     syncDokToggle.disabled = false
@@ -288,7 +288,7 @@ const loadUsers = async settings => {
     (async () => {
       const { username: userMv } = await getMvAuth()
       if (userMv) {
-        console.log('Master Vault user found:', userMv)
+        console.debug('Master Vault user found:', userMv)
         const mvUsernameElem = document.getElementById('mv-username')
         if (mvUsernameElem) {
           mvUsernameElem.textContent = `: ${userMv}`
@@ -315,7 +315,7 @@ const loadUsers = async settings => {
   if (settings['sync-dok']) {
     userPromises.push(
       (async () => {
-        console.log('Getting DoK username')
+        console.debug('Getting DoK username')
         const token = await getDokToken()
         if (token) {
           const user = await getDokUser(token)
@@ -326,9 +326,9 @@ const loadUsers = async settings => {
           }
         } else {
           const syncButton = document.getElementById('sync-decks')
-          console.log('Sync button found?')
+          console.debug('Sync button found?')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
-            console.log('Sync button found, replacing it')
+            console.debug('Sync button found, replacing it')
             syncButton.replaceWith(syncButton.cloneNode(true))
             const newSyncButton = document.getElementById('sync-decks')
             newSyncButton.addEventListener('click', () => {
@@ -354,7 +354,7 @@ const loadUsers = async settings => {
   if (settings['sync-tco']) {
     userPromises.push(
       (async () => {
-        console.log('Getting TCO username')
+        console.debug('Getting TCO username')
         const token = await getTcoRefreshToken()
         if (token) {
           const { username } = await getTcoUser(token)
@@ -391,7 +391,7 @@ const loadUsers = async settings => {
 
   await Promise.all(userPromises)
     .then(() => {
-      console.log('Logged in!')
+      console.debug('Logged in!')
       resetButtons()
     })
     .catch(error => {

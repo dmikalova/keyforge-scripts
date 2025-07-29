@@ -1,17 +1,5 @@
 // Type definitions for KeyForge Amasser Extension
 
-// Deck interface
-interface Deck {
-  id: string
-  name?: string
-  mv?: boolean
-  dok?: boolean | string
-  tco?: boolean | string
-  houses?: string[]
-  expansion?: string
-  [key: string]: any
-}
-
 // Settings interface
 interface Settings {
   'sync-auto'?: boolean
@@ -51,14 +39,21 @@ interface TcoUser {
   username: string
 }
 
+interface Decks {
+  [id: string]: boolean | string
+}
+
 // Chrome storage
 interface StorageData {
-  decks?: { [id: string]: Deck }
+  decks?: {
+    mv?: Decks
+    dok?: Decks
+    tco?: Decks
+  }
   settings?: Settings
   'token-mv'?: string
   'token-dok'?: string
   'token-tco'?: string
-  [key: string]: any
 }
 
 // Message types

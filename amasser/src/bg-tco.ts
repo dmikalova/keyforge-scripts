@@ -5,10 +5,10 @@ const TCO_BASE_URL = 'https://thecrucible.online'
 const SYNC_MSGS = ['Syncing TCO..', 'Syncing TCO...', 'Syncing TCO.']
 
 export const handleTcoSync = async () => {
-  console.log('TCO deck sync started')
+  console.debug('TCO deck sync started')
   try {
-    const { tco: decks } = await getDecksFromStorage()
-    await importDecksToTco(decks)
+    const { mv, tco } = await getDecksFromStorage()
+    await importDecksToTco(mv, tco)
   } catch (error) {
     console.error('Error syncing TCO decks:', error)
     chrome.runtime
@@ -18,6 +18,8 @@ export const handleTcoSync = async () => {
       })
       .catch(() => {})
   }
+
+  chrome.storage.local.remove(['syncing-tco'])
 }
 
 export const getTcoRefreshToken = async (): Promise<string | null> => {
@@ -27,7 +29,7 @@ export const getTcoRefreshToken = async (): Promise<string | null> => {
   ])
 
   if (!refreshToken) {
-    console.log('You must login to The Crucible Online first')
+    console.debug('You must login to The Crucible Online first')
     return null
   }
 
@@ -45,7 +47,7 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
 
   const body = JSON.stringify(t)
 
-  console.log('Fetching TCO user info...')
+  console.debug('Fetching TCO user info...')
   const response = await fetch(`${TCO_BASE_URL}/api/account/token`, {
     credentials: 'include',
     headers: {
@@ -87,15 +89,15 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
   }
 }
 
-const importDecksToTco = async (decks: { [id: string]: Deck }) => {
-  // Filter out decks that already have tco=true
-  let decksToImport = Object.values(decks).filter(
-    (deck: Deck) => deck.mv && !deck.tco,
+const importDecksToTco = async (mv: Decks, tco: Decks) => {
+  // Filter out decks that already have dok=true
+  let decksToImport = Object.entries(mv).filter(
+    ([id, deck]) => deck === true && !tco[id],
   )
 
   if (decksToImport.length === 0) {
-    console.log('No new decks to import')
-    return decks
+    console.debug('No new decks to import')
+    return
   }
 
   // Refresh token before fetching TCO decks
@@ -121,21 +123,22 @@ const importDecksToTco = async (decks: { [id: string]: Deck }) => {
       throw new Error(`Failed to fetch TCO decks: ${error.message}`)
     })
   tcoDecks.forEach(tcoDeck => {
-    if (decks[tcoDeck.uuid]) {
-      decks[tcoDeck.uuid].tco = true
+    if (mv[tcoDeck.uuid]) {
+      tco[tcoDeck.uuid] = true
+      chrome.storage.local.set({ [`ztco.${tcoDeck.uuid}`]: true })
     }
   })
 
-  chrome.storage.local.set({ decks: decks })
-  decksToImport = Object.values(decks).filter(deck => deck.mv && !deck.tco)
-
-  console.log('Decks to import to TCO: ', decksToImport.length)
+  decksToImport = Object.entries(mv).filter(
+    ([id, deck]) => deck === true && !tco[id],
+  )
+  console.debug('Decks to import to TCO: ', decksToImport.length)
 
   for (const [i, deck] of decksToImport.entries()) {
     // Refresh token before each import to avoid unauthorized errors
-    console.log(
+    console.debug(
       `Importing deck to ${i + 1}/${decksToImport.length}: ${
-        deck.id
+        deck[0]
       } to TCO...`,
     )
     const { token } = await getTcoUser(await getTcoRefreshToken())
@@ -153,7 +156,7 @@ const importDecksToTco = async (decks: { [id: string]: Deck }) => {
       referrer: 'https://www.thecrucible.online/decks/import',
       referrerPolicy: 'no-referrer-when-downgrade',
       body: JSON.stringify({
-        uuid: deck.id,
+        uuid: deck[0],
       }),
       method: 'POST',
     })
@@ -166,36 +169,36 @@ const importDecksToTco = async (decks: { [id: string]: Deck }) => {
     ]
 
     if (response.ok && respJson.success) {
-      console.log(`Imported ${deck.id}`)
-      decks[deck.id].tco = true
-      chrome.storage.local.set({ decks: decks })
+      console.debug(`Imported ${deck[0]}`)
+      tco[deck[0]] = true
+      chrome.storage.local.set({ [`ztco.${deck[0]}`]: true })
       // if isAlliance = false
     } else if (
       response.ok &&
       !respJson.success &&
       respJson.message === 'Deck already exists.'
     ) {
-      console.log(`Deck already imported to TCO ${deck.id}`)
-      decks[deck.id].tco = true
-      chrome.storage.local.set({ decks: decks })
+      console.debug(`Deck already imported to TCO ${deck[0]}`)
+      tco[deck[0]] = true
+      chrome.storage.local.set({ [`ztco.${deck[0]}`]: true })
     } else if (
       response.ok &&
       !respJson.success &&
       tcoImportErrorMessages.some(msg => respJson.message.includes(msg))
     ) {
-      console.log(`Failed to import to TCO with known error ${deck.id}`)
-      decks[deck.id].tco = 'import error'
-      chrome.storage.local.set({ decks: decks })
+      console.debug(`Failed to import to TCO with known error ${deck[0]}`)
+      tco[deck[0]] = 'import error'
+      chrome.storage.local.set({ [`ztco.${deck[0]}`]: 'import error' })
     } else if (
       response.ok &&
       !respJson.success &&
       respJson.message === 'Invalid response from Api. Please try again later.'
     ) {
-      console.log(`Rate limiting hit, pausing`)
+      console.debug(`Rate limiting hit, pausing`)
       await new Promise(resolve => setTimeout(resolve, 60000))
     } else {
       console.error(
-        `Failed to import to TCO with unknown error ${deck.id}: ${
+        `Failed to import to TCO with unknown error ${deck[0]}: ${
           response.status
         } ${JSON.stringify(respJson)}`,
       )
@@ -208,7 +211,7 @@ const importDecksToTco = async (decks: { [id: string]: Deck }) => {
       })
       .catch(() => {})
 
-    console.log(`Waiting before next import due to rate limits...`)
+    console.debug(`Waiting before next import due to rate limits...`)
     await new Promise(resolve => setTimeout(resolve, 10000))
   }
 }

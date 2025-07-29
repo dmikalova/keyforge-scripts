@@ -20,7 +20,7 @@
       "all_frames": true
     },
     {
-      "matches": ["https://keyforgegame.com/"],
+      "matches": ["https://*.keyforgegame.com/*"],
       "js": ["dist/content-mv.js"],
       "run_at": "document_idle"
     },

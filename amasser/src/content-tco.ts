@@ -3,7 +3,7 @@ const tcoObserver = new MutationObserver(mutations => {
   for (const mutation of mutations) {
     if (mutation.type === 'childList') {
       if (document.querySelector('a#nav-Profile')) {
-        console.log('KF Amasser: User is logged in to TCO')
+        console.debug('KF Amasser: User is logged in to TCO')
         const tcoRefreshToken = window.localStorage.getItem('refreshToken')
         if (tcoRefreshToken !== null) {
           chrome.runtime.sendMessage(
@@ -13,7 +13,7 @@ const tcoObserver = new MutationObserver(mutations => {
             },
             response => {
               if (response && response.success) {
-                console.log(
+                console.debug(
                   'KF Amasser: Sent TCO refresh token to background script',
                 )
               } else {
