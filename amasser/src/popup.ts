@@ -29,7 +29,7 @@ const setupEventListeners = async () => {
   if (syncDokToggle) {
     syncDokToggle.addEventListener('change', async () => {
       await chrome.storage.sync.set({
-        syncDok:
+        'sync-dok':
           syncDokToggle instanceof HTMLInputElement && syncDokToggle.checked,
       })
       loadState().then(state => loadUsers(state.settings))
@@ -39,19 +39,18 @@ const setupEventListeners = async () => {
   if (syncTcoToggle) {
     syncTcoToggle.addEventListener('change', async () => {
       await chrome.storage.sync.set({
-        syncTco:
+        'sync-tco':
           syncTcoToggle instanceof HTMLInputElement && syncTcoToggle.checked,
       })
       loadState().then(state => loadUsers(state.settings))
     })
   }
-  const syncDailyToggle = document.getElementById('sync-daily-toggle')
-  if (syncDailyToggle) {
-    syncDailyToggle.addEventListener('change', async () => {
+  const syncAutoToggle = document.getElementById('sync-auto-toggle')
+  if (syncAutoToggle) {
+    syncAutoToggle.addEventListener('change', async () => {
       await chrome.storage.sync.set({
-        syncDaily:
-          syncDailyToggle instanceof HTMLInputElement &&
-          syncDailyToggle.checked,
+        'sync-auto':
+          syncAutoToggle instanceof HTMLInputElement && syncAutoToggle.checked,
       })
     })
   }
@@ -86,20 +85,10 @@ const setupEventListeners = async () => {
   }
 }
 
-const getSettings = async () => {
-  return new Promise(resolve => {
-    chrome.storage.sync.get(null, result => {
-      resolve(result)
-    })
-  })
-}
-
 const loadState = async () => {
-  const settings: any = await getSettings()
-  console.log('loaded settings:', settings)
+  const settings: Settings = await chrome.storage.sync.get()
 
   const { mv: decks } = await getDecksFromStorage()
-  console.log('loaded decks:', decks)
 
   const deckCountElem = document.getElementById('deck-count')
   if (deckCountElem) {
@@ -112,45 +101,45 @@ const loadState = async () => {
   const syncTcoToggle = document.getElementById(
     'sync-tco-toggle',
   ) as HTMLInputElement
-  const syncDailyToggle = document.getElementById(
-    'sync-daily-toggle',
+  const syncAutoToggle = document.getElementById(
+    'sync-auto-toggle',
   ) as HTMLInputElement
-  if (!syncDokToggle || !syncTcoToggle || !syncDailyToggle) {
+  if (!syncDokToggle || !syncTcoToggle || !syncAutoToggle) {
     console.error('Sync toggles not found in popup')
     return
   }
   // Set toggle states based on stored data
-  if (settings.syncDok === undefined) {
+  if (settings['sync-dok'] === undefined) {
     // Default to true if not set
-    settings.syncDok = true
+    settings['sync-dok'] = true
   }
-  if (settings.syncTco === undefined) {
+  if (settings['sync-tco'] === undefined) {
     // Default to true if not set
-    settings.syncTco = false
+    settings['sync-tco'] = false
   }
-  if (settings.syncDaily === undefined) {
+  if (settings['sync-auto'] === undefined) {
     // Default to true if not set
-    settings.syncDaily = false
+    settings['sync-auto'] = false
   }
   // Update toggle states
   console.log('Setting sync toggles:', {
-    syncDok: settings.syncDok,
-    syncTco: settings.syncTco,
-    syncDaily: settings.syncDaily,
+    'sync-dok': settings['sync-dok'],
+    'sync-tco': settings['sync-tco'],
+    'sync-auto': settings['sync-auto'],
   })
 
   // Set toggle states
   if (syncDokToggle) {
     syncDokToggle instanceof HTMLInputElement &&
-      (syncDokToggle.checked = settings.syncDok || false)
+      (syncDokToggle.checked = settings['sync-dok'] || false)
   }
   if (syncTcoToggle) {
     syncTcoToggle instanceof HTMLInputElement &&
-      (syncTcoToggle.checked = settings.syncTco || false)
+      (syncTcoToggle.checked = settings['sync-tco'] || false)
   }
-  if (syncDailyToggle) {
-    syncDailyToggle instanceof HTMLInputElement &&
-      (syncDailyToggle.checked = settings.syncDaily || false)
+  if (syncAutoToggle) {
+    syncAutoToggle instanceof HTMLInputElement &&
+      (syncAutoToggle.checked = settings['sync-auto'] || false)
   }
 
   console.log('Current value: ', Object.keys(decks || {}).length)
@@ -238,9 +227,9 @@ const resetButtons = () => {
     syncTcoToggle.disabled = false
   }
 
-  const syncDailyToggle = document.getElementById('sync-daily-toggle')
-  if (syncDailyToggle && syncDailyToggle instanceof HTMLInputElement) {
-    syncDailyToggle.disabled = false
+  const syncAutoToggle = document.getElementById('sync-auto-toggle')
+  if (syncAutoToggle && syncAutoToggle instanceof HTMLInputElement) {
+    syncAutoToggle.disabled = false
   }
 
   const syncButton = document.getElementById('sync-decks')
@@ -323,7 +312,7 @@ const loadUsers = async settings => {
     })(),
   )
 
-  if (settings.syncDok) {
+  if (settings['sync-dok']) {
     userPromises.push(
       (async () => {
         console.log('Getting DoK username')
@@ -362,7 +351,7 @@ const loadUsers = async settings => {
     }
   }
 
-  if (settings.syncTco) {
+  if (settings['sync-tco']) {
     userPromises.push(
       (async () => {
         console.log('Getting TCO username')
@@ -407,15 +396,12 @@ const loadUsers = async settings => {
     })
     .catch(error => {
       console.error('Error loading users:', error)
-      // Do not reset buttons if any promise fails
     })
 }
 
 const loadQuotes = () => {
-  console.log('Loading quote')
   const quoteElem = document.getElementById('quote')
   if (quoteElem) {
     quoteElem.textContent = quotes[Math.floor(Math.random() * quotes.length)]
-    console.log('Quote should be loaded')
   }
 }

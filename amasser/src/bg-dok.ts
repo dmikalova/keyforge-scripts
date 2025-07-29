@@ -25,7 +25,7 @@ export const handleDokSync = async () => {
  */
 export const getDokToken = async (): Promise<string | null> => {
   // Check for token in local storage
-  let { 'dok-auth': token } = await chrome.storage.local.get(['dok-auth'])
+  let { 'token-dok': token } = await chrome.storage.local.get(['token-dok'])
 
   if (!token) {
     console.log('You must login to Decks of KeyForge first')

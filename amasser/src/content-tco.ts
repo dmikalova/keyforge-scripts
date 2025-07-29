@@ -9,7 +9,7 @@ const tcoObserver = new MutationObserver(mutations => {
           chrome.runtime.sendMessage(
             {
               type: 'SAVE_TCO_REFRESH_TOKEN',
-              'tco-refresh-token': tcoRefreshToken,
+              'token-tco': tcoRefreshToken,
             },
             response => {
               if (response && response.success) {

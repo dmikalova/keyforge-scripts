@@ -22,8 +22,8 @@ export const handleTcoSync = async () => {
 
 export const getTcoRefreshToken = async (): Promise<string | null> => {
   // Check for token in local storage
-  let { 'tco-refresh-token': refreshToken } = await chrome.storage.local.get([
-    'tco-refresh-token',
+  let { 'token-tco': refreshToken } = await chrome.storage.local.get([
+    'token-tco',
   ])
 
   if (!refreshToken) {

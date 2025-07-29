@@ -14,10 +14,9 @@ interface Deck {
 
 // Settings interface
 interface Settings {
-  syncDok?: boolean
-  syncTco?: boolean
-  syncDaily?: boolean
-  [key: string]: any
+  'sync-auto'?: boolean
+  'sync-dok'?: boolean
+  'sync-tco'?: boolean
 }
 
 // Auth interfaces
@@ -56,9 +55,9 @@ interface TcoUser {
 interface StorageData {
   decks?: { [id: string]: Deck }
   settings?: Settings
-  'mv-auth'?: string
-  'dok-auth'?: string
-  'tco-refresh-token'?: string
+  'token-mv'?: string
+  'token-dok'?: string
+  'token-tco'?: string
   [key: string]: any
 }
 

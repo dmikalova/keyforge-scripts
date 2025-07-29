@@ -11,7 +11,7 @@ An unofficial browser extension for Chrome and Firefox that collects KeyForge de
   - An initial sync of 1000 decks to DoK can take 10 minutes.
   - An initial sync of 1000 decks to TCO can take 6 hours due to rate limiting.
 - Syncing runs in the background - once started the extension popup can be closed without interrupting the sync.
-- Syncing can automatically run daily as long as you are logged in to each site and the browser is left open.
+- Syncing can automatically run daily while the browser is open and on each visit or deck scan in MV as long as you are logged in to each site.
 - Includes fun, inspiring, and thought-provoking quotes to ponder while waiting for the sync to complete.
 - Brilliant graphic design that is bright enoough to be seen from space.
 

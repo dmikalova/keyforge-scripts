@@ -17,13 +17,13 @@ chrome.commands.onCommand.addListener(shortcut => {
 chrome.runtime.onInstalled.addListener(async details => {
   console.log('Extension installed:', details)
 
-  const settings = await chrome.storage.sync.get()
+  const settings: Settings = await chrome.storage.sync.get()
 
   // Initialize default settings
   chrome.storage.sync.set({
-    syncDok: settings.syncDok || true,
-    syncTco: settings.syncTco || false,
-    syncDaily: settings.syncDaily || false,
+    'sync-dok': settings['sync-dok'] || true,
+    'sync-tco': settings['sync-tco'] || false,
+    'sync-auto': settings['sync-auto'] || false,
   })
 })
 
@@ -34,6 +34,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.type) {
     case 'SYNC_COMPLETE':
       console.log('Deck sync complete in bg')
+      chrome.storage.local.remove(
+        ['syncing-dok', 'syncing-mv', 'syncing-tco'],
+        () => {
+          console.log('removed syncing')
+        },
+      )
       handleRotateIcon(0)
         .then(status => sendResponse({ success: true, status }))
         .catch(error => sendResponse({ success: false, error: error.message }))
@@ -62,29 +68,24 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'SAVE_DOK_AUTH':
       console.log('Received DoK auth token from content script')
-      if (message['dok-auth']) {
-        chrome.storage.local.set({ 'dok-auth': message['dok-auth'] }, () => {
+      if (message['token-dok']) {
+        chrome.storage.local.set({ 'token-dok': message['token-dok'] }, () => {
           console.log('DoK auth token saved to storage from content script')
           sendResponse({ success: true })
         })
       } else {
-        console.warn('SAVE_DOK_AUTH message missing dok-auth token')
-        sendResponse({ success: false, error: 'Missing dok-auth token' })
+        console.warn('SAVE_DOK_AUTH message missing token-dok token')
+        sendResponse({ success: false, error: 'Missing token-dok token' })
       }
       return true
 
     case 'SAVE_TCO_REFRESH_TOKEN':
       console.log('Received TCO refresh token from content script')
-      if (message['tco-refresh-token']) {
-        chrome.storage.local.set(
-          { 'tco-refresh-token': message['tco-refresh-token'] },
-          () => {
-            console.log(
-              'TCO refresh token saved to storage from content script',
-            )
-            sendResponse({ success: true })
-          },
-        )
+      if (message['token-tco']) {
+        chrome.storage.local.set({ 'token-tco': message['token-tco'] }, () => {
+          console.log('TCO refresh token saved to storage from content script')
+          sendResponse({ success: true })
+        })
       } else {
         console.warn('SAVE_TCO_REFRESH_TOKEN message missing TCO refresh token')
         sendResponse({ success: false, error: 'Missing TCO refresh token' })
@@ -99,29 +100,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 const handleDeckSync = async () => {
   console.log('Syncing decks from bg...')
-  try {
-    await handleMvSync()
-    if ((await chrome.storage.sync.get('syncDok')).syncDok) {
-      await handleDokSync()
-    }
-    if ((await chrome.storage.sync.get('syncTco')).syncTco) {
-      await handleTcoSync()
-    }
+  const syncPromises = []
 
-    // Notify popup that sync is complete
-    console.log('Deck sync complete in bg')
-    chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
-  } catch (error) {
-    console.error('Error during deck sync:', error)
-    // Notify popup that sync failed
-    chrome.runtime
-      .sendMessage({
-        type: 'SYNC_ERROR',
-        error: error.message,
-      })
-      .catch(() => {})
-    throw error // Re-throw so the message handler can also handle it
+  chrome.storage.local.set({ 'syncing-mv': Date.now() })
+  syncPromises.push(handleMvSync())
+
+  if ((await chrome.storage.sync.get('syncDok')).syncDok) {
+    chrome.storage.local.set({ 'syncing-dok': Date.now() })
+    syncPromises.push(handleDokSync())
   }
+
+  if ((await chrome.storage.sync.get('syncTco')).syncTco) {
+    chrome.storage.local.set({ 'syncing-tco': Date.now() })
+    syncPromises.push(handleTcoSync())
+  }
+
+  await Promise.all(syncPromises)
+    .then(≈() => {
+      // Notify popup that sync is complete
+      console.log('Deck sync promises complete in bg')
+      // Remove await to avoid background script termination before message is handled
+      chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {
+        console.log('Failed to send SYNC_COMPLETE message')
+      })
+    })
+    .catch(error => {
+      console.error('Error during deck sync:', error)
+      // Notify popup that sync failed
+      chrome.runtime
+        .sendMessage({
+          type: 'SYNC_ERROR',
+          error: error.message,
+        })
+        .catch(() => {})
+      throw error // Re-throw so the message handler can also handle it
+    })
 }
 
 const ICON_ROTATIONS = [
