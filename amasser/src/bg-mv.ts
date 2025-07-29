@@ -223,8 +223,6 @@ const favoriteLegacyDecks = async decks => {
   }
 }
 
-// TODO: get existing DoK decks
-// TODO: import DoK/TCO decks just once
 // TODO: switch to asynchronous data model:
 // have dok/tco worker syncing decks while mv is syncing or decks unsynced
 // TODO: implement a mutex in the sync by storing a timestamp on each sync, and if a sync doesn't happen in a minute or whatever release it

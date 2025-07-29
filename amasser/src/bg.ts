@@ -101,12 +101,12 @@ const handleDeckSync = async () => {
   chrome.storage.local.set({ 'syncing-mv': Date.now() })
   syncPromises.push(handleMvSync())
 
-  if ((await chrome.storage.sync.get('syncDok')).syncDok) {
+  if ((await chrome.storage.sync.get('sync-dok'))['sync-dok']) {
     chrome.storage.local.set({ 'syncing-dok': Date.now() })
     syncPromises.push(handleDokSync())
   }
 
-  if ((await chrome.storage.sync.get('syncTco')).syncTco) {
+  if ((await chrome.storage.sync.get('sync-tco'))['sync-tco']) {
     chrome.storage.local.set({ 'syncing-tco': Date.now() })
     syncPromises.push(handleTcoSync())
   }

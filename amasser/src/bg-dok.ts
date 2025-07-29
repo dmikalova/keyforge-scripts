@@ -2,7 +2,7 @@ import { getDecksFromStorage } from './lib.js'
 
 // Decks of KeyForge configuration
 const DOK_BASE_URL = 'https://decksofkeyforge.com'
-const SYNC_MSGS = ['Syncing DoK..', 'Syncing DoK...', 'Syncing DoK.']
+const SYNC_MSGS = ['Syncing DoK.', 'Syncing DoK..', 'Syncing DoK...']
 
 export const handleDokSync = async () => {
   console.debug('DoK deck sync started')
@@ -38,18 +38,15 @@ export const getDokToken = async (): Promise<string | null> => {
 }
 
 export const getDokUser = async (token: string): Promise<string> => {
-  const response = await fetch(
-    'https://decksofkeyforge.com/api/users/secured/your-user',
-    {
-      credentials: 'include',
-      headers: {
-        accept: 'application/json',
-        'accept-language': 'en-us',
-        authorization: token,
-        'x-authorization': token,
-      },
+  const response = await fetch(`${DOK_BASE_URL}/api/users/secured/your-user`, {
+    credentials: 'include',
+    headers: {
+      accept: 'application/json',
+      'accept-language': 'en-us',
+      authorization: token,
+      'x-authorization': token,
     },
-  )
+  })
 
   if (!response.ok) {
     throw new Error(`Failed to fetch user: ${response.status}`)
@@ -77,11 +74,93 @@ const createDokRequestConfig = (token: string): RequestInit => ({
 
 const importDecksToDok = async (mv: Decks, dok: Decks) => {
   const token = await getDokToken()
+  const username = await getDokUser(token)
 
   // Filter out decks that already have dok=true
-  const decksToImport = Object.entries(mv).filter(
+  let decksToImport = Object.entries(mv).filter(
     ([id, deck]) => deck === true && !dok[id],
   )
+
+  if (decksToImport.length === 0) {
+    console.debug('KFA: DoK: No new decks to import')
+    return
+  }
+
+  console.debug(
+    `KFA: DoK: Importing ${decksToImport.length} decks...`,
+    decksToImport[0],
+  )
+
+  let dokLibraryPage = 0
+  let dokNextPage = true
+  let dokLibrary = []
+
+  await fetch(`${DOK_BASE_URL}/api/decks/filter`, {
+    credentials: 'include',
+    headers: {
+      accept: 'application/json, text/plain, */*',
+      'accept-language': 'en-US,en;q=0.9,da;q=0.8',
+      authorization: token,
+      'cache-control': 'no-cache',
+      'content-type': 'application/json;charset=UTF-8',
+      pragma: 'no-cache',
+      timezone: '-240',
+    },
+    body: JSON.stringify({
+      houses: [],
+      page: dokLibraryPage,
+      constraints: [],
+      expansions: [],
+      pageSize: 1000,
+      title: '',
+      sort: 'ADDED_DATE',
+      forSale: false,
+      notForSale: false,
+      forTrade: false,
+      forAuction: false,
+      withOwners: false,
+      completedAuctions: false,
+      includeUnregistered: true,
+      myFavorites: false,
+      cards: [],
+      sortDirection: 'DESC',
+      owner: username,
+    }),
+    method: 'POST',
+  })
+    .then(response => response.json())
+    .then(response => {
+      if (response.decks.length === 0) {
+        dokNextPage = false
+        return
+      }
+      console.debug(
+        `Fetched ${response.decks.length} decks from DoK library on page ${
+          dokLibraryPage + 1
+        }`,
+      )
+      dokLibrary = dokLibrary.concat(response.decks)
+    })
+    .catch(error => {
+      console.error('Error fetching DoK library:', error)
+      dokNextPage = false
+    })
+  console.debug(`Fetched ${dokLibrary.length} decks from DoK library`)
+
+  for (const deck of dokLibrary) {
+    // console.debug(`KFA: DoK: Found deck in library: ${deck.keyforgeId}`)
+    dok[deck.keyforgeId] = true
+    chrome.storage.local.set({ [`zdok.${deck.keyforgeId}`]: true })
+  }
+
+  decksToImport = Object.entries(mv).filter(
+    ([id, deck]) => deck === true && !dok[id],
+  )
+
+  if (decksToImport.length === 0) {
+    console.debug('KFA: DoK: No new deckz to import')
+    return
+  }
 
   for (const [i, deck] of decksToImport.entries()) {
     console.debug(
@@ -90,7 +169,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
       )} to DoK...`,
     )
     const response = await fetch(
-      `https://decksofkeyforge.com/api/decks/${deck[0]}/import-and-add`,
+      `${DOK_BASE_URL}/api/decks/${deck[0]}/import-and-add`,
       createDokRequestConfig(token),
     )
 

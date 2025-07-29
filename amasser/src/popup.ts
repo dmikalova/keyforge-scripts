@@ -92,7 +92,7 @@ const loadState = async () => {
 
   const deckCountElem = document.getElementById('deck-count')
   if (deckCountElem) {
-    deckCountElem.textContent = Object.keys(decks || {}).length.toString()
+    deckCountElem.textContent = Object.keys(decks || {}).length.toLocaleString()
   }
 
   const syncDokToggle = document.getElementById(
