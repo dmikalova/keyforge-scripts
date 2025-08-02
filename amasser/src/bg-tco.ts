@@ -1,13 +1,18 @@
-import { getDecksFromStorage } from './lib.js'
+import {
+  getDecksFromStorage,
+  staleSyncSeconds,
+  syncAgainSeconds,
+} from './lib.js'
 
 // The Crucible Online API configuration
 const TCO_BASE_URL = 'https://thecrucible.online'
 const SYNC_MSGS = ['Syncing TCO..', 'Syncing TCO...', 'Syncing TCO.']
 
 export const handleTcoSync = async () => {
-  if (
-    await chrome.storage.local.get(['syncing-tco']).then(r => r['syncing-tco'])
-  ) {
+  const syncingTco = await chrome.storage.local
+    .get(['syncing-tco'])
+    .then(r => r['syncing-tco'])
+  if (syncingTco && Date.now() - syncingTco < staleSyncSeconds) {
     console.debug(`KFA: TCO: sync already in progress`)
     return
   }
@@ -19,6 +24,7 @@ export const handleTcoSync = async () => {
     await importDecksToTco(mv, tco)
   } catch (error) {
     console.error('KFA: TCO: Error syncing decks:', error)
+    chrome.storage.local.remove(['syncing-tco'])
     chrome.runtime
       .sendMessage({
         type: 'SYNC_ERROR',
@@ -28,6 +34,15 @@ export const handleTcoSync = async () => {
   }
 
   chrome.storage.local.remove(['syncing-tco'])
+
+  // If MV sync is in progress, trigger TCO sync again
+  const syncingMv = await chrome.storage.local
+    .get(['syncing-mv'])
+    .then(r => r['syncing-mv'])
+  if (syncingMv && Date.now() - syncingMv < staleSyncSeconds) {
+    await new Promise(resolve => setTimeout(resolve, syncAgainSeconds))
+    handleTcoSync()
+  }
 }
 
 export const getTcoRefreshToken = async (): Promise<string | null> => {
@@ -126,7 +141,10 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
   tcoDecks.forEach(tcoDeck => {
     if (mv[tcoDeck.uuid]) {
       tco[tcoDeck.uuid] = true
-      chrome.storage.local.set({ [`ztco.${tcoDeck.uuid}`]: true })
+      chrome.storage.local.set({
+        [`ztco.${tcoDeck.uuid}`]: true,
+        'syncing-tco': Date.now(),
+      })
     }
   })
 
@@ -172,8 +190,10 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     if (response.ok && respJson.success) {
       console.debug(`Imported ${deck[0]}`)
       tco[deck[0]] = true
-      chrome.storage.local.set({ [`ztco.${deck[0]}`]: true })
-      // if isAlliance = false
+      chrome.storage.local.set({
+        [`ztco.${deck[0]}`]: true,
+        'syncing-tco': Date.now(),
+      })
     } else if (
       response.ok &&
       !respJson.success &&
@@ -181,7 +201,10 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     ) {
       console.debug(`Deck already imported to TCO ${deck[0]}`)
       tco[deck[0]] = true
-      chrome.storage.local.set({ [`ztco.${deck[0]}`]: true })
+      chrome.storage.local.set({
+        [`ztco.${deck[0]}`]: true,
+        'syncing-tco': Date.now(),
+      })
     } else if (
       response.ok &&
       !respJson.success &&
@@ -189,7 +212,10 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     ) {
       console.debug(`Failed to import to TCO with known error ${deck[0]}`)
       tco[deck[0]] = 'import error'
-      chrome.storage.local.set({ [`ztco.${deck[0]}`]: 'import error' })
+      chrome.storage.local.set({
+        [`ztco.${deck[0]}`]: 'import error',
+        'syncing-tco': Date.now(),
+      })
     } else if (
       response.ok &&
       !respJson.success &&

@@ -1,9 +1,10 @@
 // Background service worker for the KeyForge Amasser extension
-console.debug('KeyForge Amasser background script loaded')
+console.debug('KFA: BG: script loaded')
 
 import { handleDokSync } from './bg-dok.js'
 import { handleMvSync } from './bg-mv.js'
 import { handleTcoSync } from './bg-tco.js'
+import { staleSyncSeconds } from './lib.js'
 
 chrome.commands.onCommand.addListener(shortcut => {
   console.debug('lets reload')
@@ -15,7 +16,7 @@ chrome.commands.onCommand.addListener(shortcut => {
 
 // Extension installation/startup
 chrome.runtime.onInstalled.addListener(async details => {
-  console.debug('Extension installed:', details)
+  console.debug('KFA: BG: Extension installed:', details)
 
   const settings: Settings = await chrome.storage.sync.get()
 
@@ -32,31 +33,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.debug('Background received message of type:', message.type)
 
   switch (message.type) {
-    case 'SYNC_COMPLETE':
-      console.debug('Deck sync complete in bg')
-      handleRotateIcon(0)
-        .then(status => sendResponse({ success: true, status }))
-        .catch(error => sendResponse({ success: false, error: error.message }))
-      return true
-
-    case 'SYNC_ERROR':
-      handleRotateIcon(180)
-        .then(status => sendResponse({ success: true, status }))
-        .catch(error => sendResponse({ success: false, error: error.message }))
-
     case 'SYNC_START':
-      handleRotateIcon(15)
+      handleRotateIcon()
         .then(status => sendResponse({ success: true, status }))
         .catch(error => sendResponse({ success: false, error: error.message }))
 
       handleDeckSync()
         .then(() => sendResponse({ success: true }))
-        .catch(error => sendResponse({ success: false, error: error.message }))
-      return true
-
-    case 'SYNC_STATUS':
-      handleRotateIcon()
-        .then(status => sendResponse({ success: true, status }))
         .catch(error => sendResponse({ success: false, error: error.message }))
       return true
 
@@ -101,12 +84,10 @@ const handleDeckSync = async () => {
   syncPromises.push(handleMvSync())
 
   if ((await chrome.storage.sync.get('sync-dok'))['sync-dok']) {
-    chrome.storage.local.set({ 'syncing-dok': Date.now() })
     syncPromises.push(handleDokSync())
   }
 
   if ((await chrome.storage.sync.get('sync-tco'))['sync-tco']) {
-    chrome.storage.local.set({ 'syncing-tco': Date.now() })
     syncPromises.push(handleTcoSync())
   }
 
@@ -149,24 +130,51 @@ const ICON_ROTATIONS = [
   '../icons/amasser-128-345.png',
 ]
 
-const handleRotateIcon = async (angle?: number) => {
-  console.debug('Rotating icon to angle:', angle)
+const handleRotateIcon = async () => {
+  console.debug('KFA: BG: Rotating icon during sync...')
+  let rotation = 0
+  let s = await chrome.storage.local.get([
+    'syncing-dok',
+    'syncing-mv',
+    'syncing-tco',
+  ])
+  let now = Date.now()
+  console.log('syncings', JSON.stringify(s))
+  while (Object.keys(s).length === 0) {
+    rotation++ % ICON_ROTATIONS.length
+    console.debug(`KFA: BG: Rotating icon to angle: ${rotation}`)
+    await chrome.action.setIcon({
+      path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
+    })
 
-  let iconPath: string
-  if (angle === undefined) {
-    // Keep a counter in chrome.storage.local and increment it each time
-    const { iconAngle = 0 } = await chrome.storage.local.get('iconAngle')
-    angle = iconAngle + 1
-    await chrome.storage.local.set({ iconAngle: angle })
-
-    iconPath = ICON_ROTATIONS[angle % ICON_ROTATIONS.length]
-  } else {
-    iconPath =
-      ICON_ROTATIONS.find(path => path.includes(`${angle}`)) ||
-      ICON_ROTATIONS[0]
+    await new Promise(resolve => setTimeout(resolve, 100))
+    s = await chrome.storage.local.get([
+      'syncing-dok',
+      'syncing-mv',
+      'syncing-tco',
+    ])
   }
 
-  chrome.action.setIcon({
-    path: iconPath,
-  })
+  while (
+    (s['syncing-dok'] && now - s['syncing-dok'] < staleSyncSeconds) ||
+    (s['syncing-mv'] && now - s['syncing-mv'] < staleSyncSeconds) ||
+    (s['syncing-tco'] && now - s['syncing-tco'] < staleSyncSeconds)
+  ) {
+    rotation++ % ICON_ROTATIONS.length
+    console.debug(`KFA: BG: Rotating icon to angle: ${rotation}`)
+    await chrome.action.setIcon({
+      path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
+    })
+
+    // Wait for a short interval before checking again
+    await new Promise(resolve => setTimeout(resolve, 75))
+    s = await chrome.storage.local.get([
+      'syncing-dok',
+      'syncing-mv',
+      'syncing-tco',
+    ])
+    now = Date.now()
+  }
+
+  await chrome.action.setIcon({ path: ICON_ROTATIONS[0] })
 }

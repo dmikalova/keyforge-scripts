@@ -180,7 +180,6 @@ const clearData = () => {
 const handleBackgroundMessage = message => {
   switch (message.type) {
     case 'SYNC_COMPLETE':
-      console.debug('Deck sync complete in popup')
       resetButtons()
       console.debug('Sync completed successfully!')
       break
@@ -279,6 +278,11 @@ const handleSyncStatus = message => {
     body.style.setProperty('--count', `${newCount % 360}deg`)
   }
 }
+
+// TODO: if in the middle of a sync then don't reset buttons
+// TODO: when syncing rotate the ...
+// TODO: remove the button status message and just check on sync status
+// TODO: if in a sync change the clear data button to cancel sync
 
 const loadUsers = async settings => {
   const userPromises = []

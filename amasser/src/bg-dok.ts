@@ -1,4 +1,8 @@
-import { getDecksFromStorage } from './lib.js'
+import {
+  getDecksFromStorage,
+  staleSyncSeconds,
+  syncAgainSeconds,
+} from './lib.js'
 
 // Decks of KeyForge configuration
 const DOK_BASE_URL = 'https://decksofkeyforge.com'
@@ -8,8 +12,10 @@ export const handleDokSync = async () => {
   const syncingDok = await chrome.storage.local
     .get(['syncing-dok'])
     .then(r => r['syncing-dok'])
-  if (syncingDok && Date.now() - syncingDok < 60 * 1000) {
-    console.debug(`KFA: DoK: sync already in progress`)
+  if (syncingDok && Date.now() - syncingDok < staleSyncSeconds) {
+    console.debug(
+      `KFA: DoK: sync already in progress: ${Date.now() - syncingDok}ms`,
+    )
     return
   }
   chrome.storage.local.set({ 'syncing-dok': Date.now() })
@@ -32,9 +38,11 @@ export const handleDokSync = async () => {
   chrome.storage.local.remove(['syncing-dok'])
 
   // If MV sync is in progress, trigger Dok sync again
-  if (
-    await chrome.storage.local.get(['syncing-mv']).then(r => r['syncing-mv'])
-  ) {
+  const syncingMv = await chrome.storage.local
+    .get(['syncing-mv'])
+    .then(r => r['syncing-mv'])
+  if (syncingMv && Date.now() - syncingMv < staleSyncSeconds) {
+    await new Promise(resolve => setTimeout(resolve, syncAgainSeconds))
     handleDokSync()
   }
 }
@@ -135,8 +143,10 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
 
   for (const deck of dokLibrary) {
     dok[deck.keyforgeId] = true
-    chrome.storage.local.set({ [`zdok.${deck.keyforgeId}`]: true })
-    chrome.storage.local.set({ 'syncing-dok': Date.now() })
+    chrome.storage.local.set({
+      [`zdok.${deck.keyforgeId}`]: true,
+      'syncing-dok': Date.now(),
+    })
   }
 
   decksToImport = Object.entries(mv).filter(
@@ -160,8 +170,10 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
     if (response.ok) {
       console.debug(`Imported ${deck[0]}`)
       dok[deck[0]] = true
-      chrome.storage.local.set({ [`zdok.${deck[0]}`]: true })
-      chrome.storage.local.set({ 'syncing-dok': Date.now() })
+      chrome.storage.local.set({
+        [`zdok.${deck[0]}`]: true,
+        'syncing-dok': Date.now(),
+      })
     } else {
       console.error(`Failed to import ${deck[0]}: ${response.status}`)
     }

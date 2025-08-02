@@ -231,14 +231,8 @@ const favoriteLegacyDecks = async decks => {
   }
 }
 
-// TODO: switch to asynchronous data model:
-// have dok/tco worker syncing decks while mv is syncing or decks unsynced
-// TODO: implement a mutex in the sync by storing a timestamp on each sync, and if a sync doesn't happen in a minute or whatever release it
 // TODO: stop all clicks while running
-// TODO: don't allow clicks while bg syncing
-// TODO: DoK/TCO sync should run repeatedly while MV sync is running
-// 
+// TODO: don't allow clicks while bg syncing//
 // TODO: while syncing change clear data to stop sync - probably by restarting the extension?
 // TODO: run daily https://stackoverflow.com/questions/36241436/chrome-extension-use-javascript-to-run-periodically-and-log-data-permanently
 // TODO: clearing data should restart the extension as well
-// TODO: amasser count per site

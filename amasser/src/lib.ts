@@ -21,3 +21,6 @@ export const getDecksFromStorage = async () => {
   })
   return decks
 }
+
+export const staleSyncSeconds = 60 * 1000
+export const syncAgainSeconds = 2 * 1000
