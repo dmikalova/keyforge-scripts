@@ -98,7 +98,6 @@ const handleDeckSync = async () => {
   console.debug('Syncing decks from bg...')
   const syncPromises = []
 
-  chrome.storage.local.set({ 'syncing-mv': Date.now() })
   syncPromises.push(handleMvSync())
 
   if ((await chrome.storage.sync.get('sync-dok'))['sync-dok']) {

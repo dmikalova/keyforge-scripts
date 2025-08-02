@@ -208,7 +208,7 @@ const handleBackgroundMessage = message => {
 const updateDeckCount = count => {
   const deckCountElement = document.getElementById('deck-count')
   if (deckCountElement) {
-    deckCountElement.textContent = count || '0'
+    deckCountElement.textContent = (count || '0').toLocaleString()
   }
 }
 

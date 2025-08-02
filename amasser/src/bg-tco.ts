@@ -5,12 +5,20 @@ const TCO_BASE_URL = 'https://thecrucible.online'
 const SYNC_MSGS = ['Syncing TCO..', 'Syncing TCO...', 'Syncing TCO.']
 
 export const handleTcoSync = async () => {
-  console.debug('TCO deck sync started')
+  if (
+    await chrome.storage.local.get(['syncing-tco']).then(r => r['syncing-tco'])
+  ) {
+    console.debug(`KFA: TCO: sync already in progress`)
+    return
+  }
+  chrome.storage.local.set({ 'syncing-tco': Date.now() })
+  console.debug('KFA: TCO: deck sync started')
+
   try {
     const { mv, tco } = await getDecksFromStorage()
     await importDecksToTco(mv, tco)
   } catch (error) {
-    console.error('Error syncing TCO decks:', error)
+    console.error('KFA: TCO: Error syncing decks:', error)
     chrome.runtime
       .sendMessage({
         type: 'SYNC_ERROR',
@@ -53,13 +61,6 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
     headers: {
       accept: 'application/json',
       'accept-language': 'en-us',
-      // authorization: `Bearer ${token}`,
-      // 'content-type': 'application/json',
-      // 'x-authorization': `Bearer ${token}`,
-      // 'x-requested-with': 'XMLHttpRequest',
-      // referrer: 'https://www.thecrucible.online/',
-      // accept: '*/*',
-      // 'accept-language': 'en-US,en;q=0.9,da;q=0.8',
       'cache-control': 'no-cache',
       'content-type': 'application/json',
       pragma: 'no-cache',

@@ -8,12 +8,20 @@ const SYNC_MSGS = ['Syncing MV.', 'Syncing MV..', 'Syncing MV...']
  * Main entry point for Master Vault synchronization
  */
 export const handleMvSync = async () => {
-  console.debug('MV deck sync started')
+  if (
+    await chrome.storage.local.get(['syncing-mv']).then(r => r['syncing-mv'])
+  ) {
+    console.debug(`KFA: MV: sync already in progress`)
+    return
+  }
+  chrome.storage.local.set({ 'syncing-mv': Date.now() })
+  console.debug('KFA: MV: deck sync started')
+
   try {
     const { mv: decks } = await getDecksFromStorage()
     await getDecksFromMv(decks)
   } catch (error) {
-    console.error('Error syncing MV decks:', error)
+    console.error('KFA: MV: Error syncing decks:', error)
     chrome.runtime
       .sendMessage({
         type: 'SYNC_ERROR',
@@ -228,8 +236,9 @@ const favoriteLegacyDecks = async decks => {
 // TODO: implement a mutex in the sync by storing a timestamp on each sync, and if a sync doesn't happen in a minute or whatever release it
 // TODO: stop all clicks while running
 // TODO: don't allow clicks while bg syncing
+// TODO: DoK/TCO sync should run repeatedly while MV sync is running
+// 
 // TODO: while syncing change clear data to stop sync - probably by restarting the extension?
 // TODO: run daily https://stackoverflow.com/questions/36241436/chrome-extension-use-javascript-to-run-periodically-and-log-data-permanently
 // TODO: clearing data should restart the extension as well
 // TODO: amasser count per site
-// TODO: commas in amasser count
