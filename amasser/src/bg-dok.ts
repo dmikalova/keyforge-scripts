@@ -6,7 +6,6 @@ import {
 
 // Decks of KeyForge configuration
 const DOK_BASE_URL = 'https://decksofkeyforge.com'
-const SYNC_MSGS = ['Syncing DoK.', 'Syncing DoK..', 'Syncing DoK...']
 
 export const handleDokSync = async () => {
   const syncingDok = await chrome.storage.local
@@ -177,12 +176,5 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
     } else {
       console.error(`Failed to import ${deck[0]}: ${response.status}`)
     }
-
-    chrome.runtime
-      .sendMessage({
-        type: 'SYNC_STATUS',
-        button: SYNC_MSGS[i % SYNC_MSGS.length],
-      })
-      .catch(() => {})
   }
 }

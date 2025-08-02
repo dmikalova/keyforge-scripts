@@ -6,7 +6,6 @@ import {
 
 // The Crucible Online API configuration
 const TCO_BASE_URL = 'https://thecrucible.online'
-const SYNC_MSGS = ['Syncing TCO..', 'Syncing TCO...', 'Syncing TCO.']
 
 export const handleTcoSync = async () => {
   const syncingTco = await chrome.storage.local
@@ -222,7 +221,10 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
       respJson.message === 'Invalid response from Api. Please try again later.'
     ) {
       console.debug(`Rate limiting hit, pausing`)
-      await new Promise(resolve => setTimeout(resolve, 60000))
+      for (let timeout = 0; timeout < 60; timeout++) {
+        chrome.storage.local.set({ 'syncing-tco': Date.now() })
+        await new Promise(resolve => setTimeout(resolve, 1000))
+      }
     } else {
       console.error(
         `Failed to import to TCO with unknown error ${deck[0]}: ${
@@ -231,14 +233,10 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
       )
     }
 
-    chrome.runtime
-      .sendMessage({
-        type: 'SYNC_STATUS',
-        button: SYNC_MSGS[i % SYNC_MSGS.length],
-      })
-      .catch(() => {})
-
     console.debug(`Waiting before next import due to rate limits...`)
-    await new Promise(resolve => setTimeout(resolve, 10000))
+    for (let timeout = 0; timeout < 10; timeout++) {
+      chrome.storage.local.set({ 'syncing-tco': Date.now() })
+      await new Promise(resolve => setTimeout(resolve, 1000))
+    }
   }
 }

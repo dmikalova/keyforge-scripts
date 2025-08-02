@@ -1,7 +1,11 @@
 import { getDokToken, getDokUser } from './bg-dok.js'
 import { getMvAuth } from './bg-mv.js'
 import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
-import { getDecksFromStorage } from './lib.js'
+import {
+  getDecksFromStorage,
+  rotateAgainSeconds,
+  staleSyncSeconds,
+} from './lib.js'
 import { quotes } from './quotes.js'
 
 // Popup script for KeyForge Amasser extension
@@ -142,8 +146,7 @@ const loadState = async () => {
       (syncAutoToggle.checked = settings['sync-auto'] || false)
   }
 
-  console.debug('Current value: ', Object.keys(decks || {}).length)
-
+  console.debug(`KFA: POP: Deck count: `, Object.keys(decks || {}).length)
   return { decks, settings }
 }
 
@@ -152,8 +155,8 @@ const syncDecks = () => {
   console.debug('Syncing decks from popup..')
 
   // Update button state
-  handleSyncStatus('Syncing...')
-
+  handleSyncStatus(syncMessages[0])
+  checkSyncStatus(true)
   chrome.runtime.sendMessage({ type: 'SYNC_START' })
 }
 
@@ -190,7 +193,6 @@ const handleBackgroundMessage = message => {
       break
 
     case 'SYNC_STATUS':
-      handleSyncStatus(message.button)
       if (message.decks !== undefined) {
         updateDeckCount(message.decks)
       }
@@ -243,10 +245,69 @@ const resetButtons = () => {
   }
 }
 
+const syncMessages = [
+  'Syncing    ',
+  'Syncing.   ',
+  'Syncing..  ',
+  'Syncing... ',
+  'yncing... S',
+  'ncing... Sy',
+  'cing... Syn',
+  'ing... Sync',
+  'ng... Synci',
+  'g... Syncin',
+  '... Syncing',
+  '.. Syncing.',
+  '. Syncing..',
+  ' Syncing...',
+  'Syncing...  ',
+  'Syncing..  ',
+  'Syncing.   ',
+]
+
+const checkSyncStatus = async (wait: boolean = false) => {
+  console.log('KFA: BG: Checking sync status...')
+  let now = Date.now()
+  let shift = 0
+  let s = await chrome.storage.local.get([
+    'syncing-dok',
+    'syncing-mv',
+    'syncing-tco',
+  ])
+  while (
+    (s['syncing-dok'] && now - s['syncing-dok'] < staleSyncSeconds) ||
+    (s['syncing-mv'] && now - s['syncing-mv'] < staleSyncSeconds) ||
+    (s['syncing-tco'] && now - s['syncing-tco'] < staleSyncSeconds) ||
+    wait
+  ) {
+    handleSyncStatus(syncMessages[shift])
+
+    shift = (shift + 1) % syncMessages.length
+    await new Promise(resolve => setTimeout(resolve, rotateAgainSeconds))
+
+    s = await chrome.storage.local.get([
+      'syncing-dok',
+      'syncing-mv',
+      'syncing-tco',
+    ])
+    now = Date.now()
+    if (Object.keys(s).length !== 0) {
+      wait = false
+    }
+    console.debug('running again:', now, wait, s)
+  }
+  console.log('KFA: POP: Sync button state done, resetting buttons')
+}
+
 /**
  * Reset sync button to default state
  */
-const handleSyncStatus = message => {
+const handleSyncStatus = text => {
+  // TODO: if in the middle of a sync then don't reset buttons when popup starts
+  // TODO: when syncing rotate the ...
+  // TODO: remove the button status message and just check on sync status
+  // TODO: if in a sync change the clear data button to cancel sync
+
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
     if (toggle instanceof HTMLInputElement) {
       toggle.disabled = true
@@ -261,7 +322,7 @@ const handleSyncStatus = message => {
 
   const syncButton = document.getElementById('sync-decks')
   if (syncButton && syncButton instanceof HTMLButtonElement) {
-    syncButton.textContent = message
+    syncButton.textContent = text
   }
 
   // Randomly rotate the background gradients
@@ -278,11 +339,6 @@ const handleSyncStatus = message => {
     body.style.setProperty('--count', `${newCount % 360}deg`)
   }
 }
-
-// TODO: if in the middle of a sync then don't reset buttons
-// TODO: when syncing rotate the ...
-// TODO: remove the button status message and just check on sync status
-// TODO: if in a sync change the clear data button to cancel sync
 
 const loadUsers = async settings => {
   const userPromises = []
@@ -315,6 +371,44 @@ const loadUsers = async settings => {
       }
     })(),
   )
+
+  if (settings['sync-tco']) {
+    userPromises.push(
+      (async () => {
+        console.debug('Getting TCO username')
+        const token = await getTcoRefreshToken()
+        if (token) {
+          const { username } = await getTcoUser(token)
+          const tcoUsernameElem = document.getElementById('tco-username')
+          if (tcoUsernameElem) {
+            tcoUsernameElem.textContent = `: ${username}`
+            tcoUsernameElem.style.display = 'inline'
+          }
+        } else {
+          console.error('No TCO user found')
+          const syncButton = document.getElementById('sync-decks')
+          if (syncButton && syncButton instanceof HTMLButtonElement) {
+            syncButton.replaceWith(syncButton.cloneNode(true))
+            const newSyncButton = document.getElementById('sync-decks')
+            newSyncButton.addEventListener('click', () => {
+              chrome.tabs.create({ url: 'https://thecrucible.online/' })
+            })
+            newSyncButton.textContent = 'Login to TCO'
+            if (newSyncButton instanceof HTMLButtonElement) {
+              newSyncButton.disabled = false
+            }
+          }
+          throw new Error('No TCO user found')
+        }
+      })(),
+    )
+  } else {
+    const tcoUsernameElem = document.getElementById('tco-username')
+    if (tcoUsernameElem) {
+      tcoUsernameElem.textContent = ``
+      tcoUsernameElem.style.display = 'inline'
+    }
+  }
 
   if (settings['sync-dok']) {
     userPromises.push(
@@ -355,47 +449,10 @@ const loadUsers = async settings => {
     }
   }
 
-  if (settings['sync-tco']) {
-    userPromises.push(
-      (async () => {
-        console.debug('Getting TCO username')
-        const token = await getTcoRefreshToken()
-        if (token) {
-          const { username } = await getTcoUser(token)
-          const tcoUsernameElem = document.getElementById('tco-username')
-          if (tcoUsernameElem) {
-            tcoUsernameElem.textContent = `: ${username}`
-            tcoUsernameElem.style.display = 'inline'
-          }
-        } else {
-          console.error('No TCO user found')
-          const syncButton = document.getElementById('sync-decks')
-          if (syncButton && syncButton instanceof HTMLButtonElement) {
-            syncButton.replaceWith(syncButton.cloneNode(true))
-            const newSyncButton = document.getElementById('sync-decks')
-            newSyncButton.addEventListener('click', () => {
-              chrome.tabs.create({ url: 'https://thecrucible.online/' })
-            })
-            newSyncButton.textContent = 'Login to TCO'
-            if (newSyncButton instanceof HTMLButtonElement) {
-              newSyncButton.disabled = false
-            }
-          }
-          throw new Error('No TCO user found')
-        }
-      })(),
-    )
-  } else {
-    const tcoUsernameElem = document.getElementById('tco-username')
-    if (tcoUsernameElem) {
-      tcoUsernameElem.textContent = ``
-      tcoUsernameElem.style.display = 'inline'
-    }
-  }
-
   await Promise.all(userPromises)
-    .then(() => {
+    .then(async () => {
       console.debug('Logged in!')
+      await checkSyncStatus()
       resetButtons()
     })
     .catch(error => {

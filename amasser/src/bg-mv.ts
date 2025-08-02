@@ -2,7 +2,6 @@ import { getDecksFromStorage } from './lib.js'
 
 // Master Vault API configuration
 const MV_BASE_URL = 'https://www.keyforgegame.com'
-const SYNC_MSGS = ['Syncing MV.', 'Syncing MV..', 'Syncing MV...']
 
 /**
  * Main entry point for Master Vault synchronization
@@ -144,7 +143,6 @@ const getDecksFromMv = async (decks = {}) => {
       .sendMessage({
         type: 'SYNC_STATUS',
         decks: Object.keys(decks).length,
-        button: SYNC_MSGS[Object.keys(decks).length % SYNC_MSGS.length],
       })
       .catch(() => {})
 

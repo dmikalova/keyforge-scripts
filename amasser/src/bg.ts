@@ -4,7 +4,7 @@ console.debug('KFA: BG: script loaded')
 import { handleDokSync } from './bg-dok.js'
 import { handleMvSync } from './bg-mv.js'
 import { handleTcoSync } from './bg-tco.js'
-import { staleSyncSeconds } from './lib.js'
+import { rotateAgainSeconds, staleSyncSeconds } from './lib.js'
 
 chrome.commands.onCommand.addListener(shortcut => {
   console.debug('lets reload')
@@ -141,13 +141,13 @@ const handleRotateIcon = async () => {
   let now = Date.now()
   console.log('syncings', JSON.stringify(s))
   while (Object.keys(s).length === 0) {
-    rotation++ % ICON_ROTATIONS.length
+    rotation = (rotation + 1) % ICON_ROTATIONS.length
     console.debug(`KFA: BG: Rotating icon to angle: ${rotation}`)
     await chrome.action.setIcon({
       path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
     })
 
-    await new Promise(resolve => setTimeout(resolve, 100))
+    await new Promise(resolve => setTimeout(resolve, rotateAgainSeconds))
     s = await chrome.storage.local.get([
       'syncing-dok',
       'syncing-mv',
@@ -160,14 +160,14 @@ const handleRotateIcon = async () => {
     (s['syncing-mv'] && now - s['syncing-mv'] < staleSyncSeconds) ||
     (s['syncing-tco'] && now - s['syncing-tco'] < staleSyncSeconds)
   ) {
-    rotation++ % ICON_ROTATIONS.length
+    rotation = (rotation + 1) % ICON_ROTATIONS.length
     console.debug(`KFA: BG: Rotating icon to angle: ${rotation}`)
     await chrome.action.setIcon({
       path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
     })
 
     // Wait for a short interval before checking again
-    await new Promise(resolve => setTimeout(resolve, 75))
+    await new Promise(resolve => setTimeout(resolve, rotateAgainSeconds))
     s = await chrome.storage.local.get([
       'syncing-dok',
       'syncing-mv',
