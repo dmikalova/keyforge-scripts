@@ -69,7 +69,7 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
 
   const body = JSON.stringify(t)
 
-  console.debug('Fetching TCO user info...')
+  console.debug('KFA: TCO: Fetching user info...')
   const response = await fetch(`${TCO_BASE_URL}/api/account/token`, {
     credentials: 'include',
     headers: {
@@ -116,6 +116,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
   }
 
   // Refresh token before fetching TCO decks
+  chrome.storage.local.set({ 'syncing-tco': Date.now() + 4 * staleSyncSeconds })
   const { token } = await getTcoUser(await getTcoRefreshToken())
   const { decks: tcoDecks } = await fetch(
     `${TCO_BASE_URL}/api/decks?pageSize=100000&page=1`,
@@ -150,7 +151,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
   decksToImport = Object.entries(mv).filter(
     ([id, deck]) => deck === true && !tco[id],
   )
-  console.debug('Decks to import to TCO: ', decksToImport.length)
+  console.debug(`KFA: TCO: Decks to import: ${decksToImport.length}`)
 
   for (const [i, deck] of decksToImport.entries()) {
     // Refresh token before each import to avoid unauthorized errors
@@ -231,6 +232,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
           response.status
         } ${JSON.stringify(respJson)}`,
       )
+      chrome.storage.local.set({ 'syncing-tco': Date.now() })
     }
 
     console.debug(`Waiting before next import due to rate limits...`)

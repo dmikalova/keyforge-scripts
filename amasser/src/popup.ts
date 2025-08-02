@@ -163,9 +163,10 @@ const syncDecks = () => {
 // Clear all data from local storage
 const clearData = () => {
   chrome.storage.local.clear(() => {
-    console.debug('All data cleared')
-    loadState()
+    console.debug('KFA: BG: All data cleared')
+    loadState().then(state => loadUsers(state.settings))
   })
+
   const clearDataButton = document.getElementById('clear-data')
   if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
     clearDataButton.textContent = 'Data Cleared!'
@@ -246,9 +247,6 @@ const resetButtons = () => {
 }
 
 const syncMessages = [
-  'Syncing    ',
-  'Syncing.   ',
-  'Syncing..  ',
   'Syncing... ',
   'yncing... S',
   'ncing... Sy',
@@ -259,10 +257,6 @@ const syncMessages = [
   '... Syncing',
   '.. Syncing.',
   '. Syncing..',
-  ' Syncing...',
-  'Syncing...  ',
-  'Syncing..  ',
-  'Syncing.   ',
 ]
 
 const checkSyncStatus = async (wait: boolean = false) => {
@@ -275,10 +269,13 @@ const checkSyncStatus = async (wait: boolean = false) => {
     'syncing-tco',
   ])
   while (
-    (s['syncing-dok'] && now - s['syncing-dok'] < staleSyncSeconds) ||
-    (s['syncing-mv'] && now - s['syncing-mv'] < staleSyncSeconds) ||
-    (s['syncing-tco'] && now - s['syncing-tco'] < staleSyncSeconds) ||
-    wait
+    wait ||
+    (typeof s['syncing-dok'] === 'number' &&
+      now - s['syncing-dok'] < staleSyncSeconds) ||
+    (typeof s['syncing-mv'] === 'number' &&
+      now - s['syncing-mv'] < staleSyncSeconds) ||
+    (typeof s['syncing-tco'] === 'number' &&
+      now - s['syncing-tco'] < staleSyncSeconds)
   ) {
     handleSyncStatus(syncMessages[shift])
 
@@ -294,7 +291,19 @@ const checkSyncStatus = async (wait: boolean = false) => {
     if (Object.keys(s).length !== 0) {
       wait = false
     }
-    console.debug('running again:', now, wait, s)
+    console.debug(
+      'running again:',
+      now,
+      wait,
+      wait ||
+        (typeof s['syncing-dok'] === 'number' &&
+          now - s['syncing-dok'] < staleSyncSeconds) ||
+        (typeof s['syncing-mv'] === 'number' &&
+          now - s['syncing-mv'] < staleSyncSeconds) ||
+        (typeof s['syncing-tco'] === 'number' &&
+          now - s['syncing-tco'] < staleSyncSeconds),
+      s,
+    )
   }
   console.log('KFA: POP: Sync button state done, resetting buttons')
 }
@@ -303,10 +312,6 @@ const checkSyncStatus = async (wait: boolean = false) => {
  * Reset sync button to default state
  */
 const handleSyncStatus = text => {
-  // TODO: if in the middle of a sync then don't reset buttons when popup starts
-  // TODO: when syncing rotate the ...
-  // TODO: remove the button status message and just check on sync status
-  // TODO: if in a sync change the clear data button to cancel sync
 
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
     if (toggle instanceof HTMLInputElement) {
@@ -368,6 +373,11 @@ const loadUsers = async settings => {
             newSyncButton.disabled = false
           }
         }
+        const mvUsernameElem = document.getElementById('mv-username')
+        if (mvUsernameElem) {
+          mvUsernameElem.textContent = ``
+          mvUsernameElem.style.display = 'inline'
+        }
       }
     })(),
   )
@@ -397,6 +407,11 @@ const loadUsers = async settings => {
             if (newSyncButton instanceof HTMLButtonElement) {
               newSyncButton.disabled = false
             }
+          }
+          const tcoUsernameElem = document.getElementById('tco-username')
+          if (tcoUsernameElem) {
+            tcoUsernameElem.textContent = ``
+            tcoUsernameElem.style.display = 'inline'
           }
           throw new Error('No TCO user found')
         }
@@ -436,6 +451,11 @@ const loadUsers = async settings => {
             if (newSyncButton instanceof HTMLButtonElement) {
               newSyncButton.disabled = false
             }
+          }
+          const dokUsernameElem = document.getElementById('dok-username')
+          if (dokUsernameElem) {
+            dokUsernameElem.textContent = ``
+            dokUsernameElem.style.display = 'inline'
           }
           throw new Error('No DoK user found')
         }

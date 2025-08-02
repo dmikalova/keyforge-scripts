@@ -156,9 +156,12 @@ const handleRotateIcon = async () => {
   }
 
   while (
-    (s['syncing-dok'] && now - s['syncing-dok'] < staleSyncSeconds) ||
-    (s['syncing-mv'] && now - s['syncing-mv'] < staleSyncSeconds) ||
-    (s['syncing-tco'] && now - s['syncing-tco'] < staleSyncSeconds)
+    (typeof s['syncing-dok'] === 'number' &&
+      now - s['syncing-dok'] < staleSyncSeconds) ||
+    (typeof s['syncing-mv'] === 'number' &&
+      now - s['syncing-mv'] < staleSyncSeconds) ||
+    (typeof s['syncing-tco'] === 'number' &&
+      now - s['syncing-tco'] < staleSyncSeconds)
   ) {
     rotation = (rotation + 1) % ICON_ROTATIONS.length
     console.debug(`KFA: BG: Rotating icon to angle: ${rotation}`)

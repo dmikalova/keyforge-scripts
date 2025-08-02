@@ -21,6 +21,7 @@ export const handleMvSync = async () => {
     await getDecksFromMv(decks)
   } catch (error) {
     console.error('KFA: MV: Error syncing decks:', error)
+    chrome.storage.local.remove(['syncing-mv'])
     chrome.runtime
       .sendMessage({
         type: 'SYNC_ERROR',
@@ -135,7 +136,10 @@ const getDecksFromMv = async (decks = {}) => {
     )
     data.decks.forEach(deck => {
       decks[deck.id] = true
-      chrome.storage.local.set({ [`zmv.${deck.id}`]: true })
+      chrome.storage.local.set({
+        [`zmv.${deck.id}`]: true,
+        'syncing-mv': Date.now(),
+      })
     })
 
     // Notify popup of new decks added
@@ -229,8 +233,5 @@ const favoriteLegacyDecks = async decks => {
   }
 }
 
-// TODO: stop all clicks while running
-// TODO: don't allow clicks while bg syncing//
-// TODO: while syncing change clear data to stop sync - probably by restarting the extension?
 // TODO: run daily https://stackoverflow.com/questions/36241436/chrome-extension-use-javascript-to-run-periodically-and-log-data-permanently
-// TODO: clearing data should restart the extension as well
+// TODO: if in a sync change the clear data button to cancel sync
