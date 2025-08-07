@@ -10,7 +10,7 @@ for SIZE in 48 96 128; do
     "${SCRIPT_DIR}/icons/amasser-${SIZE}.png"
 done
 
-for ANGLE in $(seq 0 15 345); do
+for ANGLE in $(seq 0 30 330); do
   magick "${SCRIPT_DIR}/icons/amasser-128.png" \
     -virtual-pixel none \
     -distort SRT "${ANGLE}" \

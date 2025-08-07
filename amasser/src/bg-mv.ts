@@ -1,4 +1,4 @@
-import { getDecksFromStorage } from './lib.js'
+import { getDecksFromStorage, staleSyncSeconds } from './lib.js'
 
 // Master Vault API configuration
 const MV_BASE_URL = 'https://www.keyforgegame.com'
@@ -7,10 +7,13 @@ const MV_BASE_URL = 'https://www.keyforgegame.com'
  * Main entry point for Master Vault synchronization
  */
 export const handleMvSync = async () => {
-  if (
-    await chrome.storage.local.get(['syncing-mv']).then(r => r['syncing-mv'])
-  ) {
-    console.debug(`KFA: MV: sync already in progress`)
+  const syncingMv = await chrome.storage.local
+    .get(['syncing-dok'])
+    .then(r => r['syncing-dok'])
+  if (syncingMv && Date.now() - syncingMv < staleSyncSeconds) {
+    console.debug(
+      `KFA: MV: sync already in progress: ${Date.now() - syncingMv}ms`,
+    )
     return
   }
   chrome.storage.local.set({ 'syncing-mv': Date.now() })
@@ -178,6 +181,7 @@ const favoriteLegacyDecks = async decks => {
   console.debug('Fetching Master Vault legacy decks for user:', userId)
   const requestConfig = createMvRequestConfig(token)
   const pageSize = 10
+  // Check if a bigger page size can be used
   let page = 1
   let hasMorePages = true
 
@@ -232,6 +236,3 @@ const favoriteLegacyDecks = async decks => {
     )
   }
 }
-
-// TODO: run daily https://stackoverflow.com/questions/36241436/chrome-extension-use-javascript-to-run-periodically-and-log-data-permanently
-// TODO: if in a sync change the clear data button to cancel sync

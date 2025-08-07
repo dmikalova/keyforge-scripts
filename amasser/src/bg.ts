@@ -41,6 +41,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       handleDeckSync()
         .then(() => sendResponse({ success: true }))
         .catch(error => sendResponse({ success: false, error: error.message }))
+
+      updateAutoSyncAlarm()
       return true
 
     case 'SAVE_DOK_AUTH':
@@ -105,29 +107,17 @@ const handleDeckSync = async () => {
 
 const ICON_ROTATIONS = [
   '../icons/amasser-128-0.png',
-  '../icons/amasser-128-15.png',
   '../icons/amasser-128-30.png',
-  '../icons/amasser-128-45.png',
   '../icons/amasser-128-60.png',
-  '../icons/amasser-128-75.png',
   '../icons/amasser-128-90.png',
-  '../icons/amasser-128-105.png',
   '../icons/amasser-128-120.png',
-  '../icons/amasser-128-135.png',
   '../icons/amasser-128-150.png',
-  '../icons/amasser-128-165.png',
   '../icons/amasser-128-180.png',
-  '../icons/amasser-128-195.png',
   '../icons/amasser-128-210.png',
-  '../icons/amasser-128-225.png',
   '../icons/amasser-128-240.png',
-  '../icons/amasser-128-255.png',
   '../icons/amasser-128-270.png',
-  '../icons/amasser-128-285.png',
   '../icons/amasser-128-300.png',
-  '../icons/amasser-128-315.png',
   '../icons/amasser-128-330.png',
-  '../icons/amasser-128-345.png',
 ]
 
 const handleRotateIcon = async () => {
@@ -139,7 +129,24 @@ const handleRotateIcon = async () => {
     'syncing-tco',
   ])
   let now = Date.now()
-  console.log('syncings', JSON.stringify(s))
+  console.log(
+    `KFA: BG: syncing times: MV: ${now - s['syncing-mv']}ms DoK: ${
+      now - s['syncing-dok']
+    }ms TCO: ${now - s['syncing-tco']}ms`,
+  )
+
+  if (
+    (typeof s['syncing-dok'] === 'number' &&
+      now - s['syncing-dok'] > staleSyncSeconds) ||
+    (typeof s['syncing-mv'] === 'number' &&
+      now - s['syncing-mv'] > staleSyncSeconds) ||
+    (typeof s['syncing-tco'] === 'number' &&
+      now - s['syncing-tco'] > staleSyncSeconds)
+  ) {
+    console.debug('KFA: BG: Stale syncs...')
+    s = {}
+  }
+
   while (Object.keys(s).length === 0) {
     rotation = (rotation + 1) % ICON_ROTATIONS.length
     console.debug(`KFA: BG: Rotating icon to angle: ${rotation}`)
@@ -180,4 +187,32 @@ const handleRotateIcon = async () => {
   }
 
   await chrome.action.setIcon({ path: ICON_ROTATIONS[0] })
+}
+
+const onAlarm = async alarm => {
+  switch (alarm.name) {
+    case 'DAILY_SYNC':
+      console.debug('KFA: BG: Daily sync triggered')
+      handleRotateIcon()
+      handleDeckSync()
+      chrome.runtime.sendMessage({ type: 'SYNC_START' })
+      break
+
+    default:
+      break
+  }
+}
+chrome.alarms.onAlarm.addListener(onAlarm)
+
+const updateAutoSyncAlarm = async () => {
+  const syncAuto = (await chrome.storage.sync.get('sync-auto'))['sync-auto']
+  console.debug(`KFA: BG: Checking auto-sync alarm... ${syncAuto}`)
+  if (syncAuto) {
+    console.debug('KFA: BG: Scheduling daily sync alarm')
+    chrome.alarms.create('DAILY_SYNC', {
+      periodInMinutes: 24 * 60, // every 24 hours
+    })
+  } else {
+    chrome.alarms.clear('DAILY_SYNC')
+  }
 }

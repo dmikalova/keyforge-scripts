@@ -20,20 +20,32 @@ export const handleDokSync = async () => {
   chrome.storage.local.set({ 'syncing-dok': Date.now() })
   console.debug('KFA: DoK: deck sync started')
 
-  try {
-    const { mv, dok } = await getDecksFromStorage()
-    await importDecksToDok(mv, dok)
-  } catch (error) {
-    console.error('Error syncing DoK decks:', error)
-    chrome.storage.local.remove(['syncing-dok'])
-    chrome.runtime
-      .sendMessage({
-        type: 'SYNC_ERROR',
-        error: error.message,
-      })
-      .catch(() => {})
-  }
+  let keepSyncing = true
+  while (keepSyncing) {
+    try {
+      const { mv, dok } = await getDecksFromStorage()
+      await importDecksToDok(mv, dok)
+    } catch (error) {
+      console.error('Error syncing DoK decks:', error)
+      chrome.storage.local.remove(['syncing-dok'])
+      chrome.runtime
+        .sendMessage({
+          type: 'SYNC_ERROR',
+          error: error.message,
+        })
+        .catch(() => {})
+    }
 
+    // Filter out decks that already have dok=true
+    const { mv, dok }: { mv: Decks; dok: Decks } = await getDecksFromStorage()
+    let decksToImport = Object.entries(mv).filter(
+      ([id, deck]) => deck == true && !dok[id],
+    )
+    if (decksToImport.length === 0) {
+      console.debug('KFA: DoK: No new decks to import')
+      keepSyncing = false
+    }
+  }
   chrome.storage.local.remove(['syncing-dok'])
 
   // If MV sync is in progress, trigger Dok sync again
@@ -98,6 +110,7 @@ const createDokRequestConfig = (token: string): RequestInit => ({
 })
 
 const importDecksToDok = async (mv: Decks, dok: Decks) => {
+  console.debug('KFA: DoK: Importing decks from MV to DoK...')
   const token = await getDokToken()
   const username = await getDokUser(token)
 
@@ -111,51 +124,77 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
     return
   }
 
-  const dokLibrary = await fetch(`${DOK_BASE_URL}/api/decks/filter`, {
-    credentials: 'include',
-    headers: {
-      accept: 'application/json, text/plain, */*',
-      'accept-language': 'en-US',
-      authorization: token,
-      'cache-control': 'no-cache',
-      'content-type': 'application/json',
-      timezone: '0',
-    },
-    body: JSON.stringify({
-      page: 0,
-      pageSize: 1000,
-      sort: 'ADDED_DATE',
-      sortDirection: 'DESC',
-      owner: username,
-    }),
-    method: 'POST',
-  })
-    .then(response => response.json())
-    .then(response => {
-      console.debug(`Fetched ${response.decks.length} decks from DoK library`)
-      return response.decks
-    })
-    .catch(error => {
-      console.error('Error fetching DoK library:', error)
-    })
-  console.debug(`KFA: DoK: Fetched ${dokLibrary.length} decks from DoK library`)
-
-  for (const deck of dokLibrary) {
-    dok[deck.keyforgeId] = true
-    chrome.storage.local.set({
-      [`zdok.${deck.keyforgeId}`]: true,
-      'syncing-dok': Date.now(),
-    })
-  }
-
-  decksToImport = Object.entries(mv).filter(
-    ([id, deck]) => deck === true && !dok[id],
+  const { 'library-dok': libraryDok } = await chrome.storage.local.get([
+    'library-dok',
+  ])
+  console.debug(
+    `KFA: DoK: Library status: ${libraryDok} ${!libraryDok ? 'true' : 'false'}`,
   )
+  if (!libraryDok) {
+    let nextPage = true
+    let page = 0
+    while (nextPage) {
+      console.debug(`KFA: DoK: Fetching page ${page + 1} of DoK library...`)
+      const dokLibrary = await fetch(`${DOK_BASE_URL}/api/decks/filter`, {
+        credentials: 'include',
+        headers: {
+          accept: 'application/json, text/plain, */*',
+          'accept-language': 'en-US',
+          authorization: token,
+          'cache-control': 'no-cache',
+          'content-type': 'application/json',
+          timezone: '0',
+        },
+        body: JSON.stringify({
+          page: page,
+          pageSize: 1000,
+          sort: 'ADDED_DATE',
+          sortDirection: 'DESC',
+          owner: username,
+        }),
+        method: 'POST',
+      })
+        .then(response => response.json())
+        .then(response => {
+          console.debug(
+            `Fetched ${response.decks.length} decks from DoK library`,
+          )
+          return response.decks
+        })
+        .catch(error => {
+          console.error('Error fetching DoK library:', error)
+        })
+      console.debug(
+        `KFA: DoK: Fetched ${dokLibrary.length} decks from DoK library`,
+      )
 
-  if (decksToImport.length === 0) {
-    console.debug('KFA: DoK: No new decks to import')
-    return
+      for (const deck of dokLibrary) {
+        dok[deck.keyforgeId] = true
+        chrome.storage.local.set({
+          [`zdok.${deck.keyforgeId}`]: true,
+          'syncing-dok': Date.now(),
+        })
+      }
+
+      if (dokLibrary.length < 1000) {
+        nextPage = false
+      }
+      page++
+    }
+
+    chrome.storage.local.set({ 'library-dok': Date.now() })
+
+    decksToImport = Object.entries(mv).filter(
+      ([id, deck]) => deck === true && !dok[id],
+    )
+
+    if (decksToImport.length === 0) {
+      console.debug('KFA: DoK: No new decks to import')
+      return
+    }
   }
+
+  console.debug(`KFA: DoK: Decks to import: ${decksToImport.length}`)
 
   for (const [i, deck] of decksToImport.entries()) {
     console.debug(

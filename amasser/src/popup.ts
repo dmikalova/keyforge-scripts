@@ -199,6 +199,10 @@ const handleBackgroundMessage = message => {
       }
       break
 
+    case 'SYNC_START':
+      checkSyncStatus(true)
+      break
+
     default:
       console.debug('Unknown message type:', message.type)
   }
@@ -312,7 +316,6 @@ const checkSyncStatus = async (wait: boolean = false) => {
  * Reset sync button to default state
  */
 const handleSyncStatus = text => {
-
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
     if (toggle instanceof HTMLInputElement) {
       toggle.disabled = true
@@ -486,3 +489,5 @@ const loadQuotes = () => {
     quoteElem.textContent = quotes[Math.floor(Math.random() * quotes.length)]
   }
 }
+
+// TODO: if in a sync change the clear data button to cancel sync
