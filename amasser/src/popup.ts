@@ -344,6 +344,7 @@ const handleSyncStatus = text => {
           .replace('deg', ''),
       ) || 0
     const newCount = currentCount + Math.floor(Math.random() * 240) + 60
+    console.debug('KFA: POP: Rotating background gradient to:', newCount)
     body.style.setProperty('--count', `${newCount % 360}deg`)
   }
 }

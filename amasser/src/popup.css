@@ -41,7 +41,7 @@ body {
 main {
   align-items: center;
   background: linear-gradient(
-    calc(var(--gradient-angle-main, 150deg) - var(--count, 0deg)),
+    calc(var(--gradient-angle-main, 222deg) - 1.4 * var(--count, 0deg)),
     var(--color-pink) 0%,
     var(--color-purple) 100%
   );
