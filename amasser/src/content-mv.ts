@@ -1,7 +1,7 @@
-console.debug('KFA: MV: content script loaded')
+console.debug(`KFA: MV: content script loaded`)
 chrome.storage.sync.get(['sync-auto'], result => {
   if (result['sync-auto']) {
-    console.debug('KFA: MV: Automatic sync enabled')
+    console.debug(`KFA: MV: Automatic sync enabled`)
     chrome.runtime.sendMessage({
       type: 'SYNC_START',
     })
@@ -37,16 +37,16 @@ chrome.storage.sync.get(['sync-auto'], result => {
                 `KFA: MV: last scan: ${lastProcessedScan}, current scan: ${currentScan}`,
               )
               if (lastProcessedScan !== currentScan) {
-                console.debug('KFA: MV: Deck scanned')
+                console.debug(`KFA: MV: Deck scanned`)
                 lastProcessedScan = currentScan
 
                 chrome.runtime
                   .sendMessage({ type: 'SYNC_START' })
                   .then(() => {
-                    console.debug('KFA: MV: Sync started')
+                    console.debug(`KFA: MV: Sync started`)
                   })
                   .catch(error => {
-                    console.error('KFA: MV: Error starting sync:', error)
+                    console.error(`KFA: MV: Error starting sync: ${error}`)
                   })
               }
             }, 500) // Wait 500ms for DOM to stabilize

@@ -17,7 +17,7 @@ export const handleTcoSync = async () => {
     return
   }
   await chrome.storage.local.set({ 'syncing-tco': Date.now() })
-  console.debug('KFA: TCO: deck sync started')
+  console.debug(`KFA: TCO: deck sync started`)
   // TODO: sync in separate fn and set syncing status only here, try catch
   let keepSyncing = true
   while (keepSyncing) {
@@ -25,7 +25,7 @@ export const handleTcoSync = async () => {
       const { mv, tco } = await getDecksFromStorage()
       await importDecksToTco(mv, tco)
     } catch (error) {
-      console.error('KFA: TCO: Error syncing decks:', error)
+      console.error(`KFA: TCO: Error syncing decks: ${error}`)
       chrome.storage.local.remove(['syncing-tco'])
       chrome.runtime
         .sendMessage({
@@ -41,7 +41,7 @@ export const handleTcoSync = async () => {
       ([id, deck]) => deck == true && !tco[id],
     )
     if (decksToImport.length === 0) {
-      console.debug('KFA: TCO: No new decks to import')
+      console.debug(`KFA: TCO: No new decks to import`)
       keepSyncing = false
     }
   }
@@ -75,7 +75,7 @@ export const getTcoRefreshToken = async (): Promise<string | null> => {
   ])
 
   if (!refreshToken) {
-    console.debug('You must login to The Crucible Online first')
+    console.debug(`You must login to The Crucible Online first`)
     return null
   }
 
@@ -93,7 +93,7 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
 
   const body = JSON.stringify(t)
 
-  console.debug('KFA: TCO: Fetching user info...')
+  console.debug(`KFA: TCO: Fetching user info...`)
   const response = await fetch(`${TCO_BASE_URL}/api/account/token`, {
     credentials: 'include',
     headers: {
@@ -135,7 +135,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
   )
 
   if (decksToImport.length === 0) {
-    console.debug('No new decks to import')
+    console.debug(`No new decks to import`)
     return
   }
 
@@ -143,7 +143,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     'library-tco',
   ])
   if (!libraryTco) {
-    console.debug('KFA: TCO: Fetching TCO library')
+    console.debug(`KFA: TCO: Fetching TCO library`)
     chrome.storage.local.set({
       'syncing-tco': Date.now() + 4 * staleSyncSeconds,
     })
@@ -182,7 +182,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     )
 
     if (decksToImport.length === 0) {
-      console.debug('No new decks to import')
+      console.debug(`No new decks to import`)
       return
     }
   }

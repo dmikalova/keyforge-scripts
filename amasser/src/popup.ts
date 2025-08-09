@@ -109,7 +109,7 @@ const loadState = async () => {
     'sync-auto-toggle',
   ) as HTMLInputElement
   if (!syncDokToggle || !syncTcoToggle || !syncAutoToggle) {
-    console.error('Sync toggles not found in popup')
+    console.error(`Sync toggles not found in popup`)
     return
   }
   // Set toggle states based on stored data
@@ -126,7 +126,7 @@ const loadState = async () => {
     settings['sync-auto'] = false
   }
   // Update toggle states
-  console.debug('Setting sync toggles:', {
+  console.debug(`Setting sync toggles:`, {
     'sync-dok': settings['sync-dok'],
     'sync-tco': settings['sync-tco'],
     'sync-auto': settings['sync-auto'],
@@ -152,7 +152,7 @@ const loadState = async () => {
 
 // Trigger a deck sync
 const syncDecks = () => {
-  console.debug('Syncing decks from popup..')
+  console.debug(`Syncing decks from popup..`)
 
   // Update button state
   handleSyncStatus(syncMessages[0])
@@ -163,7 +163,7 @@ const syncDecks = () => {
 // Clear all data from local storage
 const clearData = () => {
   chrome.storage.local.clear(() => {
-    console.debug('KFA: BG: All data cleared')
+    console.debug(`KFA: BG: All data cleared`)
     loadState().then(state => loadUsers(state.settings))
   })
 
@@ -185,7 +185,7 @@ const handleBackgroundMessage = message => {
   switch (message.type) {
     case 'SYNC_COMPLETE':
       resetButtons()
-      console.debug('Sync completed successfully!')
+      console.debug(`Sync completed successfully!`)
       break
 
     case 'SYNC_ERROR':
@@ -204,7 +204,7 @@ const handleBackgroundMessage = message => {
       break
 
     default:
-      console.debug('Unknown message type:', message.type)
+      console.debug(`Unknown message type: ${message.type}`)
   }
 }
 
@@ -219,11 +219,11 @@ const updateDeckCount = count => {
 }
 
 const cancelSync = () => {
-  console.debug('KFA: POP: Cancelling sync from popup...')
+  console.debug(`KFA: POP: Cancelling sync from popup...`)
   chrome.storage.local
     .remove(['syncing-mv', 'syncing-dok', 'syncing-tco'])
     .then(() => {
-      console.debug('KFA: POP: Sync cancelled and buttons reset')
+      console.debug(`KFA: POP: Sync cancelled and buttons reset`)
       chrome.runtime.reload()
     })
 }
@@ -232,7 +232,7 @@ const cancelSync = () => {
  * Reset sync button to default state
  */
 const resetButtons = async () => {
-  console.debug('Resetting buttons to default state')
+  console.debug(`Resetting buttons to default state`)
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle && syncDokToggle instanceof HTMLInputElement) {
     syncDokToggle.disabled = false
@@ -282,7 +282,7 @@ const syncMessages = [
 ]
 
 const checkSyncStatus = async (wait: boolean = false) => {
-  console.debug('KFA: BG: Checking sync status...')
+  console.debug(`KFA: BG: Checking sync status...`)
   let now = Date.now()
   let shift = 0
   let s = await chrome.storage.local.get([
@@ -314,7 +314,7 @@ const checkSyncStatus = async (wait: boolean = false) => {
       wait = false
     }
     console.debug(
-      'running again:',
+      `running again:`,
       now,
       wait,
       wait ||
@@ -327,7 +327,7 @@ const checkSyncStatus = async (wait: boolean = false) => {
       s,
     )
   }
-  console.debug('KFA: POP: Sync button state done, resetting buttons')
+  console.debug(`KFA: POP: Sync button state done, resetting buttons`)
 }
 
 const handleSyncStatus = text => {
@@ -367,7 +367,7 @@ const handleSyncStatus = text => {
           .replace('deg', ''),
       ) || 0
     const newCount = currentCount + Math.floor(Math.random() * 240) + 60
-    console.debug('KFA: POP: Rotating background gradient to:', newCount)
+    console.debug(`KFA: POP: Rotating background gradient to: ${newCount}`)
     body.style.setProperty('--count', `${newCount % 360}deg`)
   }
 }
@@ -380,14 +380,14 @@ const loadUsers = async settings => {
     (async () => {
       const { username: userMv } = await getMvAuth()
       if (userMv) {
-        console.debug('Master Vault user found:', userMv)
+        console.debug(`Master Vault user found: ${userMv}`)
         const mvUsernameElem = document.getElementById('mv-username')
         if (mvUsernameElem) {
           mvUsernameElem.textContent = `: ${userMv}`
           mvUsernameElem.style.display = 'inline'
         }
       } else {
-        console.error('No MV user found')
+        console.error(`No MV user found`)
         const syncButton = document.getElementById('sync-decks')
         if (syncButton && syncButton instanceof HTMLButtonElement) {
           syncButton.replaceWith(syncButton.cloneNode(true))
@@ -413,7 +413,7 @@ const loadUsers = async settings => {
   if (settings['sync-dok']) {
     userPromises.push(
       (async () => {
-        console.debug('Getting DoK username')
+        console.debug(`Getting DoK username`)
         const token = await getDokToken()
         if (token) {
           const user = await getDokUser(token)
@@ -424,9 +424,9 @@ const loadUsers = async settings => {
           }
         } else {
           const syncButton = document.getElementById('sync-decks')
-          console.debug('Sync button found?')
+          console.debug(`Sync button found?`)
           if (syncButton && syncButton instanceof HTMLButtonElement) {
-            console.debug('Sync button found, replacing it')
+            console.debug(`Sync button found, replacing it`)
             syncButton.replaceWith(syncButton.cloneNode(true))
             const newSyncButton = document.getElementById('sync-decks')
             newSyncButton.addEventListener('click', () => {
@@ -457,7 +457,7 @@ const loadUsers = async settings => {
   if (settings['sync-tco']) {
     userPromises.push(
       (async () => {
-        console.debug('Getting TCO username')
+        console.debug(`Getting TCO username`)
         const token = await getTcoRefreshToken()
         if (token) {
           const { username } = await getTcoUser(token)
@@ -467,7 +467,7 @@ const loadUsers = async settings => {
             tcoUsernameElem.style.display = 'inline'
           }
         } else {
-          console.error('No TCO user found')
+          console.error(`No TCO user found`)
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
             syncButton.replaceWith(syncButton.cloneNode(true))
@@ -504,14 +504,14 @@ const loadUsers = async settings => {
           return r.status === 'fulfilled'
         })
       ) {
-        return console.error('Error loading users:', results)
+        return console.error(`Error loading users: ${results}`)
       }
-      console.debug('Logged in!')
+      console.debug(`Logged in!`)
       await checkSyncStatus()
       resetButtons()
     })
     .catch(error => {
-      console.error('Error loading users:', error)
+      console.error(`Error loading users: ${error}`)
     })
 }
 

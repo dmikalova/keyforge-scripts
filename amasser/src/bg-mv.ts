@@ -17,13 +17,13 @@ export const handleMvSync = async () => {
     return
   }
   chrome.storage.local.set({ 'syncing-mv': Date.now() })
-  console.debug('KFA: MV: deck sync started')
+  console.debug(`KFA: MV: deck sync started`)
 
   try {
     const { mv: decks } = await getDecksFromStorage()
     await getDecksFromMv(decks)
   } catch (error) {
-    console.error('KFA: MV: Error syncing decks:', error)
+    console.error(`KFA: MV: Error syncing decks: ${error}`)
     chrome.storage.local.remove(['syncing-mv'])
     chrome.runtime
       .sendMessage({
@@ -41,13 +41,13 @@ export const getMvAuth = async (): Promise<
 > => {
   const authCookie = await getMvAuthCookie()
   if (!authCookie) {
-    console.debug('You must login to Master Vault first')
+    console.debug(`You must login to Master Vault first`)
     return { token: null, userId: null, username: null }
   }
-  console.debug('Master Vault auth cookie loaded...')
+  console.debug(`Master Vault auth cookie loaded...`)
 
   const user = await getMvUser(authCookie.value)
-  console.debug('Master Vault user ID:', user.id)
+  console.debug(`Master Vault user ID: ${user.id}`)
 
   return { token: authCookie.value, userId: user.id, username: user.username }
 }
@@ -58,7 +58,7 @@ export const getMvAuth = async (): Promise<
 const getMvAuthCookie = (): Promise<chrome.cookies.Cookie | null> => {
   return new Promise(resolve => {
     if (!chrome.cookies) {
-      console.error('ERROR: Chrome cookies API is not available.')
+      console.error(`ERROR: Chrome cookies API is not available.`)
       resolve(null)
       return
     }
@@ -117,7 +117,7 @@ const getDecksFromMv = async (decks = {}) => {
 
   const { token, userId } = await getMvAuth()
 
-  console.debug('Fetching Master Vault decks for user:', userId)
+  console.debug(`Fetching Master Vault decks for user: ${userId}`)
   const requestConfig = createMvRequestConfig(token)
   const pageSize = 10
   let page = 1
@@ -173,12 +173,12 @@ const getDecksFromMv = async (decks = {}) => {
 const favoriteLegacyDecks = async decks => {
   if (typeof decks !== 'object' || decks === null) {
     decks = {}
-    console.debug('Initialized decks as an empty object')
+    console.debug(`Initialized decks as an empty object`)
   }
 
   const { token, userId } = await getMvAuth()
 
-  console.debug('Fetching Master Vault legacy decks for user:', userId)
+  console.debug(`Fetching Master Vault legacy decks for user: ${userId}`)
   const requestConfig = createMvRequestConfig(token)
   const pageSize = 10
   // Check if a bigger page size can be used
