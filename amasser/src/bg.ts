@@ -128,7 +128,7 @@ const ICON_ROTATIONS = [
 ]
 
 const handleRotateIcon = async () => {
-  console.debug(`KFA: BG: Rotating icon during sync...`)
+  console.debug(`KFA: BG: Handling rotating icon`)
   let rotation = 0
   let s = await chrome.storage.local.get([
     'syncing-dok',
@@ -137,9 +137,9 @@ const handleRotateIcon = async () => {
   ])
   let now = Date.now()
   console.debug(
-    `KFA: BG: Syncing times: MV: ${now - s['syncing-mv']}ms DoK: ${
-      now - s['syncing-dok']
-    }ms TCO: ${now - s['syncing-tco']}ms`,
+    `KFA: BG: Syncing timestamps: MV: ${now - s['syncing-mv'] || 0}ms DoK: ${
+      now - s['syncing-dok'] || 0
+    }ms TCO: ${now - s['syncing-tco'] || 0}ms`,
   )
 
   if (

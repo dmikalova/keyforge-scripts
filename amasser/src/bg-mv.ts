@@ -116,7 +116,7 @@ const getDecksFromMv = async (decks = {}) => {
 
   const { token, userId } = await getMvAuth()
 
-  console.debug(`KFA: MV:Fetching decks`)
+  console.debug(`KFA: MV: Fetching decks`)
   const requestConfig = createMvRequestConfig(token)
   const pageSize = 10
   let page = 1

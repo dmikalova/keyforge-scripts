@@ -157,7 +157,7 @@ const syncDecks = () => {
 // Clear all data from local storage
 const clearData = () => {
   chrome.storage.local.clear(() => {
-    console.debug(`KFA: BG: All data cleared`)
+    console.debug(`KFA: POP: All data cleared`)
     loadState().then(state => loadUsers(state.settings))
   })
 
@@ -276,7 +276,7 @@ const syncMessages = [
 ]
 
 const checkSyncStatus = async (wait: boolean = false) => {
-  console.debug(`KFA: BG: Checking sync status`)
+  console.debug(`KFA: POP: Checking sync status`)
   let now = Date.now()
   let shift = 0
   let s = await chrome.storage.local.get([
@@ -309,9 +309,9 @@ const checkSyncStatus = async (wait: boolean = false) => {
     }
 
     console.debug(
-      `KFA: BG: Syncing times: MV: ${now - s['syncing-mv']}ms DoK: ${
-        now - s['syncing-dok']
-      }ms TCO: ${now - s['syncing-tco']}ms Wait: ${wait}`,
+      `KFA: POP: Syncing timestamps: MV: ${now - s['syncing-mv'] || 0}ms DoK: ${
+        now - s['syncing-dok'] || 0
+      }ms TCO: ${now - s['syncing-tco'] || 0}ms Wait: ${wait}`,
     )
   }
   console.debug(`KFA: POP: Sync finished`)
