@@ -129,7 +129,7 @@ const handleRotateIcon = async () => {
     'syncing-tco',
   ])
   let now = Date.now()
-  console.log(
+  console.debug(
     `KFA: BG: syncing times: MV: ${now - s['syncing-mv']}ms DoK: ${
       now - s['syncing-dok']
     }ms TCO: ${now - s['syncing-tco']}ms`,

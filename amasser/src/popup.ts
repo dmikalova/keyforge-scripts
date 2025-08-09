@@ -282,7 +282,7 @@ const syncMessages = [
 ]
 
 const checkSyncStatus = async (wait: boolean = false) => {
-  console.log('KFA: BG: Checking sync status...')
+  console.debug('KFA: BG: Checking sync status...')
   let now = Date.now()
   let shift = 0
   let s = await chrome.storage.local.get([
@@ -327,7 +327,7 @@ const checkSyncStatus = async (wait: boolean = false) => {
       s,
     )
   }
-  console.log('KFA: POP: Sync button state done, resetting buttons')
+  console.debug('KFA: POP: Sync button state done, resetting buttons')
 }
 
 const handleSyncStatus = text => {
