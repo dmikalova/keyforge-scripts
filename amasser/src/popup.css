@@ -34,8 +34,11 @@ body {
   color: var(--color-yellow);
   font-family: 'Teuton Fett Regular';
   font-size: 16px;
-  text-shadow: 0px 0px 5px var(--color-black), 0px 0px 10px var(--color-black),
-    0px 0px 15px var(--color-black), 0px 0px 20px var(--color-black);
+  text-shadow:
+    0px 0px 5px var(--color-black),
+    0px 0px 10px var(--color-black),
+    0px 0px 15px var(--color-black),
+    0px 0px 20px var(--color-black);
 }
 
 main {
@@ -175,8 +178,11 @@ hr {
   margin-right: auto;
   padding: 8px 16px;
   text-align: center;
-  text-shadow: 0px 0px 5px var(--color-black), 0px 0px 10px var(--color-black),
-    0px 0px 15px var(--color-black), 0px 0px 20px var(--color-black);
+  text-shadow:
+    0px 0px 5px var(--color-black),
+    0px 0px 10px var(--color-black),
+    0px 0px 15px var(--color-black),
+    0px 0px 20px var(--color-black);
   transition: all 0.2s;
   width: 130px;
 }
