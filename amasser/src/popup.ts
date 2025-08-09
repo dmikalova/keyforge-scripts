@@ -405,52 +405,10 @@ const loadUsers = async settings => {
           mvUsernameElem.textContent = ``
           mvUsernameElem.style.display = 'inline'
         }
+        throw new Error('No MV user found')
       }
     })(),
   )
-
-  if (settings['sync-tco']) {
-    userPromises.push(
-      (async () => {
-        console.debug('Getting TCO username')
-        const token = await getTcoRefreshToken()
-        if (token) {
-          const { username } = await getTcoUser(token)
-          const tcoUsernameElem = document.getElementById('tco-username')
-          if (tcoUsernameElem) {
-            tcoUsernameElem.textContent = `: ${username}`
-            tcoUsernameElem.style.display = 'inline'
-          }
-        } else {
-          console.error('No TCO user found')
-          const syncButton = document.getElementById('sync-decks')
-          if (syncButton && syncButton instanceof HTMLButtonElement) {
-            syncButton.replaceWith(syncButton.cloneNode(true))
-            const newSyncButton = document.getElementById('sync-decks')
-            newSyncButton.addEventListener('click', () => {
-              chrome.tabs.create({ url: 'https://thecrucible.online/' })
-            })
-            newSyncButton.textContent = 'Login to TCO'
-            if (newSyncButton instanceof HTMLButtonElement) {
-              newSyncButton.disabled = false
-            }
-          }
-          const tcoUsernameElem = document.getElementById('tco-username')
-          if (tcoUsernameElem) {
-            tcoUsernameElem.textContent = ``
-            tcoUsernameElem.style.display = 'inline'
-          }
-          throw new Error('No TCO user found')
-        }
-      })(),
-    )
-  } else {
-    const tcoUsernameElem = document.getElementById('tco-username')
-    if (tcoUsernameElem) {
-      tcoUsernameElem.textContent = ``
-      tcoUsernameElem.style.display = 'inline'
-    }
-  }
 
   if (settings['sync-dok']) {
     userPromises.push(
@@ -493,6 +451,49 @@ const loadUsers = async settings => {
     if (dokUsernameElem) {
       dokUsernameElem.textContent = ``
       dokUsernameElem.style.display = 'inline'
+    }
+  }
+
+  if (settings['sync-tco']) {
+    userPromises.push(
+      (async () => {
+        console.debug('Getting TCO username')
+        const token = await getTcoRefreshToken()
+        if (token) {
+          const { username } = await getTcoUser(token)
+          const tcoUsernameElem = document.getElementById('tco-username')
+          if (tcoUsernameElem) {
+            tcoUsernameElem.textContent = `: ${username}`
+            tcoUsernameElem.style.display = 'inline'
+          }
+        } else {
+          console.error('No TCO user found')
+          const syncButton = document.getElementById('sync-decks')
+          if (syncButton && syncButton instanceof HTMLButtonElement) {
+            syncButton.replaceWith(syncButton.cloneNode(true))
+            const newSyncButton = document.getElementById('sync-decks')
+            newSyncButton.addEventListener('click', () => {
+              chrome.tabs.create({ url: 'https://thecrucible.online/' })
+            })
+            newSyncButton.textContent = 'Login to TCO'
+            if (newSyncButton instanceof HTMLButtonElement) {
+              newSyncButton.disabled = false
+            }
+          }
+          const tcoUsernameElem = document.getElementById('tco-username')
+          if (tcoUsernameElem) {
+            tcoUsernameElem.textContent = ``
+            tcoUsernameElem.style.display = 'inline'
+          }
+          throw new Error('No TCO user found')
+        }
+      })(),
+    )
+  } else {
+    const tcoUsernameElem = document.getElementById('tco-username')
+    if (tcoUsernameElem) {
+      tcoUsernameElem.textContent = ``
+      tcoUsernameElem.style.display = 'inline'
     }
   }
 

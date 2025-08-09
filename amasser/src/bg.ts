@@ -94,10 +94,10 @@ const handleDeckSync = async () => {
   }
 
   try {
-    await Promise.allSettled(syncPromises)
+    const results = await Promise.allSettled(syncPromises)
 
     // Notify popup that sync is complete
-    console.debug('Deck sync promises complete in bg')
+    console.debug('Deck sync promises complete in bg:', results)
     chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
   } catch (error) {
     console.error('Error during deck sync:', error)

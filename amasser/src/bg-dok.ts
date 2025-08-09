@@ -17,7 +17,7 @@ export const handleDokSync = async () => {
     )
     return
   }
-  chrome.storage.local.set({ 'syncing-dok': Date.now() })
+  await chrome.storage.local.set({ 'syncing-dok': Date.now() })
   console.debug('KFA: DoK: deck sync started')
 
   let keepSyncing = true
@@ -46,7 +46,6 @@ export const handleDokSync = async () => {
       keepSyncing = false
     }
   }
-  chrome.storage.local.remove(['syncing-dok'])
 
   // If MV sync is in progress, trigger Dok sync again
   const syncingMv = await chrome.storage.local
@@ -64,10 +63,10 @@ export const handleDokSync = async () => {
         break
       }
     }
-    chrome.storage.local.remove(['syncing-dok'])
-    handleDokSync()
+    await chrome.storage.local.remove(['syncing-dok'])
+    await handleDokSync()
   }
-  chrome.storage.local.remove(['syncing-dok'])
+  await chrome.storage.local.remove(['syncing-dok'])
 }
 
 /**

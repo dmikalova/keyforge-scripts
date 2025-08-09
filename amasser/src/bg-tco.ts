@@ -16,9 +16,9 @@ export const handleTcoSync = async () => {
     )
     return
   }
-  chrome.storage.local.set({ 'syncing-tco': Date.now() })
+  await chrome.storage.local.set({ 'syncing-tco': Date.now() })
   console.debug('KFA: TCO: deck sync started')
-
+  // TODO: sync in separate fn and set syncing status only here, try catch
   let keepSyncing = true
   while (keepSyncing) {
     try {
@@ -62,10 +62,10 @@ export const handleTcoSync = async () => {
         break
       }
     }
-    chrome.storage.local.remove(['syncing-tco'])
-    handleTcoSync()
+    await chrome.storage.local.remove(['syncing-tco'])
+    await handleTcoSync()
   }
-  chrome.storage.local.remove(['syncing-tco'])
+  await chrome.storage.local.remove(['syncing-tco'])
 }
 
 export const getTcoRefreshToken = async (): Promise<string | null> => {
