@@ -218,10 +218,20 @@ const updateDeckCount = count => {
   }
 }
 
+const cancelSync = () => {
+  console.debug('KFA: POP: Cancelling sync from popup...')
+  chrome.storage.local
+    .remove(['syncing-mv', 'syncing-dok', 'syncing-tco'])
+    .then(() => {
+      console.debug('KFA: POP: Sync cancelled and buttons reset')
+      chrome.runtime.reload()
+    })
+}
+
 /**
  * Reset sync button to default state
  */
-const resetButtons = () => {
+const resetButtons = async () => {
   console.debug('Resetting buttons to default state')
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle && syncDokToggle instanceof HTMLInputElement) {
@@ -246,6 +256,14 @@ const resetButtons = () => {
 
   const clearDataButton = document.getElementById('clear-data')
   if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
+    if (clearDataButton.textContent !== 'Clear Data') {
+      clearDataButton.disabled = true
+      clearDataButton.textContent = 'Sync Finished'
+      clearDataButton.removeEventListener('click', cancelSync)
+      clearDataButton.addEventListener('click', clearData)
+      await new Promise(resolve => setTimeout(resolve, 1500))
+    }
+    clearDataButton.textContent = 'Clear Data'
     clearDataButton.disabled = false
   }
 }
@@ -312,9 +330,6 @@ const checkSyncStatus = async (wait: boolean = false) => {
   console.log('KFA: POP: Sync button state done, resetting buttons')
 }
 
-/**
- * Reset sync button to default state
- */
 const handleSyncStatus = text => {
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
     if (toggle instanceof HTMLInputElement) {
@@ -331,6 +346,14 @@ const handleSyncStatus = text => {
   const syncButton = document.getElementById('sync-decks')
   if (syncButton && syncButton instanceof HTMLButtonElement) {
     syncButton.textContent = text
+  }
+
+  const clearDataButton = document.getElementById('clear-data')
+  if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
+    clearDataButton.removeEventListener('click', clearData)
+    clearDataButton.addEventListener('click', cancelSync)
+    clearDataButton.textContent = 'Cancel Sync'
+    clearDataButton.disabled = false
   }
 
   // Randomly rotate the background gradients
@@ -473,7 +496,7 @@ const loadUsers = async settings => {
     }
   }
 
-  await Promise.all(userPromises)
+  await Promise.allSettled(userPromises)
     .then(async () => {
       console.debug('Logged in!')
       await checkSyncStatus()
@@ -490,5 +513,3 @@ const loadQuotes = () => {
     quoteElem.textContent = quotes[Math.floor(Math.random() * quotes.length)]
   }
 }
-
-// TODO: if in a sync change the clear data button to cancel sync

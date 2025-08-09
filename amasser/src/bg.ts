@@ -94,7 +94,7 @@ const handleDeckSync = async () => {
   }
 
   try {
-    await Promise.all(syncPromises)
+    await Promise.allSettled(syncPromises)
 
     // Notify popup that sync is complete
     console.debug('Deck sync promises complete in bg')

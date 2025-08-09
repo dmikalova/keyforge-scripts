@@ -53,6 +53,17 @@ export const handleDokSync = async () => {
     .get(['syncing-mv'])
     .then(r => r['syncing-mv'])
   if (syncingMv && Date.now() - syncingMv < staleSyncSeconds) {
+    let waited = 0
+    while (waited < syncAgainSeconds) {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      waited += 1000
+      const stillSyncingMv = await chrome.storage.local
+        .get(['syncing-mv'])
+        .then(r => r['syncing-mv'])
+      if (!stillSyncingMv || Date.now() - stillSyncingMv >= staleSyncSeconds) {
+        break
+      }
+    }
     await new Promise(resolve => setTimeout(resolve, syncAgainSeconds))
     handleDokSync()
   }
@@ -168,13 +179,13 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
         `KFA: DoK: Fetched ${dokLibrary.length} decks from DoK library`,
       )
 
-      for (const deck of dokLibrary) {
-        dok[deck.keyforgeId] = true
+      dokLibrary.forEach(dokDeck => {
+        dok[dokDeck.keyforgeId] = true
         chrome.storage.local.set({
-          [`zdok.${deck.keyforgeId}`]: true,
+          [`zdok.${dokDeck.keyforgeId}`]: true,
           'syncing-dok': Date.now(),
         })
-      }
+      })
 
       if (dokLibrary.length < 1000) {
         nextPage = false

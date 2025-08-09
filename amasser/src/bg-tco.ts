@@ -6,13 +6,14 @@ import {
 
 // The Crucible Online API configuration
 const TCO_BASE_URL = 'https://thecrucible.online'
-// TODO: why doesn't tco sync fully the first time after clear data
 export const handleTcoSync = async () => {
   const syncingTco = await chrome.storage.local
     .get(['syncing-tco'])
     .then(r => r['syncing-tco'])
   if (syncingTco && Date.now() - syncingTco < staleSyncSeconds) {
-    console.debug(`KFA: TCO: sync already in progress: ${Date.now() - syncingTco}ms`)
+    console.debug(
+      `KFA: TCO: sync already in progress: ${Date.now() - syncingTco}ms`,
+    )
     return
   }
   chrome.storage.local.set({ 'syncing-tco': Date.now() })
@@ -51,6 +52,17 @@ export const handleTcoSync = async () => {
     .get(['syncing-mv'])
     .then(r => r['syncing-mv'])
   if (syncingMv && Date.now() - syncingMv < staleSyncSeconds) {
+    let waited = 0
+    while (waited < syncAgainSeconds) {
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      waited += 1000
+      const stillSyncingMv = await chrome.storage.local
+        .get(['syncing-mv'])
+        .then(r => r['syncing-mv'])
+      if (!stillSyncingMv || Date.now() - stillSyncingMv >= staleSyncSeconds) {
+        break
+      }
+    }
     await new Promise(resolve => setTimeout(resolve, syncAgainSeconds))
     handleTcoSync()
   }
@@ -157,13 +169,11 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
         throw new Error(`Failed to fetch TCO decks: ${error.message}`)
       })
     tcoDecks.forEach(tcoDeck => {
-      if (mv[tcoDeck.uuid]) {
-        tco[tcoDeck.uuid] = true
-        chrome.storage.local.set({
-          [`ztco.${tcoDeck.uuid}`]: true,
-          'syncing-tco': Date.now(),
-        })
-      }
+      tco[tcoDeck.uuid] = true
+      chrome.storage.local.set({
+        [`ztco.${tcoDeck.uuid}`]: true,
+        'syncing-tco': Date.now(),
+      })
     })
     chrome.storage.local.set({ 'library-tco': Date.now() })
 

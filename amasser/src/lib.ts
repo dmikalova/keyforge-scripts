@@ -23,5 +23,5 @@ export const getDecksFromStorage = async () => {
 }
 
 export const staleSyncSeconds = 5 * 1000
-export const syncAgainSeconds = 2 * 1000
+export const syncAgainSeconds = 5 * 1000
 export const rotateAgainSeconds = 500
