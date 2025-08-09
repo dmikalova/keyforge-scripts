@@ -3,10 +3,10 @@ import { getMvAuth } from './bg-mv.js'
 import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
 import {
   getDecksFromStorage,
+  quotes,
   rotateAgainSeconds,
   staleSyncSeconds,
 } from './lib.js'
-import { quotes } from './quotes.js'
 
 // Popup script for KeyForge Amasser extension
 document.addEventListener('DOMContentLoaded', async () => {
@@ -497,7 +497,14 @@ const loadUsers = async settings => {
   }
 
   await Promise.allSettled(userPromises)
-    .then(async () => {
+    .then(async results => {
+      if (
+        !results.every(r => {
+          return r.status === 'fulfilled'
+        })
+      ) {
+        return console.error('Error loading users:', results)
+      }
       console.debug('Logged in!')
       await checkSyncStatus()
       resetButtons()

@@ -6,7 +6,7 @@
     "build": "tsc",
     "clean": "rm -rf dist",
     "generate-icons": "bash scripts/generate-icons.sh",
-    "pack": "npm run build && npm run pack:chrome && npm run pack:firefox",
+    "pack": "rm -rf dist *.zip && npm run build  && cp src/*.{css,html} dist && npm run pack:chrome && npm run pack:firefox",
     "pack:chrome": "zip -r keyforge-amasser-chrome.zip manifest.json dist fonts icons",
     "pack:firefox": "zip -r keyforge-amasser-firefox.zip manifest.json dist fonts icons",
     "watch": "tsc --watch"

@@ -1,6 +1,6 @@
 # KeyForge Amasser Browser Extension
 
-An unofficial browser extension for Chrome and Firefox that collects KeyForge decks from the Master Vault and syncs them to Decks of KeyForge or The Crucible Online.
+An unofficial browser extension for [Chrome](https://chromewebstore.google.com/detail/nmlpikoganplgciecgaboddhndemaohl) and Firefox that collects KeyForge decks from the Master Vault and syncs them to Decks of KeyForge or The Crucible Online.
 
 <!-- markdownlint-disable-next-line MD033 -->
 <img src="assets/screenshot.png" alt="KeyForge Amasser Extension Screenshot" height="400">
@@ -33,7 +33,7 @@ TCO has the following issues:
 
 ## Installation
 
-Download the extension from the [Chrome Web Store](https://chrome.google.com/webstore/detail/keyforge-amasser/your-extension-id) or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/keyforge-amasser/).
+Download the extension from the [Chrome Web Store](https://chromewebstore.google.com/detail/nmlpikoganplgciecgaboddhndemaohl) or [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/keyforge-amasser/).
 
 ## Privacy and Permissions
 

@@ -224,4 +224,4 @@ const updateAutoSyncAlarm = async () => {
 // TODO: compile for firefox
 // TODO: consistent debug messaging
 // TODO: turn off excessive debug messaging
-
+// TODO: remove errors when not logged in
