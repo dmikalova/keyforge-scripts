@@ -226,7 +226,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
       })
       console.debug(`KFA: DoK: Imported ${deck[0]}`)
     } else {
-      console.error(`KFA: DoK: Import failed ${deck[0]}: ${response.status}`)
+      console.debug(`KFA: DoK: Import failed ${deck[0]}: ${response.status}`)
     }
   }
 }

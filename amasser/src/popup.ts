@@ -405,7 +405,7 @@ const loadUsers = async settings => {
         }
         console.debug(`KFA: POP: MV username: ${userMv}`)
       } else {
-        console.error(`KFA: POP: Not logged in to MV`)
+        console.debug(`KFA: POP: Not logged in to MV`)
         // Reset the sync button to open MV login page
         const syncButton = document.getElementById('sync-decks')
         if (syncButton && syncButton instanceof HTMLButtonElement) {
@@ -443,7 +443,7 @@ const loadUsers = async settings => {
           }
           console.debug(`KFA: POP: TCO username: ${username}`)
         } else {
-          console.error(`KFA: POP: Not logged in to TCO`)
+          console.debug(`KFA: POP: Not logged in to TCO`)
           // Reset the sync button to open TCO login page
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
@@ -488,7 +488,7 @@ const loadUsers = async settings => {
           }
           console.debug(`KFA: POP: DoK username: ${user}`)
         } else {
-          console.error(`KFA: POP: Not logged in to DoK`)
+          console.debug(`KFA: POP: Not logged in to DoK`)
           // Reset the sync button to open DoK login page
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
@@ -525,9 +525,7 @@ const loadUsers = async settings => {
           return r.status === 'fulfilled'
         })
       ) {
-        return console.error(
-          `KFA POP: Error settling user promises: ${JSON.stringify(results)}`,
-        )
+        return console.debug(`KFA POP: Not logged in to all accounts`)
       }
       console.debug(`KFA: POP: Logged in to all accounts`)
       await checkSyncStatus()
