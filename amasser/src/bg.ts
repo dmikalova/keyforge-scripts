@@ -216,3 +216,12 @@ const updateAutoSyncAlarm = async () => {
     chrome.alarms.clear('DAILY_SYNC')
   }
 }
+
+// TODO: code consistency
+// TODO: break out fns
+// TODO: test on FF
+// TODO: compile for chrome
+// TODO: compile for firefox
+// TODO: consistent debug messaging
+// TODO: turn off excessive debug messaging
+

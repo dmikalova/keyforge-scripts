@@ -44,7 +44,7 @@
   },
   "manifest_version": 3,
   "name": "KeyForge Amasser",
-  "permissions": ["alarms", "cookies", "scripting", "storage"],
+  "permissions": ["alarms", "cookies", "storage"],
   "version": "1.0.0",
   "commands": {
     "Ctrl+I": {
@@ -52,7 +52,7 @@
         "default": "Ctrl+I",
         "mac": "Command+I"
       },
-      "description": "Ctrl+I."
+      "description": "Restart the extension"
     }
   }
 }

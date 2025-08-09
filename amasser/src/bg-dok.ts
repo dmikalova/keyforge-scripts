@@ -64,9 +64,10 @@ export const handleDokSync = async () => {
         break
       }
     }
-    await new Promise(resolve => setTimeout(resolve, syncAgainSeconds))
+    chrome.storage.local.remove(['syncing-dok'])
     handleDokSync()
   }
+  chrome.storage.local.remove(['syncing-dok'])
 }
 
 /**

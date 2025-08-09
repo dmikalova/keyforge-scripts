@@ -45,7 +45,6 @@ export const handleTcoSync = async () => {
       keepSyncing = false
     }
   }
-  chrome.storage.local.remove(['syncing-tco'])
 
   // If MV sync is in progress, trigger TCO sync again
   const syncingMv = await chrome.storage.local
@@ -63,9 +62,10 @@ export const handleTcoSync = async () => {
         break
       }
     }
-    await new Promise(resolve => setTimeout(resolve, syncAgainSeconds))
+    chrome.storage.local.remove(['syncing-tco'])
     handleTcoSync()
   }
+  chrome.storage.local.remove(['syncing-tco'])
 }
 
 export const getTcoRefreshToken = async (): Promise<string | null> => {
