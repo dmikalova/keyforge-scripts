@@ -226,10 +226,5 @@ const updateAutoSyncAlarm = async () => {
 
 // TODO: code consistency
 // TODO: break out fns
-// TODO: test on FF
-// TODO: compile for chrome
-// TODO: compile for firefox
-// TODO: consistent debug messaging
-// TODO: turn off excessive debug messaging
 // TODO: remove errors when not logged in
 // TODO: clean up types
