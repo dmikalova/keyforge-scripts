@@ -9,7 +9,6 @@
     "default_title": "KeyForge Amasser"
   },
   "background": {
-    "scripts": ["dist/bg.js"],
     "service_worker": "dist/bg.js",
     "type": "module"
   },

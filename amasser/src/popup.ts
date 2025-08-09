@@ -493,14 +493,16 @@ const loadUsers = async settings => {
           return r.status === 'fulfilled'
         })
       ) {
-        return console.error(`KFA POP: Error loading users: ${results}`)
+        return console.error(
+          `KFA POP: Error settling user promises: ${JSON.stringify(results)}`,
+        )
       }
       console.debug(`KFA: POP: Logged in to all accounts`)
       await checkSyncStatus()
       resetButtons()
     })
     .catch(error => {
-      console.error(`KFA: POP: Error loading users: ${error}`)
+      console.error(`KFA: POP: Error loading users: ${JSON.stringify(error)}`)
     })
 }
 

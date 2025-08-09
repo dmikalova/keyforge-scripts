@@ -3,13 +3,11 @@
   "version": "1.0.0",
   "description": "Sync KeyForge decks from the Master Vault to Decks of KeyForge",
   "scripts": {
-    "build": "tsc",
-    "clean": "rm -rf dist",
+    "build": "bash scripts/build.sh",
+    "clean": "rm -rf chrome dist firefox ./*.zip",
     "generate-icons": "bash scripts/generate-icons.sh",
-    "pack": "rm -rf dist *.zip && npm run build  && cp src/*.{css,html} dist && npm run pack:chrome && npm run pack:firefox",
-    "pack:chrome": "zip -r keyforge-amasser-chrome.zip manifest.json dist fonts icons",
-    "pack:firefox": "zip -r keyforge-amasser-firefox.zip manifest.json dist fonts icons",
-    "watch": "tsc --watch"
+    "pack": "bash scripts/pack.sh",
+    "watch": "npm-watch"
   },
   "keywords": [
     "keyforge",
@@ -27,9 +25,21 @@
     "@types/chrome": "^0.0.246",
     "@types/node": "^24.1.0",
     "@types/webextension-polyfill": "^0.10.0",
+    "npm-watch": "^0.13.0",
     "typescript": "^5.0.0"
   },
   "engines": {
     "node": ">=16.0.0"
+  },
+  "watch": {
+    "build": {
+      "patterns": [
+        "manifest.json",
+        "fonts",
+        "icons",
+        "src"
+      ],
+      "extensions": "css,html,png,ts,woff"
+    }
   }
 }
