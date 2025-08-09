@@ -1,4 +1,5 @@
-import { getDecksFromStorage, staleSyncSeconds } from './lib.js'
+import { conf } from './conf.js'
+import { getDecksFromStorage } from './lib.js'
 
 // Master Vault API configuration
 const MV_BASE_URL = 'https://www.keyforgegame.com'
@@ -10,21 +11,21 @@ export const handleMvSync = async () => {
   const syncingMv = await chrome.storage.local
     .get(['syncing-dok'])
     .then(r => r['syncing-dok'])
-  if (syncingMv && Date.now() - syncingMv < staleSyncSeconds) {
+  if (syncingMv && Date.now() - syncingMv < conf.staleSyncSeconds) {
     console.debug(
-      `KFA: MV: sync already in progress: ${Date.now() - syncingMv}ms`,
+      `KFA: MV: Sync already in progress: ${Date.now() - syncingMv}ms`,
     )
     return
   }
-  chrome.storage.local.set({ 'syncing-mv': Date.now() })
-  console.debug(`KFA: MV: deck sync started`)
+  await chrome.storage.local.set({ 'syncing-mv': Date.now() })
+  console.debug(`KFA: MV: Sync starting`)
 
   try {
     const { mv: decks } = await getDecksFromStorage()
     await getDecksFromMv(decks)
   } catch (error) {
-    console.error(`KFA: MV: Error syncing decks: ${error}`)
-    chrome.storage.local.remove(['syncing-mv'])
+    console.error(`KFA: MV: Error syncing: ${error}`)
+    await chrome.storage.local.remove(['syncing-mv'])
     chrome.runtime
       .sendMessage({
         type: 'SYNC_ERROR',
@@ -33,7 +34,7 @@ export const handleMvSync = async () => {
       .catch(() => {})
   }
 
-  chrome.storage.local.remove(['syncing-mv'])
+  await chrome.storage.local.remove(['syncing-mv'])
 }
 
 export const getMvAuth = async (): Promise<
@@ -41,13 +42,11 @@ export const getMvAuth = async (): Promise<
 > => {
   const authCookie = await getMvAuthCookie()
   if (!authCookie) {
-    console.debug(`You must login to Master Vault first`)
+    console.debug(`KFA: MV: Not logged in`)
     return { token: null, userId: null, username: null }
   }
-  console.debug(`Master Vault auth cookie loaded...`)
 
   const user = await getMvUser(authCookie.value)
-  console.debug(`Master Vault user ID: ${user.id}`)
 
   return { token: authCookie.value, userId: user.id, username: user.username }
 }
@@ -58,7 +57,7 @@ export const getMvAuth = async (): Promise<
 const getMvAuthCookie = (): Promise<chrome.cookies.Cookie | null> => {
   return new Promise(resolve => {
     if (!chrome.cookies) {
-      console.error(`ERROR: Chrome cookies API is not available.`)
+      console.error(`KFA: MV: Cookies API is not available`)
       resolve(null)
       return
     }
@@ -98,7 +97,7 @@ const getMvUser = async (token: string): Promise<MvUser> => {
   )
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch user: ${response.status}`)
+    throw new Error(`KFA: MV: Failed to fetch user: ${response.status}`)
   }
 
   const user = await response.json()
@@ -113,11 +112,11 @@ const getDecksFromMv = async (decks = {}) => {
     decks = {}
   }
 
-  chrome.storage.local.set({ 'syncing-mv': Date.now() })
+  await chrome.storage.local.set({ 'syncing-mv': Date.now() })
 
   const { token, userId } = await getMvAuth()
 
-  console.debug(`Fetching Master Vault decks for user: ${userId}`)
+  console.debug(`KFA: MV:Fetching decks`)
   const requestConfig = createMvRequestConfig(token)
   const pageSize = 10
   let page = 1
@@ -137,9 +136,9 @@ const getDecksFromMv = async (decks = {}) => {
     console.debug(
       `KFA: MV: Fetched page ${page} with ${data.decks.length} decks`,
     )
-    data.decks.forEach(deck => {
+    data.decks.forEach(async deck => {
       decks[deck.id] = true
-      chrome.storage.local.set({
+      await chrome.storage.local.set({
         [`zmv.${deck.id}`]: true,
         'syncing-mv': Date.now(),
       })
@@ -155,9 +154,7 @@ const getDecksFromMv = async (decks = {}) => {
 
     if (Object.keys(decks).length === data.count) {
       console.debug(
-        `All ${Object.keys(decks).length}/${
-          data.count
-        } decks fetched, breaking loop`,
+        `KFA: MV: Finished with ${Object.keys(decks).length}/${data.count} decks`,
       )
       break
     }
@@ -165,74 +162,7 @@ const getDecksFromMv = async (decks = {}) => {
     hasMorePages = data.decks.length === pageSize
     page++
     console.debug(
-      `Moving to page ${page}: ${Object.keys(decks).length}/${data.count}`,
-    )
-  }
-}
-
-const favoriteLegacyDecks = async decks => {
-  if (typeof decks !== 'object' || decks === null) {
-    decks = {}
-    console.debug(`Initialized decks as an empty object`)
-  }
-
-  const { token, userId } = await getMvAuth()
-
-  console.debug(`Fetching Master Vault legacy decks for user: ${userId}`)
-  const requestConfig = createMvRequestConfig(token)
-  const pageSize = 10
-  // Check if a bigger page size can be used
-  let page = 1
-  let hasMorePages = true
-
-  while (hasMorePages) {
-    const url = `${MV_BASE_URL}/api/users/${userId}/decks/?page=${page}&page_size=${pageSize}&search=&ordering=-date`
-    const response = await fetch(url, requestConfig)
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch decks page ${page}: ${response.status}`)
-    }
-
-    const data = await response.json().then(data => {
-      return { count: data.count, decks: data.data }
-    })
-    console.debug(`Fetched legacy page ${page} with ${data.decks.length} decks`)
-    data.decks.forEach(async deck => {
-      if (decks[deck.id]) {
-        console.debug(`Legacy deck ${deck.id} is owned`)
-        await fetch(`${MV_BASE_URL}/api/users/${userId}/decks/favorites/`, {
-          credentials: 'include',
-          headers: {
-            accept: 'application/json',
-            'accept-language': 'en-us',
-            authorization: `Token ${token}`,
-            'x-authorization': `Token ${token}`,
-            'content-type': 'application/json',
-          },
-          method: 'DELETE',
-          body: JSON.stringify({ deck_id: deck.id }),
-        })
-      } else {
-        console.debug(`Adding unowned legacy deck ${deck.id} to favorites`)
-        await fetch(`${MV_BASE_URL}/api/users/${userId}/decks/favorites/`, {
-          credentials: 'include',
-          headers: {
-            accept: 'application/json',
-            'accept-language': 'en-us',
-            authorization: `Token ${token}`,
-            'x-authorization': `Token ${token}`,
-            'content-type': 'application/json',
-          },
-          method: 'POST',
-          body: JSON.stringify({ deck_id: deck.id }),
-        })
-      }
-    })
-
-    hasMorePages = data.decks.length === pageSize
-    page++
-    console.debug(
-      `Moving to page ${page}: ${Object.keys(decks).length}/${data.count}`,
+      `KFA: MV: Next page ${page}: ${Object.keys(decks).length}/${data.count} decks`,
     )
   }
 }

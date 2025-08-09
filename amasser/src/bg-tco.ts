@@ -1,23 +1,21 @@
-import {
-  getDecksFromStorage,
-  staleSyncSeconds,
-  syncAgainSeconds,
-} from './lib.js'
+import { conf } from './conf.js'
+import { getDecksFromStorage } from './lib.js'
 
 // The Crucible Online API configuration
 const TCO_BASE_URL = 'https://thecrucible.online'
+
 export const handleTcoSync = async () => {
   const syncingTco = await chrome.storage.local
     .get(['syncing-tco'])
     .then(r => r['syncing-tco'])
-  if (syncingTco && Date.now() - syncingTco < staleSyncSeconds) {
+  if (syncingTco && Date.now() - syncingTco < conf.staleSyncSeconds) {
     console.debug(
       `KFA: TCO: sync already in progress: ${Date.now() - syncingTco}ms`,
     )
     return
   }
   await chrome.storage.local.set({ 'syncing-tco': Date.now() })
-  console.debug(`KFA: TCO: deck sync started`)
+  console.debug(`KFA: TCO: Sync starting`)
   // TODO: sync in separate fn and set syncing status only here, try catch
   let keepSyncing = true
   while (keepSyncing) {
@@ -50,15 +48,18 @@ export const handleTcoSync = async () => {
   const syncingMv = await chrome.storage.local
     .get(['syncing-mv'])
     .then(r => r['syncing-mv'])
-  if (syncingMv && Date.now() - syncingMv < staleSyncSeconds) {
+  if (syncingMv && Date.now() - syncingMv < conf.staleSyncSeconds) {
     let waited = 0
-    while (waited < syncAgainSeconds) {
+    while (waited < conf.syncAgainSeconds) {
       await new Promise(resolve => setTimeout(resolve, 1000))
       waited += 1000
       const stillSyncingMv = await chrome.storage.local
         .get(['syncing-mv'])
         .then(r => r['syncing-mv'])
-      if (!stillSyncingMv || Date.now() - stillSyncingMv >= staleSyncSeconds) {
+      if (
+        !stillSyncingMv ||
+        Date.now() - stillSyncingMv >= conf.staleSyncSeconds
+      ) {
         break
       }
     }
@@ -75,7 +76,7 @@ export const getTcoRefreshToken = async (): Promise<string | null> => {
   ])
 
   if (!refreshToken) {
-    console.debug(`You must login to The Crucible Online first`)
+    console.debug(`KFA: TCO: Not logged in`)
     return null
   }
 
@@ -84,7 +85,7 @@ export const getTcoRefreshToken = async (): Promise<string | null> => {
 
 export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
   if (!token) {
-    throw new Error('No TCO token provided')
+    throw new Error('KFA: TCO: Token missing')
   }
 
   const t = {
@@ -93,7 +94,7 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
 
   const body = JSON.stringify(t)
 
-  console.debug(`KFA: TCO: Fetching user info...`)
+  console.debug(`KFA: TCO: Fetching user`)
   const response = await fetch(`${TCO_BASE_URL}/api/account/token`, {
     credentials: 'include',
     headers: {
@@ -112,13 +113,13 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
   })
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch user: ${response.status}`)
+    throw new Error(`KFA: TCO: Failed to fetch user: ${response.status}`)
   }
 
   const respJson = await response.json()
   if (!respJson.success) {
     await chrome.storage.local.remove('tcoRefreshToken')
-    throw new Error(`Failed to fetch user: ${respJson.error}`)
+    throw new Error(`KFA: TCO: Failed to fetch user: ${respJson.error}`)
   }
 
   return {
@@ -129,13 +130,12 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
 }
 
 const importDecksToTco = async (mv: Decks, tco: Decks) => {
-  // Filter out decks that already have tco=true
   let decksToImport = Object.entries(mv).filter(
     ([id, deck]) => deck === true && !tco[id],
   )
 
   if (decksToImport.length === 0) {
-    console.debug(`No new decks to import`)
+    console.debug(`KFA: TCO: No new decks to import`)
     return
   }
 
@@ -145,7 +145,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
   if (!libraryTco) {
     console.debug(`KFA: TCO: Fetching TCO library`)
     chrome.storage.local.set({
-      'syncing-tco': Date.now() + 4 * staleSyncSeconds,
+      'syncing-tco': Date.now() + 4 * conf.staleSyncSeconds,
     })
     const { token } = await getTcoUser(await getTcoRefreshToken())
     const { decks: tcoDecks } = await fetch(
@@ -166,7 +166,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     )
       .then(response => response.json())
       .catch(error => {
-        throw new Error(`Failed to fetch TCO decks: ${error.message}`)
+        throw new Error(`KFA: TCO: Error fetching library: ${error.message}`)
       })
     tcoDecks.forEach(tcoDeck => {
       tco[tcoDeck.uuid] = true
@@ -182,18 +182,16 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     )
 
     if (decksToImport.length === 0) {
-      console.debug(`No new decks to import`)
+      console.debug(`KFA: TCO: No new decks to import`)
       return
     }
   }
-  console.debug(`KFA: TCO: Decks to import: ${decksToImport.length}`)
+  console.debug(`KFA: TCO: Importing ${decksToImport.length} decks`)
 
   for (const [i, deck] of decksToImport.entries()) {
     // Refresh token before each import to avoid unauthorized errors
     console.debug(
-      `Importing deck to ${i + 1}/${decksToImport.length}: ${
-        deck[0]
-      } to TCO...`,
+      `KFA: TCO: Importing deck ${i + 1}/${decksToImport.length}: ${deck}`,
     )
     const { token } = await getTcoUser(await getTcoRefreshToken())
     const response = await fetch(`${TCO_BASE_URL}/api/decks/`, {
@@ -223,7 +221,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     ]
 
     if (response.ok && respJson.success) {
-      console.debug(`Imported ${deck[0]}`)
+      console.debug(`KFA: TCO: Imported deck: ${deck[0]}`)
       tco[deck[0]] = true
       chrome.storage.local.set({
         [`ztco.${deck[0]}`]: true,
@@ -234,7 +232,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
       !respJson.success &&
       respJson.message === 'Deck already exists.'
     ) {
-      console.debug(`Deck already imported to TCO ${deck[0]}`)
+      console.debug(`KFA: TCO: Already imported deck: ${deck[0]}`)
       tco[deck[0]] = true
       chrome.storage.local.set({
         [`ztco.${deck[0]}`]: true,
@@ -245,7 +243,9 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
       !respJson.success &&
       tcoImportErrorMessages.some(msg => respJson.message.includes(msg))
     ) {
-      console.debug(`Failed to import to TCO with known error ${deck[0]}`)
+      console.debug(
+        `KFA: TCO: Import failed with known error for deck: ${deck[0]}`,
+      )
       tco[deck[0]] = 'import error'
       chrome.storage.local.set({
         [`ztco.${deck[0]}`]: 'import error',
@@ -256,21 +256,22 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
       !respJson.success &&
       respJson.message === 'Invalid response from Api. Please try again later.'
     ) {
-      console.debug(`Rate limiting hit, pausing`)
+      console.debug(`KFA: TCO: Rate limit hit, pausing`)
       for (let timeout = 0; timeout < 60; timeout++) {
         chrome.storage.local.set({ 'syncing-tco': Date.now() })
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     } else {
       console.error(
-        `Failed to import to TCO with unknown error ${deck[0]}: ${
+        `KFA: TCO: Import failed with unknown error for deck: ${deck[0]}: ${
           response.status
         } ${JSON.stringify(respJson)}`,
       )
       chrome.storage.local.set({ 'syncing-tco': Date.now() })
     }
 
-    console.debug(`Waiting before next import due to rate limits...`)
+    // console.debug(`KFA: TCO: Wait before next import`)
+    // TODO: get the timeout from lib and use the additive wait method
     for (let timeout = 0; timeout < 10; timeout++) {
       chrome.storage.local.set({ 'syncing-tco': Date.now() })
       await new Promise(resolve => setTimeout(resolve, 1000))

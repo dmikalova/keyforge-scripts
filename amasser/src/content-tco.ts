@@ -5,7 +5,7 @@ chrome.storage.sync.get(['sync-tco'], result => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
           if (document.querySelector('a#nav-Profile')) {
-            console.debug(`KF Amasser: User is logged in to TCO`)
+            console.debug(`KFA: CTCO: User is logged in`)
             const tcoRefreshToken = window.localStorage.getItem('refreshToken')
             if (tcoRefreshToken !== null) {
               chrome.runtime.sendMessage(
@@ -15,13 +15,9 @@ chrome.storage.sync.get(['sync-tco'], result => {
                 },
                 response => {
                   if (response && response.success) {
-                    console.debug(
-                      `KF Amasser: Sent TCO refresh token to background script`,
-                    )
+                    console.debug(`KFA: CTCO: Refresh token message succeeded`)
                   } else {
-                    console.warn(
-                      `KF Amasser: Failed to send TCO refresh token to background script`,
-                    )
+                    console.warn(`KFA: CTCO: Refresh token message failed`)
                   }
                 },
               )

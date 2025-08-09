@@ -5,20 +5,16 @@ chrome.storage.sync.get(['sync-dok'], result => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
           if (document.querySelector('a[href="/my-dok/my-profile"]')) {
-            console.debug(`KF Amasser: User is logged in to DoK`)
+            console.debug(`KFA: CDoK: User is logged in`)
             const dokAuth = window.localStorage.getItem('AUTH')
             if (dokAuth !== null) {
               chrome.runtime.sendMessage(
                 { type: 'SAVE_DOK_AUTH', 'token-dok': dokAuth },
                 response => {
                   if (response && response.success) {
-                    console.debug(
-                      `KF Amasser: Sent DoK auth token to background script`,
-                    )
+                    console.debug(`KFA: CDoK: Auth token message succeeded`)
                   } else {
-                    console.warn(
-                      `KF Amasser: Failed to send DoK auth token to background script`,
-                    )
+                    console.warn(`KFA: CDoK: Auth token message failed`)
                   }
                 },
               )

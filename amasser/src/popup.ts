@@ -1,33 +1,29 @@
 import { getDokToken, getDokUser } from './bg-dok.js'
 import { getMvAuth } from './bg-mv.js'
 import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
-import {
-  getDecksFromStorage,
-  quotes,
-  rotateAgainSeconds,
-  staleSyncSeconds,
-} from './lib.js'
+import { conf } from './conf.js'
+import { getDecksFromStorage } from './lib.js'
 
 // Popup script for KeyForge Amasser extension
 document.addEventListener('DOMContentLoaded', async () => {
+  // Set up event listeners
+  setupEventListeners()
+
   // Load quotes
   loadQuotes()
 
   // Load state from storage
   const state = await loadState()
 
-  // Set up event listeners
-  setupEventListeners()
+  await loadUsers(state.settings)
+})
 
+const setupEventListeners = async () => {
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener(message => {
     handleBackgroundMessage(message)
   })
 
-  await loadUsers(state.settings)
-})
-
-const setupEventListeners = async () => {
   // Toggle event listeners
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle) {
@@ -109,28 +105,26 @@ const loadState = async () => {
     'sync-auto-toggle',
   ) as HTMLInputElement
   if (!syncDokToggle || !syncTcoToggle || !syncAutoToggle) {
-    console.error(`Sync toggles not found in popup`)
+    console.error(`KFA: POP: Sync toggle elements not found`)
     return
   }
   // Set toggle states based on stored data
   if (settings['sync-dok'] === undefined) {
     // Default to true if not set
-    settings['sync-dok'] = true
+    settings['sync-dok'] = conf.defaults['sync-dok']
   }
   if (settings['sync-tco'] === undefined) {
     // Default to true if not set
-    settings['sync-tco'] = false
+    settings['sync-tco'] = conf.defaults['sync-tco']
   }
   if (settings['sync-auto'] === undefined) {
     // Default to true if not set
-    settings['sync-auto'] = false
+    settings['sync-auto'] = conf.defaults['sync-auto']
   }
   // Update toggle states
-  console.debug(`Setting sync toggles:`, {
-    'sync-dok': settings['sync-dok'],
-    'sync-tco': settings['sync-tco'],
-    'sync-auto': settings['sync-auto'],
-  })
+  console.debug(
+    `KFA: POP: Setting sync toggles: DoK: ${settings['sync-dok']}, TCO: ${settings['sync-tco']}, Auto: ${settings['sync-auto']}`,
+  )
 
   // Set toggle states
   if (syncDokToggle) {
@@ -146,13 +140,13 @@ const loadState = async () => {
       (syncAutoToggle.checked = settings['sync-auto'] || false)
   }
 
-  console.debug(`KFA: POP: Deck count: `, Object.keys(decks || {}).length)
+  console.debug(`KFA: POP: Deck count: ${Object.keys(decks || {}).length}`)
   return { decks, settings }
 }
 
 // Trigger a deck sync
 const syncDecks = () => {
-  console.debug(`Syncing decks from popup..`)
+  console.debug(`KFA: POP: Sync starting`)
 
   // Update button state
   handleSyncStatus(syncMessages[0])
@@ -185,12 +179,12 @@ const handleBackgroundMessage = message => {
   switch (message.type) {
     case 'SYNC_COMPLETE':
       resetButtons()
-      console.debug(`Sync completed successfully!`)
+      console.debug(`KFA: POP: Sync completed`)
       break
 
     case 'SYNC_ERROR':
       resetButtons()
-      console.error(`Sync failed: ${message.error}`)
+      console.error(`KFA: POP: Sync failed: ${message.error}`)
       break
 
     case 'SYNC_STATUS':
@@ -204,7 +198,7 @@ const handleBackgroundMessage = message => {
       break
 
     default:
-      console.debug(`Unknown message type: ${message.type}`)
+      console.debug(`KFA: POP: Unknown message type: ${message.type}`)
   }
 }
 
@@ -219,7 +213,7 @@ const updateDeckCount = count => {
 }
 
 const cancelSync = () => {
-  console.debug(`KFA: POP: Cancelling sync from popup...`)
+  console.debug(`KFA: POP: Cancelling sync`)
   chrome.storage.local
     .remove(['syncing-mv', 'syncing-dok', 'syncing-tco'])
     .then(() => {
@@ -232,7 +226,7 @@ const cancelSync = () => {
  * Reset sync button to default state
  */
 const resetButtons = async () => {
-  console.debug(`Resetting buttons to default state`)
+  console.debug(`KFA: POP: Resetting buttons`)
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle && syncDokToggle instanceof HTMLInputElement) {
     syncDokToggle.disabled = false
@@ -282,7 +276,7 @@ const syncMessages = [
 ]
 
 const checkSyncStatus = async (wait: boolean = false) => {
-  console.debug(`KFA: BG: Checking sync status...`)
+  console.debug(`KFA: BG: Checking sync status`)
   let now = Date.now()
   let shift = 0
   let s = await chrome.storage.local.get([
@@ -293,16 +287,16 @@ const checkSyncStatus = async (wait: boolean = false) => {
   while (
     wait ||
     (typeof s['syncing-dok'] === 'number' &&
-      now - s['syncing-dok'] < staleSyncSeconds) ||
+      now - s['syncing-dok'] < conf.staleSyncSeconds) ||
     (typeof s['syncing-mv'] === 'number' &&
-      now - s['syncing-mv'] < staleSyncSeconds) ||
+      now - s['syncing-mv'] < conf.staleSyncSeconds) ||
     (typeof s['syncing-tco'] === 'number' &&
-      now - s['syncing-tco'] < staleSyncSeconds)
+      now - s['syncing-tco'] < conf.staleSyncSeconds)
   ) {
     handleSyncStatus(syncMessages[shift])
 
     shift = (shift + 1) % syncMessages.length
-    await new Promise(resolve => setTimeout(resolve, rotateAgainSeconds))
+    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
 
     s = await chrome.storage.local.get([
       'syncing-dok',
@@ -313,21 +307,14 @@ const checkSyncStatus = async (wait: boolean = false) => {
     if (Object.keys(s).length !== 0) {
       wait = false
     }
+
     console.debug(
-      `running again:`,
-      now,
-      wait,
-      wait ||
-        (typeof s['syncing-dok'] === 'number' &&
-          now - s['syncing-dok'] < staleSyncSeconds) ||
-        (typeof s['syncing-mv'] === 'number' &&
-          now - s['syncing-mv'] < staleSyncSeconds) ||
-        (typeof s['syncing-tco'] === 'number' &&
-          now - s['syncing-tco'] < staleSyncSeconds),
-      s,
+      `KFA: BG: Syncing times: MV: ${now - s['syncing-mv']}ms DoK: ${
+        now - s['syncing-dok']
+      }ms TCO: ${now - s['syncing-tco']}ms Wait: ${wait}`,
     )
   }
-  console.debug(`KFA: POP: Sync button state done, resetting buttons`)
+  console.debug(`KFA: POP: Sync finished`)
 }
 
 const handleSyncStatus = text => {
@@ -367,7 +354,7 @@ const handleSyncStatus = text => {
           .replace('deg', ''),
       ) || 0
     const newCount = currentCount + Math.floor(Math.random() * 240) + 60
-    console.debug(`KFA: POP: Rotating background gradient to: ${newCount}`)
+    // console.debug(`KFA: POP: Rotating background gradient`)
     body.style.setProperty('--count', `${newCount % 360}deg`)
   }
 }
@@ -375,19 +362,21 @@ const handleSyncStatus = text => {
 const loadUsers = async settings => {
   const userPromises = []
 
+  // TODO: don't replace the sync button, just change the listeners
   // MV user
   userPromises.push(
     (async () => {
+      console.debug(`KFA: POP: Getting MV username`)
       const { username: userMv } = await getMvAuth()
       if (userMv) {
-        console.debug(`Master Vault user found: ${userMv}`)
         const mvUsernameElem = document.getElementById('mv-username')
         if (mvUsernameElem) {
           mvUsernameElem.textContent = `: ${userMv}`
           mvUsernameElem.style.display = 'inline'
         }
+        console.debug(`KFA: POP: MV username: ${userMv}`)
       } else {
-        console.error(`No MV user found`)
+        console.error(`KFA: POP: Not logged in to MV`)
         const syncButton = document.getElementById('sync-decks')
         if (syncButton && syncButton instanceof HTMLButtonElement) {
           syncButton.replaceWith(syncButton.cloneNode(true))
@@ -405,59 +394,15 @@ const loadUsers = async settings => {
           mvUsernameElem.textContent = ``
           mvUsernameElem.style.display = 'inline'
         }
-        throw new Error('No MV user found')
+        throw new Error('KFA: POP: Not logged into MV')
       }
     })(),
   )
 
-  if (settings['sync-dok']) {
-    userPromises.push(
-      (async () => {
-        console.debug(`Getting DoK username`)
-        const token = await getDokToken()
-        if (token) {
-          const user = await getDokUser(token)
-          const dokUsernameElem = document.getElementById('dok-username')
-          if (dokUsernameElem) {
-            dokUsernameElem.textContent = `: ${user}`
-            dokUsernameElem.style.display = 'inline'
-          }
-        } else {
-          const syncButton = document.getElementById('sync-decks')
-          console.debug(`Sync button found?`)
-          if (syncButton && syncButton instanceof HTMLButtonElement) {
-            console.debug(`Sync button found, replacing it`)
-            syncButton.replaceWith(syncButton.cloneNode(true))
-            const newSyncButton = document.getElementById('sync-decks')
-            newSyncButton.addEventListener('click', () => {
-              chrome.tabs.create({ url: 'https://decksofkeyforge.com/' })
-            })
-            newSyncButton.textContent = 'Login to DoK'
-            if (newSyncButton instanceof HTMLButtonElement) {
-              newSyncButton.disabled = false
-            }
-          }
-          const dokUsernameElem = document.getElementById('dok-username')
-          if (dokUsernameElem) {
-            dokUsernameElem.textContent = ``
-            dokUsernameElem.style.display = 'inline'
-          }
-          throw new Error('No DoK user found')
-        }
-      })(),
-    )
-  } else {
-    const dokUsernameElem = document.getElementById('dok-username')
-    if (dokUsernameElem) {
-      dokUsernameElem.textContent = ``
-      dokUsernameElem.style.display = 'inline'
-    }
-  }
-
   if (settings['sync-tco']) {
     userPromises.push(
       (async () => {
-        console.debug(`Getting TCO username`)
+        console.debug(`KFA: POP: Getting TCO username`)
         const token = await getTcoRefreshToken()
         if (token) {
           const { username } = await getTcoUser(token)
@@ -466,8 +411,9 @@ const loadUsers = async settings => {
             tcoUsernameElem.textContent = `: ${username}`
             tcoUsernameElem.style.display = 'inline'
           }
+          console.debug(`KFA: POP: TCO username: ${username}`)
         } else {
-          console.error(`No TCO user found`)
+          console.error(`KFA: POP: Not logged in to TCO`)
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
             syncButton.replaceWith(syncButton.cloneNode(true))
@@ -485,7 +431,7 @@ const loadUsers = async settings => {
             tcoUsernameElem.textContent = ``
             tcoUsernameElem.style.display = 'inline'
           }
-          throw new Error('No TCO user found')
+          throw new Error('KFA: POP: Not logged into TCO')
         }
       })(),
     )
@@ -497,6 +443,49 @@ const loadUsers = async settings => {
     }
   }
 
+  if (settings['sync-dok']) {
+    userPromises.push(
+      (async () => {
+        console.debug(`KFA: POP: Getting DoK username`)
+        const token = await getDokToken()
+        if (token) {
+          const user = await getDokUser(token)
+          const dokUsernameElem = document.getElementById('dok-username')
+          if (dokUsernameElem) {
+            dokUsernameElem.textContent = `: ${user}`
+            dokUsernameElem.style.display = 'inline'
+          }
+          console.debug(`KFA: POP: DoK username: ${user}`)
+        } else {
+          const syncButton = document.getElementById('sync-decks')
+          if (syncButton && syncButton instanceof HTMLButtonElement) {
+            syncButton.replaceWith(syncButton.cloneNode(true))
+            const newSyncButton = document.getElementById('sync-decks')
+            newSyncButton.addEventListener('click', () => {
+              chrome.tabs.create({ url: 'https://decksofkeyforge.com/' })
+            })
+            newSyncButton.textContent = 'Login to DoK'
+            if (newSyncButton instanceof HTMLButtonElement) {
+              newSyncButton.disabled = false
+            }
+          }
+          const dokUsernameElem = document.getElementById('dok-username')
+          if (dokUsernameElem) {
+            dokUsernameElem.textContent = ``
+            dokUsernameElem.style.display = 'inline'
+          }
+          throw new Error('KFA: POP: Not logged into DoK')
+        }
+      })(),
+    )
+  } else {
+    const dokUsernameElem = document.getElementById('dok-username')
+    if (dokUsernameElem) {
+      dokUsernameElem.textContent = ``
+      dokUsernameElem.style.display = 'inline'
+    }
+  }
+
   await Promise.allSettled(userPromises)
     .then(async results => {
       if (
@@ -504,20 +493,21 @@ const loadUsers = async settings => {
           return r.status === 'fulfilled'
         })
       ) {
-        return console.error(`Error loading users: ${results}`)
+        return console.error(`KFA POP: Error loading users: ${results}`)
       }
-      console.debug(`Logged in!`)
+      console.debug(`KFA: POP: Logged in to all accounts`)
       await checkSyncStatus()
       resetButtons()
     })
     .catch(error => {
-      console.error(`Error loading users: ${error}`)
+      console.error(`KFA: POP: Error loading users: ${error}`)
     })
 }
 
 const loadQuotes = () => {
   const quoteElem = document.getElementById('quote')
   if (quoteElem) {
-    quoteElem.textContent = quotes[Math.floor(Math.random() * quotes.length)]
+    quoteElem.textContent =
+      conf.quotes[Math.floor(Math.random() * conf.quotes.length)]
   }
 }

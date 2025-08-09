@@ -1,8 +1,5 @@
-import {
-  getDecksFromStorage,
-  staleSyncSeconds,
-  syncAgainSeconds,
-} from './lib.js'
+import { conf } from './conf.js'
+import { getDecksFromStorage } from './lib.js'
 
 // Decks of KeyForge configuration
 const DOK_BASE_URL = 'https://decksofkeyforge.com'
@@ -11,7 +8,7 @@ export const handleDokSync = async () => {
   const syncingDok = await chrome.storage.local
     .get(['syncing-dok'])
     .then(r => r['syncing-dok'])
-  if (syncingDok && Date.now() - syncingDok < staleSyncSeconds) {
+  if (syncingDok && Date.now() - syncingDok < conf.staleSyncSeconds) {
     console.debug(
       `KFA: DoK: Sync already in progress: ${Date.now() - syncingDok}ms`,
     )
@@ -51,15 +48,18 @@ export const handleDokSync = async () => {
   const syncingMv = await chrome.storage.local
     .get(['syncing-mv'])
     .then(r => r['syncing-mv'])
-  if (syncingMv && Date.now() - syncingMv < staleSyncSeconds) {
+  if (syncingMv && Date.now() - syncingMv < conf.staleSyncSeconds) {
     let waited = 0
-    while (waited < syncAgainSeconds) {
+    while (waited < conf.syncAgainSeconds) {
       await new Promise(resolve => setTimeout(resolve, 1000))
       waited += 1000
       const stillSyncingMv = await chrome.storage.local
         .get(['syncing-mv'])
         .then(r => r['syncing-mv'])
-      if (!stillSyncingMv || Date.now() - stillSyncingMv >= staleSyncSeconds) {
+      if (
+        !stillSyncingMv ||
+        Date.now() - stillSyncingMv >= conf.staleSyncSeconds
+      ) {
         break
       }
     }
@@ -97,7 +97,7 @@ export const getDokUser = async (token: string): Promise<string> => {
 
   if (!response.ok) {
     await chrome.storage.local.remove(['token-dok'])
-    throw new Error(`Failed to fetch user: ${response.status}`)
+    throw new Error(`KFA: DoK: Failed to fetch user: ${response.status}`)
   }
 
   const user = await response.json()
@@ -207,12 +207,12 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
     )
 
     if (response.ok) {
-      console.debug(`KFA: DoK: Imported ${deck[0]}`)
       dok[deck[0]] = true
       await chrome.storage.local.set({
         [`zdok.${deck[0]}`]: true,
         'syncing-dok': Date.now(),
       })
+      console.debug(`KFA: DoK: Imported ${deck[0]}`)
     } else {
       console.error(`KFA: DoK: Import failed ${deck[0]}: ${response.status}`)
     }

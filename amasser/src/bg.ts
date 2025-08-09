@@ -1,23 +1,19 @@
-// Background service worker for the KeyForge Amasser extension
-console.debug(`KFA: BG: script loaded`)
-
 import { handleDokSync } from './bg-dok.js'
 import { handleMvSync } from './bg-mv.js'
 import { handleTcoSync } from './bg-tco.js'
-import { rotateAgainSeconds, staleSyncSeconds } from './lib.js'
+import { conf } from './conf.js'
 
-chrome.commands.onCommand.addListener(shortcut => {
-  console.debug(`lets reload`)
-  console.debug(shortcut)
-  if (shortcut.includes('+I')) {
-    chrome.runtime.reload()
-  }
-})
+if (!('update_url' in chrome.runtime.getManifest())) {
+  console.debug('KFA: BG: Debugging commands are enabled')
+  chrome.commands.onCommand.addListener(shortcut => {
+    if (shortcut.includes('+I')) {
+      chrome.runtime.reload()
+    }
+  })
+}
 
 // Extension installation/startup
-chrome.runtime.onInstalled.addListener(async details => {
-  console.debug(`KFA: BG: Extension installed: ${details}`)
-
+chrome.runtime.onInstalled.addListener(async () => {
   const settings: Settings = await chrome.storage.sync.get()
 
   // Initialize default settings
@@ -30,10 +26,11 @@ chrome.runtime.onInstalled.addListener(async details => {
 
 // Handle messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.debug(`Background received message of type: ${message.type}`)
+  console.debug(`KFA: BG: Message received: ${message.type}`)
 
   switch (message.type) {
     case 'SYNC_START':
+      console.debug(`KFA: BG: Sync starting`)
       handleRotateIcon()
         .then(status => sendResponse({ success: true, status }))
         .catch(error => sendResponse({ success: false, error: error.message }))
@@ -46,44 +43,54 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return true
 
     case 'SAVE_DOK_AUTH':
-      console.debug(`Received DoK auth token from content script`)
-      if (message['token-dok']) {
-        chrome.storage.local.set({ 'token-dok': message['token-dok'] }, () => {
-          console.debug(`DoK auth token saved to storage from content script`)
-          sendResponse({ success: true })
+      console.debug(`KFA: BG: Received DoK auth token from content script`)
+      if (!message['token-dok']) {
+        console.warn(`KFA: BG: SAVE_DOK_AUTH message missing token-dok token`)
+        sendResponse({
+          success: false,
+          error: `KFA: BG: Missing token-dok: ${message['token-dok']}`,
         })
-      } else {
-        console.warn(`SAVE_DOK_AUTH message missing token-dok token`)
-        sendResponse({ success: false, error: 'Missing token-dok token' })
+        return false
       }
+
+      chrome.storage.local.set({ 'token-dok': message['token-dok'] }, () => {
+        console.debug(
+          `KFA: BG: DoK auth token saved to storage from content script`,
+        )
+        sendResponse({ success: true })
+      })
       return true
 
     case 'SAVE_TCO_REFRESH_TOKEN':
-      console.debug(`Received TCO refresh token from content script`)
-      if (message['token-tco']) {
-        chrome.storage.local.set({ 'token-tco': message['token-tco'] }, () => {
-          console.debug(
-            `TCO refresh token saved to storage from content script`,
-          )
-          sendResponse({ success: true })
+      console.debug(`KFA: BG: Received TCO refresh token from content script`)
+      if (!message['token-tco']) {
+        console.warn(
+          `KFA: BG: SAVE_TCO_REFRESH_TOKEN message missing TCO refresh token`,
+        )
+        sendResponse({
+          success: false,
+          error: `KFA: BG: Missing token-tco: ${message['token-tco']}`,
         })
-      } else {
-        console.warn(`SAVE_TCO_REFRESH_TOKEN message missing TCO refresh token`)
-        sendResponse({ success: false, error: 'Missing TCO refresh token' })
+        return false
       }
+
+      chrome.storage.local.set({ 'token-tco': message['token-tco'] }, () => {
+        console.debug(
+          `KFA: BG: TCO refresh token saved to storage from content script`,
+        )
+        sendResponse({ success: true })
+      })
       return true
 
     default:
-      console.warn(`Unknown message type: ${message.type}`)
+      console.warn(`KFA: BG: Unknown message type: ${message.type}`)
       return false
   }
 })
 
 const handleDeckSync = async () => {
-  console.debug(`Syncing decks from bg...`)
-  const syncPromises = []
-
-  syncPromises.push(handleMvSync())
+  console.debug(`KFA: BG: Handling deck sync`)
+  const syncPromises = [handleMvSync()]
 
   if ((await chrome.storage.sync.get('sync-dok'))['sync-dok']) {
     syncPromises.push(handleDokSync())
@@ -97,10 +104,10 @@ const handleDeckSync = async () => {
     const results = await Promise.allSettled(syncPromises)
 
     // Notify popup that sync is complete
-    console.debug(`Deck sync promises complete in bg: ${results}`)
+    console.debug(`KFA: BG: Deck sync settled: ${JSON.stringify(results)}`)
     chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
   } catch (error) {
-    console.error(`Error during deck sync: ${error}`)
+    console.error(`KFA: BG: Error during deck sync: ${error}`)
     throw error // Re-throw so the message handler can also handle it
   }
 }
@@ -130,31 +137,31 @@ const handleRotateIcon = async () => {
   ])
   let now = Date.now()
   console.debug(
-    `KFA: BG: syncing times: MV: ${now - s['syncing-mv']}ms DoK: ${
+    `KFA: BG: Syncing times: MV: ${now - s['syncing-mv']}ms DoK: ${
       now - s['syncing-dok']
     }ms TCO: ${now - s['syncing-tco']}ms`,
   )
 
   if (
     (typeof s['syncing-dok'] === 'number' &&
-      now - s['syncing-dok'] > staleSyncSeconds) ||
+      now - s['syncing-dok'] > conf.staleSyncSeconds) ||
     (typeof s['syncing-mv'] === 'number' &&
-      now - s['syncing-mv'] > staleSyncSeconds) ||
+      now - s['syncing-mv'] > conf.staleSyncSeconds) ||
     (typeof s['syncing-tco'] === 'number' &&
-      now - s['syncing-tco'] > staleSyncSeconds)
+      now - s['syncing-tco'] > conf.staleSyncSeconds)
   ) {
-    console.debug(`KFA: BG: Stale syncs...`)
+    console.debug(`KFA: BG: Syncs are stale`)
     s = {}
   }
 
   while (Object.keys(s).length === 0) {
     rotation = (rotation + 1) % ICON_ROTATIONS.length
-    console.debug(`KFA: BG: Rotating icon to angle: ${rotation}`)
+    // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({
       path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
     })
 
-    await new Promise(resolve => setTimeout(resolve, rotateAgainSeconds))
+    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
     s = await chrome.storage.local.get([
       'syncing-dok',
       'syncing-mv',
@@ -164,20 +171,20 @@ const handleRotateIcon = async () => {
 
   while (
     (typeof s['syncing-dok'] === 'number' &&
-      now - s['syncing-dok'] < staleSyncSeconds) ||
+      now - s['syncing-dok'] < conf.staleSyncSeconds) ||
     (typeof s['syncing-mv'] === 'number' &&
-      now - s['syncing-mv'] < staleSyncSeconds) ||
+      now - s['syncing-mv'] < conf.staleSyncSeconds) ||
     (typeof s['syncing-tco'] === 'number' &&
-      now - s['syncing-tco'] < staleSyncSeconds)
+      now - s['syncing-tco'] < conf.staleSyncSeconds)
   ) {
     rotation = (rotation + 1) % ICON_ROTATIONS.length
-    console.debug(`KFA: BG: Rotating icon to angle: ${rotation}`)
+    // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({
       path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
     })
 
     // Wait for a short interval before checking again
-    await new Promise(resolve => setTimeout(resolve, rotateAgainSeconds))
+    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
     s = await chrome.storage.local.get([
       'syncing-dok',
       'syncing-mv',
@@ -206,7 +213,7 @@ chrome.alarms.onAlarm.addListener(onAlarm)
 
 const updateAutoSyncAlarm = async () => {
   const syncAuto = (await chrome.storage.sync.get('sync-auto'))['sync-auto']
-  console.debug(`KFA: BG: Checking auto-sync alarm... ${syncAuto}`)
+  console.debug(`KFA: BG: Checking auto-sync: ${syncAuto}`)
   if (syncAuto) {
     console.debug(`KFA: BG: Scheduling daily sync alarm`)
     chrome.alarms.create('DAILY_SYNC', {
@@ -225,3 +232,4 @@ const updateAutoSyncAlarm = async () => {
 // TODO: consistent debug messaging
 // TODO: turn off excessive debug messaging
 // TODO: remove errors when not logged in
+// TODO: clean up types

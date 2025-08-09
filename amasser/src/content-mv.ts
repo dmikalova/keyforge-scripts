@@ -1,7 +1,8 @@
-console.debug(`KFA: MV: content script loaded`)
+// TODO: don't run sync if not logged in
+
 chrome.storage.sync.get(['sync-auto'], result => {
   if (result['sync-auto']) {
-    console.debug(`KFA: MV: Automatic sync enabled`)
+    console.debug(`KFA: CMV: Automatic sync enabled`)
     chrome.runtime.sendMessage({
       type: 'SYNC_START',
     })
@@ -34,19 +35,19 @@ chrome.storage.sync.get(['sync-auto'], result => {
             // Debounce: only process if we haven't seen this scan recently
             scanTimeout = setTimeout(() => {
               console.debug(
-                `KFA: MV: last scan: ${lastProcessedScan}, current scan: ${currentScan}`,
+                `KFA: CMV: last scan: ${lastProcessedScan}, current scan: ${currentScan}`,
               )
               if (lastProcessedScan !== currentScan) {
-                console.debug(`KFA: MV: Deck scanned`)
+                console.debug(`KFA: CMV: Deck scanned`)
                 lastProcessedScan = currentScan
 
                 chrome.runtime
                   .sendMessage({ type: 'SYNC_START' })
                   .then(() => {
-                    console.debug(`KFA: MV: Sync started`)
+                    console.debug(`KFA: CMV: Sync started`)
                   })
                   .catch(error => {
-                    console.error(`KFA: MV: Error starting sync: ${error}`)
+                    console.error(`KFA: CMV: Error starting sync: ${error}`)
                   })
               }
             }, 500) // Wait 500ms for DOM to stabilize

@@ -1,5 +1,9 @@
 {
-  "extends": ["eslint:recommended", "@typescript-eslint/recommended"],
+  "extends": [
+    "@typescript-eslint/recommended",
+    "eslint:recommended",
+    "js:recommended"
+  ],
   "env": {
     "browser": true,
     "es2020": true,
@@ -9,5 +13,8 @@
   "parserOptions": {
     "ecmaVersion": 2020,
     "sourceType": "module"
+  },
+  "rules": {
+    "no-unused-vars": "warn"
   }
 }
