@@ -391,14 +391,13 @@ const handleSyncStatus = text => {
  */
 const loadUsers = async settings => {
   const userPromises = []
-
-  // TODO: don't replace the sync button, just change the listeners
   // MV user
   userPromises.push(
     (async () => {
       console.debug(`KFA: POP: Getting MV username`)
       const { username: userMv } = await getMvAuth()
       if (userMv) {
+        // Show the MV username element
         const mvUsernameElem = document.getElementById('mv-username')
         if (mvUsernameElem) {
           mvUsernameElem.textContent = `: ${userMv}`
@@ -407,18 +406,18 @@ const loadUsers = async settings => {
         console.debug(`KFA: POP: MV username: ${userMv}`)
       } else {
         console.error(`KFA: POP: Not logged in to MV`)
+        // Reset the sync button to open MV login page
         const syncButton = document.getElementById('sync-decks')
         if (syncButton && syncButton instanceof HTMLButtonElement) {
-          syncButton.replaceWith(syncButton.cloneNode(true))
-          const newSyncButton = document.getElementById('sync-decks')
-          newSyncButton.addEventListener('click', () => {
+          syncButton.removeEventListener('click', syncDecks)
+          syncButton.addEventListener('click', () => {
             chrome.tabs.create({ url: `${conf.mvBaseUrl}/my-decks` })
           })
-          newSyncButton.textContent = 'Login to MV'
-          if (newSyncButton instanceof HTMLButtonElement) {
-            newSyncButton.disabled = false
-          }
+          syncButton.textContent = 'Login to MV'
+          syncButton.disabled = false
         }
+
+        // Hide the MV username element
         const mvUsernameElem = document.getElementById('mv-username')
         if (mvUsernameElem) {
           mvUsernameElem.textContent = ``
@@ -435,6 +434,7 @@ const loadUsers = async settings => {
         console.debug(`KFA: POP: Getting TCO username`)
         const token = await getTcoRefreshToken()
         if (token) {
+          // Show the TCO username element
           const { username } = await getTcoUser(token)
           const tcoUsernameElem = document.getElementById('tco-username')
           if (tcoUsernameElem) {
@@ -444,18 +444,18 @@ const loadUsers = async settings => {
           console.debug(`KFA: POP: TCO username: ${username}`)
         } else {
           console.error(`KFA: POP: Not logged in to TCO`)
+          // Reset the sync button to open TCO login page
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
-            syncButton.replaceWith(syncButton.cloneNode(true))
-            const newSyncButton = document.getElementById('sync-decks')
-            newSyncButton.addEventListener('click', () => {
-              chrome.tabs.create({ url: 'https://thecrucible.online/' })
+            syncButton.removeEventListener('click', syncDecks)
+            syncButton.addEventListener('click', () => {
+              chrome.tabs.create({ url: conf.tcoBaseUrl })
             })
-            newSyncButton.textContent = 'Login to TCO'
-            if (newSyncButton instanceof HTMLButtonElement) {
-              newSyncButton.disabled = false
-            }
+            syncButton.textContent = 'Login to TCO'
+            syncButton.disabled = false
           }
+
+          // Hide the TCO username element
           const tcoUsernameElem = document.getElementById('tco-username')
           if (tcoUsernameElem) {
             tcoUsernameElem.textContent = ``
@@ -479,6 +479,7 @@ const loadUsers = async settings => {
         console.debug(`KFA: POP: Getting DoK username`)
         const token = await getDokToken()
         if (token) {
+          // Show the DoK username element
           const user = await getDokUser(token)
           const dokUsernameElem = document.getElementById('dok-username')
           if (dokUsernameElem) {
@@ -487,18 +488,19 @@ const loadUsers = async settings => {
           }
           console.debug(`KFA: POP: DoK username: ${user}`)
         } else {
+          console.error(`KFA: POP: Not logged in to DoK`)
+          // Reset the sync button to open DoK login page
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
-            syncButton.replaceWith(syncButton.cloneNode(true))
-            const newSyncButton = document.getElementById('sync-decks')
-            newSyncButton.addEventListener('click', () => {
+            syncButton.removeEventListener('click', syncDecks)
+            syncButton.addEventListener('click', () => {
               chrome.tabs.create({ url: conf.dokBaseUrl })
             })
-            newSyncButton.textContent = 'Login to DoK'
-            if (newSyncButton instanceof HTMLButtonElement) {
-              newSyncButton.disabled = false
-            }
+            syncButton.textContent = 'Login to DoK'
+            syncButton.disabled = false
           }
+
+          // Hide the DoK username element
           const dokUsernameElem = document.getElementById('dok-username')
           if (dokUsernameElem) {
             dokUsernameElem.textContent = ``

@@ -115,7 +115,7 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
       pragma: 'no-cache',
       'x-requested-with': 'XMLHttpRequest',
     },
-    referrer: 'https://www.thecrucible.online/decks',
+    referrer: `${conf.tcoBaseUrl}/decks`,
     referrerPolicy: 'no-referrer-when-downgrade',
     mode: 'cors',
     method: 'POST',
@@ -220,7 +220,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
         pragma: 'no-cache',
         'x-requested-with': 'XMLHttpRequest',
       },
-      referrer: 'https://www.thecrucible.online/decks/import',
+      referrer: `${conf.tcoBaseUrl}/decks/import`,
       referrerPolicy: 'no-referrer-when-downgrade',
       body: JSON.stringify({
         uuid: deck[0],
