@@ -3,6 +3,10 @@ import { handleMvSync } from './bg-mv.js'
 import { handleTcoSync } from './bg-tco.js'
 import { conf } from './conf.js'
 
+/**
+ * Enable debugging commands in development builds
+ * Allows Ctrl+I to reload the extension
+ */
 if (!('update_url' in chrome.runtime.getManifest())) {
   console.debug('KFA: BG: Debugging commands are enabled')
   chrome.commands.onCommand.addListener(shortcut => {
@@ -12,7 +16,10 @@ if (!('update_url' in chrome.runtime.getManifest())) {
   })
 }
 
-// Extension installation/startup
+/**
+ * Initialize extension settings on installation
+ * Sets default values for sync preferences
+ */
 chrome.runtime.onInstalled.addListener(async () => {
   const settings: Settings = await chrome.storage.sync.get()
 
@@ -24,7 +31,10 @@ chrome.runtime.onInstalled.addListener(async () => {
   })
 })
 
-// Handle messages from content scripts
+/**
+ * Handle messages from content scripts and popup
+ * Routes different message types to appropriate handlers
+ */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.debug(`KFA: BG: Message received: ${message.type}`)
 
@@ -88,6 +98,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 })
 
+/**
+ * Handles deck synchronization across all enabled services
+ * Runs sync processes in parallel and notifies when complete
+ */
 const handleDeckSync = async () => {
   console.debug(`KFA: BG: Handling deck sync`)
   const syncPromises = [handleMvSync()]
@@ -112,21 +126,14 @@ const handleDeckSync = async () => {
   }
 }
 
-const ICON_ROTATIONS = [
-  '../icons/amasser-128-0.png',
-  '../icons/amasser-128-30.png',
-  '../icons/amasser-128-60.png',
-  '../icons/amasser-128-90.png',
-  '../icons/amasser-128-120.png',
-  '../icons/amasser-128-150.png',
-  '../icons/amasser-128-180.png',
-  '../icons/amasser-128-210.png',
-  '../icons/amasser-128-240.png',
-  '../icons/amasser-128-270.png',
-  '../icons/amasser-128-300.png',
-  '../icons/amasser-128-330.png',
-]
+/**
+ * Array of icon paths for rotation animation during sync
+ */
 
+/**
+ * Rotates the extension icon during sync operations
+ * Provides visual feedback that sync is in progress
+ */
 const handleRotateIcon = async () => {
   console.debug(`KFA: BG: Handling rotating icon`)
   let rotation = 0
@@ -155,10 +162,10 @@ const handleRotateIcon = async () => {
   }
 
   while (Object.keys(s).length === 0) {
-    rotation = (rotation + 1) % ICON_ROTATIONS.length
+    rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({
-      path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
+      path: conf.iconRotations[rotation % conf.iconRotations.length],
     })
 
     await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
@@ -177,10 +184,10 @@ const handleRotateIcon = async () => {
     (typeof s['syncing-tco'] === 'number' &&
       now - s['syncing-tco'] < conf.staleSyncSeconds)
   ) {
-    rotation = (rotation + 1) % ICON_ROTATIONS.length
+    rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({
-      path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
+      path: conf.iconRotations.length[rotation % conf.iconRotations.length],
     })
 
     // Wait for a short interval before checking again
@@ -193,9 +200,13 @@ const handleRotateIcon = async () => {
     now = Date.now()
   }
 
-  await chrome.action.setIcon({ path: ICON_ROTATIONS[0] })
+  await chrome.action.setIcon({ path: conf.iconRotations.length[0] })
 }
 
+/**
+ * Handles alarm events for scheduled operations
+ * @param {chrome.alarms.Alarm} alarm - The alarm that triggered
+ */
 const onAlarm = async alarm => {
   switch (alarm.name) {
     case 'DAILY_SYNC':
@@ -211,6 +222,10 @@ const onAlarm = async alarm => {
 }
 chrome.alarms.onAlarm.addListener(onAlarm)
 
+/**
+ * Updates the auto-sync alarm based on user settings
+ * Creates or removes daily sync alarm as needed
+ */
 const updateAutoSyncAlarm = async () => {
   const syncAuto = (await chrome.storage.sync.get('sync-auto'))['sync-auto']
   console.debug(`KFA: BG: Checking auto-sync: ${syncAuto}`)
@@ -228,3 +243,4 @@ const updateAutoSyncAlarm = async () => {
 // TODO: break out fns
 // TODO: remove errors when not logged in
 // TODO: clean up types
+// TODO: convert back to syncDok etc for storage

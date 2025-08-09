@@ -1,9 +1,10 @@
 import { conf } from './conf.js'
 import { getDecksFromStorage } from './lib.js'
 
-// Decks of KeyForge configuration
-const DOK_BASE_URL = 'https://decksofkeyforge.com'
-
+/**
+ * Main entry point for Decks of KeyForge synchronization
+ * Imports decks from Master Vault to Decks of KeyForge
+ */
 export const handleDokSync = async () => {
   const syncingDok = await chrome.storage.local
     .get(['syncing-dok'])
@@ -70,7 +71,8 @@ export const handleDokSync = async () => {
 }
 
 /**
- * Get authentication cookie from Decks of KeyForge
+ * Get authentication token from Decks of KeyForge
+ * @returns {Promise<string | null>} The auth token or null if not logged in
  */
 export const getDokToken = async (): Promise<string | null> => {
   // Check for token in local storage
@@ -84,8 +86,13 @@ export const getDokToken = async (): Promise<string | null> => {
   return token
 }
 
+/**
+ * Get current user information from Decks of KeyForge
+ * @param {string} token - Authentication token
+ * @returns {Promise<string>} Username of the authenticated user
+ */
 export const getDokUser = async (token: string): Promise<string> => {
-  const response = await fetch(`${DOK_BASE_URL}/api/users/secured/your-user`, {
+  const response = await fetch(`${conf.dokBaseUrl}/api/users/secured/your-user`, {
     credentials: 'include',
     headers: {
       accept: 'application/json',
@@ -120,6 +127,11 @@ const createDokRequestConfig = (token: string): RequestInit => ({
   method: 'POST',
 })
 
+/**
+ * Import decks from Master Vault to Decks of KeyForge
+ * @param {Decks} mv - Master Vault deck collection
+ * @param {Decks} dok - Decks of KeyForge deck collection
+ */
 const importDecksToDok = async (mv: Decks, dok: Decks) => {
   console.debug(`KFA: DoK: Importing decks`)
   const token = await getDokToken()
@@ -143,7 +155,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
     let page = 0
     while (nextPage) {
       console.debug(`KFA: DoK: Fetching library page ${page}`)
-      const dokLibrary = await fetch(`${DOK_BASE_URL}/api/decks/filter`, {
+      const dokLibrary = await fetch(`${conf.dokBaseUrl}/api/decks/filter`, {
         credentials: 'include',
         headers: {
           accept: 'application/json, text/plain, */*',
@@ -202,7 +214,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
       `KFA: DoK: Importing deck ${i + 1}/${decksToImport.length}: ${deck}`,
     )
     const response = await fetch(
-      `${DOK_BASE_URL}/api/decks/${deck[0]}/import-and-add`,
+      `${conf.dokBaseUrl}/api/decks/${deck[0]}/import-and-add`,
       createDokRequestConfig(token),
     )
 

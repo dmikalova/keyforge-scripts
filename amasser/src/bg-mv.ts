@@ -1,11 +1,9 @@
 import { conf } from './conf.js'
 import { getDecksFromStorage } from './lib.js'
 
-// Master Vault API configuration
-const MV_BASE_URL = 'https://www.keyforgegame.com'
-
 /**
  * Main entry point for Master Vault synchronization
+ * Fetches decks from Master Vault and stores them locally
  */
 export const handleMvSync = async () => {
   const syncingMv = await chrome.storage.local
@@ -37,6 +35,10 @@ export const handleMvSync = async () => {
   await chrome.storage.local.remove(['syncing-mv'])
 }
 
+/**
+ * Gets Master Vault authentication information
+ * @returns {Promise<MvAuth | {token: null, userId: null, username: null}>} Auth data or null values if not logged in
+ */
 export const getMvAuth = async (): Promise<
   MvAuth | { token: null; userId: null; username: null }
 > => {
@@ -53,6 +55,7 @@ export const getMvAuth = async (): Promise<
 
 /**
  * Get authentication cookie from Master Vault
+ * @returns {Promise<chrome.cookies.Cookie | null>} The auth cookie or null if not available
  */
 const getMvAuthCookie = (): Promise<chrome.cookies.Cookie | null> => {
   return new Promise(resolve => {
@@ -64,7 +67,7 @@ const getMvAuthCookie = (): Promise<chrome.cookies.Cookie | null> => {
 
     chrome.cookies.get(
       {
-        url: MV_BASE_URL,
+        url: conf.mvBaseUrl,
         name: 'auth',
       },
       resolve,
@@ -89,10 +92,12 @@ const createMvRequestConfig = (token: string): RequestInit => ({
 
 /**
  * Fetch current user information from Master Vault
+ * @param {string} token - Authentication token
+ * @returns {Promise<MvUser>} User information containing id and username
  */
 const getMvUser = async (token: string): Promise<MvUser> => {
   const response = await fetch(
-    `${MV_BASE_URL}/api/users/self/`,
+    `${conf.mvBaseUrl}/api/users/self/`,
     createMvRequestConfig(token),
   )
 
@@ -105,7 +110,8 @@ const getMvUser = async (token: string): Promise<MvUser> => {
 }
 
 /**
- * Fetch new decks from Master Vault
+ * Fetch new decks from Master Vault API
+ * @param {object} [decks={}] - Existing deck collection to update
  */
 const getDecksFromMv = async (decks = {}) => {
   if (typeof decks !== 'object' || decks === null) {
@@ -123,7 +129,7 @@ const getDecksFromMv = async (decks = {}) => {
   let hasMorePages = true
 
   while (hasMorePages) {
-    const url = `${MV_BASE_URL}/api/users/v2/${userId}/decks/?page=${page}&page_size=${pageSize}&search=&ordering=-date`
+    const url = `${conf.mvBaseUrl}/api/users/v2/${userId}/decks/?page=${page}&page_size=${pageSize}&search=&ordering=-date`
     const response = await fetch(url, requestConfig)
 
     if (!response.ok) {

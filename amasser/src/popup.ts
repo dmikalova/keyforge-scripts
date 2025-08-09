@@ -4,7 +4,10 @@ import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
 import { conf } from './conf.js'
 import { getDecksFromStorage } from './lib.js'
 
-// Popup script for KeyForge Amasser extension
+/**
+ * Main entry point for the KeyForge Amasser extension popup
+ * Initializes event listeners, loads quotes, state, and user information
+ */
 document.addEventListener('DOMContentLoaded', async () => {
   // Set up event listeners
   setupEventListeners()
@@ -15,9 +18,14 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Load state from storage
   const state = await loadState()
 
+  // Load user information for all enabled services
   await loadUsers(state.settings)
 })
 
+/**
+ * Sets up all event listeners for the popup interface
+ * Includes message listeners, toggle controls, buttons, and mouse interactions
+ */
 const setupEventListeners = async () => {
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener(message => {
@@ -85,6 +93,10 @@ const setupEventListeners = async () => {
   }
 }
 
+/**
+ * Loads the current state from storage and updates the UI
+ * @returns {Promise<{decks: object, settings: Settings}>} The loaded decks and settings
+ */
 const loadState = async () => {
   const settings: Settings = await chrome.storage.sync.get()
 
@@ -144,17 +156,23 @@ const loadState = async () => {
   return { decks, settings }
 }
 
-// Trigger a deck sync
+/**
+ * Triggers a deck synchronization process
+ * Updates UI state and sends sync start message to background script
+ */
 const syncDecks = () => {
   console.debug(`KFA: POP: Sync starting`)
 
   // Update button state
-  handleSyncStatus(syncMessages[0])
+  handleSyncStatus(conf.syncMessages[0])
   checkSyncStatus(true)
   chrome.runtime.sendMessage({ type: 'SYNC_START' })
 }
 
-// Clear all data from local storage
+/**
+ * Clears all extension data from local storage
+ * Updates UI to show confirmation and reloads state
+ */
 const clearData = () => {
   chrome.storage.local.clear(() => {
     console.debug(`KFA: POP: All data cleared`)
@@ -174,6 +192,10 @@ const clearData = () => {
 
 /**
  * Handle messages from background script
+ * @param {object} message - Message object from background script
+ * @param {string} message.type - Type of message (SYNC_COMPLETE, SYNC_ERROR, etc.)
+ * @param {string} [message.error] - Error message if type is SYNC_ERROR
+ * @param {number} [message.decks] - Deck count if type is SYNC_STATUS
  */
 const handleBackgroundMessage = message => {
   switch (message.type) {
@@ -203,7 +225,8 @@ const handleBackgroundMessage = message => {
 }
 
 /**
- * Update the deck count display
+ * Update the deck count display in the UI
+ * @param {number} count - The number of decks to display
  */
 const updateDeckCount = count => {
   const deckCountElement = document.getElementById('deck-count')
@@ -212,6 +235,10 @@ const updateDeckCount = count => {
   }
 }
 
+/**
+ * Cancels ongoing synchronization processes
+ * Removes sync flags from storage and reloads the extension runtime
+ */
 const cancelSync = () => {
   console.debug(`KFA: POP: Cancelling sync`)
   chrome.storage.local
@@ -223,7 +250,8 @@ const cancelSync = () => {
 }
 
 /**
- * Reset sync button to default state
+ * Reset all UI elements to their default non-syncing state
+ * Re-enables buttons and toggles, updates text content
  */
 const resetButtons = async () => {
   console.debug(`KFA: POP: Resetting buttons`)
@@ -262,19 +290,11 @@ const resetButtons = async () => {
   }
 }
 
-const syncMessages = [
-  'Syncing... ',
-  'yncing... S',
-  'ncing... Sy',
-  'cing... Syn',
-  'ing... Sync',
-  'ng... Synci',
-  'g... Syncin',
-  '... Syncing',
-  '.. Syncing.',
-  '. Syncing..',
-]
-
+/**
+ * Monitors sync status and updates UI accordingly
+ * Continues checking while any sync process is active
+ * @param {boolean} [wait=false] - Whether to wait for sync to start
+ */
 const checkSyncStatus = async (wait: boolean = false) => {
   console.debug(`KFA: POP: Checking sync status`)
   let now = Date.now()
@@ -293,9 +313,9 @@ const checkSyncStatus = async (wait: boolean = false) => {
     (typeof s['syncing-tco'] === 'number' &&
       now - s['syncing-tco'] < conf.staleSyncSeconds)
   ) {
-    handleSyncStatus(syncMessages[shift])
+    handleSyncStatus(conf.syncMessages[shift])
 
-    shift = (shift + 1) % syncMessages.length
+    shift = (shift + 1) % conf.syncMessages.length
     await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
 
     s = await chrome.storage.local.get([
@@ -317,6 +337,11 @@ const checkSyncStatus = async (wait: boolean = false) => {
   console.debug(`KFA: POP: Sync finished`)
 }
 
+/**
+ * Updates the UI to show sync is in progress
+ * Disables controls and shows animated sync text
+ * @param {string} text - The sync status text to display
+ */
 const handleSyncStatus = text => {
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
     if (toggle instanceof HTMLInputElement) {
@@ -359,6 +384,11 @@ const handleSyncStatus = text => {
   }
 }
 
+/**
+ * Loads and displays user information for all enabled services
+ * Handles login states and updates UI accordingly
+ * @param {Settings} settings - The current extension settings
+ */
 const loadUsers = async settings => {
   const userPromises = []
 
@@ -382,7 +412,7 @@ const loadUsers = async settings => {
           syncButton.replaceWith(syncButton.cloneNode(true))
           const newSyncButton = document.getElementById('sync-decks')
           newSyncButton.addEventListener('click', () => {
-            chrome.tabs.create({ url: 'https://www.keyforgegame.com/my-decks' })
+            chrome.tabs.create({ url: `${conf.mvBaseUrl}/my-decks` })
           })
           newSyncButton.textContent = 'Login to MV'
           if (newSyncButton instanceof HTMLButtonElement) {
@@ -462,7 +492,7 @@ const loadUsers = async settings => {
             syncButton.replaceWith(syncButton.cloneNode(true))
             const newSyncButton = document.getElementById('sync-decks')
             newSyncButton.addEventListener('click', () => {
-              chrome.tabs.create({ url: 'https://decksofkeyforge.com/' })
+              chrome.tabs.create({ url: conf.dokBaseUrl })
             })
             newSyncButton.textContent = 'Login to DoK'
             if (newSyncButton instanceof HTMLButtonElement) {
@@ -506,6 +536,9 @@ const loadUsers = async settings => {
     })
 }
 
+/**
+ * Loads and displays a random quote from the configuration
+ */
 const loadQuotes = () => {
   const quoteElem = document.getElementById('quote')
   if (quoteElem) {
