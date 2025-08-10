@@ -23,8 +23,6 @@ if (!('update_url' in chrome.runtime.getManifest())) {
  */
 chrome.runtime.onInstalled.addListener(async () => {
   const settings = await storage.settings.get()
-
-  // Initialize default settings
   storage.settings.set({
     syncAuto: settings.syncAuto || conf.defaults.syncAuto,
     syncDok: settings.syncDok || conf.defaults.syncDok,

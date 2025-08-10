@@ -25,6 +25,9 @@ export const getDecksFromStorage = async () => {
   return decks
 }
 
+/**
+ * Checks if timestamps are stale
+ */
 const isStale = async (keys: string[]): Promise<boolean> => {
   let s: Timestamps = await storage.get(keys)
   let now = Date.now()
@@ -32,8 +35,7 @@ const isStale = async (keys: string[]): Promise<boolean> => {
 }
 
 /**
- * Updates the auto-sync alarm based on user settings
- * Creates or removes daily sync alarm as needed
+ * Updates the auto-sync alarm based on settings
  */
 const updateAlarms = async () => {
   const syncAuto = (await storage.settings.get()).syncAuto
