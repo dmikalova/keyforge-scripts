@@ -82,14 +82,14 @@ const dokSync = async () => {
  */
 export const getDokToken = async (): Promise<string | null> => {
   // Check for token in local storage
-  let { tokenDok } = await chrome.storage.local.get('tokenDok')
+  let { authDok } = await chrome.storage.local.get('authDok')
 
-  if (!tokenDok) {
+  if (!authDok) {
     console.debug(`KFA: DoK: Not logged in`)
     return null
   }
 
-  return tokenDok
+  return authDok
 }
 
 /**
@@ -112,7 +112,7 @@ export const getDokUser = async (token: string): Promise<string> => {
   )
 
   if (!response.ok) {
-    await chrome.storage.local.remove('tokenDok')
+    await chrome.storage.local.remove('authDok')
     throw new Error(`KFA: DoK: Failed to fetch user: ${response.status}`)
   }
 

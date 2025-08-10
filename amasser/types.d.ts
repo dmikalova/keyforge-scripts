@@ -39,26 +39,33 @@ interface TcoUser {
   username: string
 }
 
+// Chrome storage
+type StorageData = AuthData & Decks & Timestamps
+
+// Decks interface
 interface Decks {
-  [id: string]: boolean | string
+  [key?: `${'zdok.' | 'zmv.' | 'ztco.'}${string}`]: boolean | string
 }
 
-// Chrome storage
-interface StorageData {
-  decks?: {
-    mv?: Decks
-    dok?: Decks
-    tco?: Decks
-  }
-  settings?: Settings
-  tokenMv?: string
-  tokenDok?: string
-  tokenTco?: string
+// Timestamps interface
+interface Timestamps {
+  syncingDok?: number
+  syncingMv?: number
+  syncingTco?: number
+  libraryDok?: number
+  libraryTco?: number
+}
+
+// Auth data interface
+interface AuthData {
+  authDok?: string
+  authTco?: { id: number; username: string; token: string }
 }
 
 // Message types
 interface SyncMessage {
-  type: 'SYNC_START' | 'SYNC_COMPLETE' | 'SYNC_ERROR' | 'SYNC_STATUS'
+  type: 'SYNC_START' | 'SYNC_COMPLETE' | 'SYNC_ERROR' | 'SYNC_STATUS' | 'AUTH'
+  auth?: AuthData
   button?: string
   decks?: number
   totalDecks?: number

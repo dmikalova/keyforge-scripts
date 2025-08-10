@@ -18,11 +18,11 @@ chrome.storage.sync.get('syncDok', result => {
         if (mutation.type === 'childList') {
           if (document.querySelector('a[href="/my-dok/my-profile"]')) {
             console.debug(`KFA: CDoK: User is logged in`)
-            const dokAuth = window.localStorage.getItem('AUTH')
-            if (dokAuth !== null) {
+            const auth = window.localStorage.getItem('AUTH')
+            if (auth !== null) {
               try {
                 chrome.runtime.sendMessage(
-                  { type: 'SAVE_DOK_AUTH', tokenDok: dokAuth },
+                  { type: 'AUTH', auth: { authDok: auth } },
                   response => {
                     if (chrome.runtime.lastError) {
                       console.warn(

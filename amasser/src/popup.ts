@@ -1,7 +1,8 @@
 import { getDokToken, getDokUser } from './bg-dok.js'
 import { getMvAuth } from './bg-mv.js'
-import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
+import { getTcoAuth, getTcoUser } from './bg-tco.js'
 import { conf } from './conf.js'
+import { browser } from './lib-browser.js'
 import { getDecksFromStorage } from './lib.js'
 
 let abortClearButton = new AbortController()
@@ -258,10 +259,7 @@ const cancelSync = () => {
   console.debug(`KFA: POP: Cancelling sync`)
   chrome.storage.local
     .remove(['syncingMv', 'syncingDok', 'syncingTco'])
-    .then(() => {
-      console.debug(`KFA: POP: Sync cancelled and buttons reset`)
-      chrome.runtime.reload()
-    })
+    .then(() => browser.extensionReload())
 }
 
 /**
@@ -516,7 +514,7 @@ const loadUsers = async settings => {
     userPromises.push(
       (async () => {
         console.debug(`KFA: POP: Getting TCO username`)
-        const token = await getTcoRefreshToken()
+        const token = await getTcoAuth()
         if (token) {
           // Show the TCO username element
           const { username } = await getTcoUser(token)

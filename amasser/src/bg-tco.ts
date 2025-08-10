@@ -76,16 +76,16 @@ const syncTco = async () => {
  * Get The Crucible Online refresh token from storage
  * @returns {Promise<string | null>} The refresh token or null if not logged in
  */
-export const getTcoRefreshToken = async (): Promise<string | null> => {
+export const getTcoAuth = async (): Promise<string | null> => {
   // Check for token in local storage
-  let { tokenTco: refreshToken } = await chrome.storage.local.get('tokenTco')
+  let { authTco: authTco } = await chrome.storage.local.get('authTco')
 
-  if (!refreshToken) {
+  if (!authTco) {
     console.debug(`KFA: TCO: Not logged in`)
     return null
   }
 
-  return JSON.parse(refreshToken)
+  return JSON.parse(authTco)
 }
 
 /**
@@ -161,13 +161,13 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
       syncingTco: Date.now() + 4 * conf.staleSyncSeconds,
     })
 
-    const refreshToken = await getTcoRefreshToken()
-    if (!refreshToken) {
+    const auth = await getTcoAuth()
+    if (!auth) {
       console.debug(`KFA: TCO: Not logged in, skipping import`)
       return
     }
 
-    const { token } = await getTcoUser(refreshToken)
+    const { token } = await getTcoUser(auth)
     const { decks: tcoDecks } = await fetch(
       `${conf.tcoBaseUrl}/api/decks?pageSize=100000&page=1`,
       {
@@ -213,13 +213,13 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     console.debug(
       `KFA: TCO: Importing deck ${i + 1}/${decksToImport.length}: ${deck}`,
     )
-    const refreshToken = await getTcoRefreshToken()
-    if (!refreshToken) {
+    const auth = await getTcoAuth()
+    if (!auth) {
       console.debug(`KFA: TCO: Not logged in, skipping import`)
       return
     }
 
-    const { token } = await getTcoUser(refreshToken)
+    const { token } = await getTcoUser(auth)
     const response = await fetch(`${conf.tcoBaseUrl}/api/decks/`, {
       credentials: 'include',
       headers: {

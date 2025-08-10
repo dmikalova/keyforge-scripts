@@ -18,13 +18,13 @@ chrome.storage.sync.get('syncTco', result => {
         if (mutation.type === 'childList') {
           if (document.querySelector('a#nav-Profile')) {
             console.debug(`KFA: CTCO: User is logged in`)
-            const tcoRefreshToken = window.localStorage.getItem('refreshToken')
-            if (tcoRefreshToken !== null) {
+            const auth = window.localStorage.getItem('refreshToken')
+            if (auth !== null) {
               try {
                 chrome.runtime.sendMessage(
                   {
-                    type: 'SAVE_TCO_REFRESH_TOKEN',
-                    tokenTco: tcoRefreshToken,
+                    type: 'AUTH',
+                    auth: { authTco: auth },
                   },
                   response => {
                     if (chrome.runtime.lastError) {
