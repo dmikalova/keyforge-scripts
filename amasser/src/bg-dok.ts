@@ -18,14 +18,22 @@ export const handleDokSync = async () => {
   await chrome.storage.local.set({ syncingDok: Date.now() })
   await new Promise(r => setTimeout(r, conf.timeoutMs * 2))
   console.debug(`KFA: DoK: Sync starting`)
+  await dokSync()
+  await chrome.storage.local.remove('syncingDok')
+}
 
+/**
+ * Main synchronization loop for Decks of KeyForge
+ * Continuously imports decks until no new decks are available
+ */
+const dokSync = async () => {
   let keepSyncing = true
   while (keepSyncing) {
     try {
       const { mv, dok } = await getDecksFromStorage()
       await importDecksToDok(mv, dok)
     } catch (error) {
-      console.error(`KFA: DoK: Error syncing: ${error}`)
+      console.debug(`KFA: DoK: Error syncing: ${error}`)
       await chrome.storage.local.remove('syncingDok')
       chrome.runtime
         .sendMessage({
@@ -64,10 +72,8 @@ export const handleDokSync = async () => {
         break
       }
     }
-    await chrome.storage.local.remove('syncingDok')
-    await handleDokSync()
+    await dokSync()
   }
-  await chrome.storage.local.remove('syncingDok')
 }
 
 /**
@@ -138,6 +144,12 @@ const createDokRequestConfig = (token: string): RequestInit => ({
 const importDecksToDok = async (mv: Decks, dok: Decks) => {
   console.debug(`KFA: DoK: Importing decks`)
   const token = await getDokToken()
+
+  if (!token) {
+    console.debug(`KFA: DoK: Not logged in, skipping import`)
+    return
+  }
+
   const username = await getDokUser(token)
 
   // Filter out decks that already have dok=true

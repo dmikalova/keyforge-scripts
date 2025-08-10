@@ -18,14 +18,18 @@ export const handleTcoSync = async () => {
   await chrome.storage.local.set({ syncingTco: Date.now() })
   await new Promise(r => setTimeout(r, conf.timeoutMs * 2))
   console.debug(`KFA: TCO: Sync starting`)
-  // TODO: sync in separate fn and set syncing status only here, try catch
+  await syncTco()
+  await chrome.storage.local.remove('syncingTco')
+}
+
+const syncTco = async () => {
   let keepSyncing = true
   while (keepSyncing) {
     try {
       const { mv, tco } = await getDecksFromStorage()
       await importDecksToTco(mv, tco)
     } catch (error) {
-      console.error(`KFA: TCO: Error syncing decks: ${error}`)
+      console.debug(`KFA: TCO: Error syncing decks: ${error}`)
       chrome.storage.local.remove('syncingTco')
       chrome.runtime
         .sendMessage({
@@ -64,10 +68,8 @@ export const handleTcoSync = async () => {
         break
       }
     }
-    await chrome.storage.local.remove('syncingTco')
-    await handleTcoSync()
+    await syncTco()
   }
-  await chrome.storage.local.remove('syncingTco')
 }
 
 /**
@@ -158,7 +160,14 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     chrome.storage.local.set({
       syncingTco: Date.now() + 4 * conf.staleSyncSeconds,
     })
-    const { token } = await getTcoUser(await getTcoRefreshToken())
+
+    const refreshToken = await getTcoRefreshToken()
+    if (!refreshToken) {
+      console.debug(`KFA: TCO: Not logged in, skipping import`)
+      return
+    }
+
+    const { token } = await getTcoUser(refreshToken)
     const { decks: tcoDecks } = await fetch(
       `${conf.tcoBaseUrl}/api/decks?pageSize=100000&page=1`,
       {
@@ -204,7 +213,13 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     console.debug(
       `KFA: TCO: Importing deck ${i + 1}/${decksToImport.length}: ${deck}`,
     )
-    const { token } = await getTcoUser(await getTcoRefreshToken())
+    const refreshToken = await getTcoRefreshToken()
+    if (!refreshToken) {
+      console.debug(`KFA: TCO: Not logged in, skipping import`)
+      return
+    }
+
+    const { token } = await getTcoUser(refreshToken)
     const response = await fetch(`${conf.tcoBaseUrl}/api/decks/`, {
       credentials: 'include',
       headers: {

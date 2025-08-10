@@ -4,8 +4,6 @@
  * Observes DOM changes to detect successful deck imports
  */
 
-// TODO: don't run sync if not logged in
-
 /**
  * Check if automatic sync is enabled and set up deck scan monitoring
  */

@@ -206,6 +206,12 @@ const clearData = () => {
  */
 const handleBackgroundMessage = async message => {
   switch (message.type) {
+    case 'DECK_COUNT':
+      if (message.decks !== undefined) {
+        updateDeckCount(message.decks)
+      }
+      break
+
     case 'RELOAD_USERS':
       console.debug(`KFA: POP: Reloading users`)
       const state = await loadState()
@@ -219,13 +225,7 @@ const handleBackgroundMessage = async message => {
 
     case 'SYNC_ERROR':
       resetButtons()
-      console.error(`KFA: POP: Sync failed: ${message.error}`)
-      break
-
-    case 'SYNC_STATUS':
-      if (message.decks !== undefined) {
-        updateDeckCount(message.decks)
-      }
+      console.debug(`KFA: POP: Sync failed: ${message.error}`)
       break
 
     case 'SYNC_START':
@@ -285,6 +285,11 @@ const resetButtons = async () => {
 
   const syncButton = document.getElementById('sync-decks')
   if (syncButton && syncButton instanceof HTMLButtonElement) {
+    await abortSyncButton.abort()
+    abortSyncButton = new AbortController()
+    syncButton.addEventListener('click', syncDecks, {
+      signal: abortSyncButton.signal,
+    })
     syncButton.disabled = false
     syncButton.textContent = 'Sync Decks'
   }

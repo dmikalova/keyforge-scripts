@@ -22,7 +22,7 @@ export const handleMvSync = async () => {
     const { mv: decks } = await getDecksFromStorage()
     await getDecksFromMv(decks)
   } catch (error) {
-    console.error(`KFA: MV: Error syncing: ${error}`)
+    console.debug(`KFA: MV: Error syncing: ${error}`)
     await chrome.storage.local.remove('syncingMv')
     chrome.runtime
       .sendMessage({
@@ -121,6 +121,10 @@ const getDecksFromMv = async (decks = {}) => {
   await chrome.storage.local.set({ syncingMv: Date.now() })
 
   const { token, userId } = await getMvAuth()
+  if (!token || !userId) {
+    console.debug(`KFA: MV: Not logged in, skipping sync`)
+    return
+  }
 
   console.debug(`KFA: MV: Fetching decks`)
   const requestConfig = createMvRequestConfig(token)
@@ -153,7 +157,7 @@ const getDecksFromMv = async (decks = {}) => {
     // Notify popup of new decks added
     chrome.runtime
       .sendMessage({
-        type: 'SYNC_STATUS',
+        type: 'DECK_COUNT',
         decks: Object.keys(decks).length,
       })
       .catch(() => {})

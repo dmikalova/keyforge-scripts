@@ -11,7 +11,12 @@ if (!('update_url' in chrome.runtime.getManifest())) {
   console.debug('KFA: BG: Debugging commands are enabled')
   chrome.commands.onCommand.addListener(shortcut => {
     if (shortcut.includes('+I')) {
-      chrome.runtime.reload()
+      chrome.storage.local
+        .remove(['syncingMv', 'syncingDok', 'syncingTco'])
+        .then(() => {
+          console.debug(`KFA: POP: Sync cancelled and buttons reset`)
+          chrome.runtime.reload()
+        })
     }
   })
 }
