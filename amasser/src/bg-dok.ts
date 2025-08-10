@@ -5,7 +5,7 @@ import { getDecksFromStorage } from './lib.js'
  * Main entry point for Decks of KeyForge synchronization
  * Imports decks from Master Vault to Decks of KeyForge
  */
-export const handleDokSync = async () => {
+export const handleSyncDok = async () => {
   const syncingDok = await chrome.storage.local
     .get('syncingDok')
     .then(r => r.syncingDok)

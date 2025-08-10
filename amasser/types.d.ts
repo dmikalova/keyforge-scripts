@@ -40,20 +40,20 @@ interface TcoUser {
 }
 
 // Chrome storage
-type StorageData = AuthData & Decks & Timestamps
+type StorageData = any
 
 // Decks interface
 interface Decks {
-  [key?: `${'zdok.' | 'zmv.' | 'ztco.'}${string}`]: boolean | string
+  [key: `${'zdok.' | 'zmv.' | 'ztco.'}${string}`]: boolean | string
 }
 
 // Timestamps interface
 interface Timestamps {
+  libraryDok?: number
+  libraryTco?: number
   syncingDok?: number
   syncingMv?: number
   syncingTco?: number
-  libraryDok?: number
-  libraryTco?: number
 }
 
 // Auth data interface

@@ -5,7 +5,7 @@ import { getDecksFromStorage } from './lib.js'
  * Main entry point for Master Vault synchronization
  * Fetches decks from Master Vault and stores them locally
  */
-export const handleMvSync = async () => {
+export const handleSyncMv = async () => {
   const syncingMv = await chrome.storage.local
     .get('syncingMv')
     .then(r => r.syncingMv)

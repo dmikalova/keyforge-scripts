@@ -5,7 +5,7 @@ import { getDecksFromStorage } from './lib.js'
  * Main entry point for The Crucible Online synchronization
  * Imports decks from Master Vault to The Crucible Online
  */
-export const handleTcoSync = async () => {
+export const handleSyncTco = async () => {
   const syncingTco = await chrome.storage.local
     .get('syncingTco')
     .then(r => r.syncingTco)

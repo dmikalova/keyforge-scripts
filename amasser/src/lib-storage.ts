@@ -1,14 +1,12 @@
-const get: (
-  keys: string | string[],
-) => Promise<{ [key: string]: any }> = async keys => {
-  return await chrome.storage.sync.get(keys)
+const get: (keys: string | string[]) => Promise<StorageData> = async keys => {
+  return await chrome.storage.local.get(keys)
 }
 
 const set: (data: StorageData, callback?: () => void) => Promise<void> = async (
   data,
   callback,
 ) => {
-  await chrome.storage.sync.set(data, callback)
+  return await chrome.storage.local.set(data, callback)
 }
 
 const getSettings: () => Promise<Settings> = async () => {
