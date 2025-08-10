@@ -190,7 +190,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
         .then(r => r.json())
         .then(r => r.decks)
         .catch(error => {
-          console.error(`KFA: DoK: Error fetching library: ${error}`)
+          console.debug(`KFA: DoK: Error fetching library: ${error}`)
         })
 
       console.debug(`KFA: DoK: Fetched ${dokLibrary.length} library decks`)

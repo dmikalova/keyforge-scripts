@@ -20,19 +20,31 @@ chrome.storage.sync.get('syncTco', result => {
             console.debug(`KFA: CTCO: User is logged in`)
             const tcoRefreshToken = window.localStorage.getItem('refreshToken')
             if (tcoRefreshToken !== null) {
-              chrome.runtime.sendMessage(
-                {
-                  type: 'SAVE_TCO_REFRESH_TOKEN',
-                  tokenTco: tcoRefreshToken,
-                },
-                response => {
-                  if (response && response.success) {
-                    console.debug(`KFA: CTCO: Refresh token message succeeded`)
-                  } else {
-                    console.warn(`KFA: CTCO: Refresh token message failed`)
-                  }
-                },
-              )
+              try {
+                chrome.runtime.sendMessage(
+                  {
+                    type: 'SAVE_TCO_REFRESH_TOKEN',
+                    tokenTco: tcoRefreshToken,
+                  },
+                  response => {
+                    if (chrome.runtime.lastError) {
+                      console.warn(
+                        `KFA: CTCO: Runtime error: ${chrome.runtime.lastError.message}`,
+                      )
+                      return
+                    }
+                    if (response && response.success) {
+                      console.debug(
+                        `KFA: CTCO: Refresh token message succeeded`,
+                      )
+                    } else {
+                      console.warn(`KFA: CTCO: Refresh token message failed`)
+                    }
+                  },
+                )
+              } catch (error) {
+                console.warn(`KFA: CTCO: Error sending message: ${error}`)
+              }
             }
             tcoObserver.disconnect()
             break

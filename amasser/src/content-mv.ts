@@ -12,6 +12,8 @@ chrome.storage.sync.get('syncAuto', result => {
     console.debug(`KFA: CMV: Automatic sync enabled`)
     chrome.runtime.sendMessage({
       type: 'SYNC_START',
+    }).catch(error => {
+      console.debug(`KFA: CMV: Error sending initial sync message: ${error}`)
     })
 
     // Track the last processed scan to prevent duplicates
@@ -57,7 +59,7 @@ chrome.storage.sync.get('syncAuto', result => {
                     console.debug(`KFA: CMV: Sync started`)
                   })
                   .catch(error => {
-                    console.error(`KFA: CMV: Error starting sync: ${error}`)
+                    console.warn(`KFA: CMV: Error starting sync: ${error}`)
                   })
               }
             }, 500) // Wait 500ms for DOM to stabilize

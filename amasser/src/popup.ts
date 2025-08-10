@@ -124,7 +124,7 @@ const loadState = async () => {
     'sync-auto-toggle',
   ) as HTMLInputElement
   if (!syncDokToggle || !syncTcoToggle || !syncAutoToggle) {
-    console.error(`KFA: POP: Sync toggle elements not found`)
+    console.warn(`KFA: POP: Sync toggle elements not found`)
     return
   }
   // Set toggle states based on stored data
@@ -173,7 +173,9 @@ const syncDecks = () => {
   // Update button state
   handleSyncStatus(conf.syncMessages[0])
   checkSyncStatus(true)
-  chrome.runtime.sendMessage({ type: 'SYNC_START' })
+  chrome.runtime.sendMessage({ type: 'SYNC_START' }).catch(error => {
+    console.debug(`KFA: POP: Error sending sync message: ${error}`)
+  })
 }
 
 /**
@@ -579,7 +581,7 @@ const loadUsers = async settings => {
       resetButtons()
     })
     .catch(error => {
-      console.error(`KFA: POP: Error loading users: ${JSON.stringify(error)}`)
+      console.warn(`KFA: POP: Error loading users: ${JSON.stringify(error)}`)
     })
 }
 

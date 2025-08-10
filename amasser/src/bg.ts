@@ -129,7 +129,7 @@ const handleDeckSync = async () => {
     await chrome.action.setIcon({ path: conf.iconRotations[0] })
     chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
   } catch (error) {
-    console.error(`KFA: BG: Error during deck sync: ${error}`)
+    console.debug(`KFA: BG: Error during deck sync: ${error}`)
     throw error // Re-throw so the message handler can also handle it
   }
 }

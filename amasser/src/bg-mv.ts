@@ -60,7 +60,7 @@ export const getMvAuth = async (): Promise<
 const getMvAuthCookie = (): Promise<chrome.cookies.Cookie | null> => {
   return new Promise(resolve => {
     if (!chrome.cookies) {
-      console.error(`KFA: MV: Cookies API is not available`)
+      console.debug(`KFA: MV: Cookies API is not available`)
       resolve(null)
       return
     }
