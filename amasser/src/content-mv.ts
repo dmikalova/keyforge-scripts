@@ -1,5 +1,14 @@
+/**
+ * Master Vault Content Script
+ * Monitors for deck scanning activities and triggers automatic sync when enabled
+ * Observes DOM changes to detect successful deck imports
+ */
+
 // TODO: don't run sync if not logged in
 
+/**
+ * Check if automatic sync is enabled and set up deck scan monitoring
+ */
 chrome.storage.sync.get('syncAuto', result => {
   if (result.syncAuto) {
     console.debug(`KFA: CMV: Automatic sync enabled`)
@@ -11,7 +20,10 @@ chrome.storage.sync.get('syncAuto', result => {
     let lastProcessedScan: string | null = null
     let scanTimeout: NodeJS.Timeout | null = null
 
-    // When a deck is scanned trigger a sync
+    /**
+     * Observer for detecting deck scan completions
+     * Monitors DOM changes for successful deck import modals
+     */
     const mvObserver = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {

@@ -129,20 +129,6 @@ const handleDeckSync = async () => {
 /**
  * Array of icon paths for rotation animation during sync
  */
-const ICON_ROTATIONS = [
-  '../icons/amasser-128-0.png',
-  '../icons/amasser-128-30.png',
-  '../icons/amasser-128-60.png',
-  '../icons/amasser-128-90.png',
-  '../icons/amasser-128-120.png',
-  '../icons/amasser-128-150.png',
-  '../icons/amasser-128-180.png',
-  '../icons/amasser-128-210.png',
-  '../icons/amasser-128-240.png',
-  '../icons/amasser-128-270.png',
-  '../icons/amasser-128-300.png',
-  '../icons/amasser-128-330.png',
-]
 
 /**
  * Rotates the extension icon during sync operations
@@ -176,10 +162,10 @@ const handleRotateIcon = async () => {
   }
 
   while (Object.keys(s).length === 0) {
-    rotation = (rotation + 1) % ICON_ROTATIONS.length
+    rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({
-      path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
+      path: conf.iconRotations[rotation % conf.iconRotations.length],
     })
 
     await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
@@ -198,10 +184,10 @@ const handleRotateIcon = async () => {
     (typeof s.syncingTco === 'number' &&
       now - s.syncingTco < conf.staleSyncSeconds)
   ) {
-    rotation = (rotation + 1) % ICON_ROTATIONS.length
+    rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({
-      path: ICON_ROTATIONS[rotation % ICON_ROTATIONS.length],
+      path: conf.iconRotations.length[rotation % conf.iconRotations.length],
     })
 
     // Wait for a short interval before checking again
@@ -214,7 +200,7 @@ const handleRotateIcon = async () => {
     now = Date.now()
   }
 
-  await chrome.action.setIcon({ path: ICON_ROTATIONS[0] })
+  await chrome.action.setIcon({ path: conf.iconRotations.length[0] })
 }
 
 /**
@@ -255,5 +241,4 @@ const updateAutoSyncAlarm = async () => {
 
 // TODO: code consistency
 // TODO: break out fns
-// TODO: remove errors when not logged in
 // TODO: clean up types

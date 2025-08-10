@@ -1,6 +1,18 @@
-// When the "MY DOK" button appears on the page, send the auth token to the background script
+/**
+ * Decks of KeyForge Content Script
+ * Monitors for user login state and extracts authentication token
+ * Sends auth token to background script when user is logged in
+ */
+
+/**
+ * Check if DoK sync is enabled and monitor for login state
+ */
 chrome.storage.sync.get('syncDok', result => {
   if (result.syncDok) {
+    /**
+     * Observer for detecting user login state
+     * Looks for the "MY DOK" profile link to confirm login
+     */
     const dokObserver = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {

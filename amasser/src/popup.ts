@@ -4,6 +4,9 @@ import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
 import { conf } from './conf.js'
 import { getDecksFromStorage } from './lib.js'
 
+let abortClearButton = new AbortController()
+let abortSyncButton = new AbortController()
+
 /**
  * Main entry point for the KeyForge Amasser extension popup
  * Initializes event listeners, loads quotes, state, and user information
@@ -66,11 +69,15 @@ const setupEventListeners = async () => {
   // Button event listeners
   const syncDecksBtn = document.getElementById('sync-decks')
   if (syncDecksBtn) {
-    syncDecksBtn.addEventListener('click', syncDecks)
+    syncDecksBtn.addEventListener('click', syncDecks, {
+      signal: abortSyncButton.signal,
+    })
   }
   const clearDataBtn = document.getElementById('clear-data')
   if (clearDataBtn) {
-    clearDataBtn.addEventListener('click', clearData)
+    clearDataBtn.addEventListener('click', clearData, {
+      signal: abortClearButton.signal,
+    })
   }
 
   // Background gradient effect
@@ -281,8 +288,12 @@ const resetButtons = async () => {
     if (clearDataButton.textContent !== 'Clear Data') {
       clearDataButton.disabled = true
       clearDataButton.textContent = 'Sync Finished'
-      clearDataButton.removeEventListener('click', cancelSync)
-      clearDataButton.addEventListener('click', clearData)
+      await abortClearButton.abort()
+      // Create a new AbortController for the next event listener
+      abortClearButton = new AbortController()
+      clearDataButton.addEventListener('click', clearData, {
+        signal: abortClearButton.signal,
+      })
       await new Promise(resolve => setTimeout(resolve, 1500))
     }
     clearDataButton.textContent = 'Clear Data'
@@ -342,7 +353,7 @@ const checkSyncStatus = async (wait: boolean = false) => {
  * Disables controls and shows animated sync text
  * @param {string} text - The sync status text to display
  */
-const handleSyncStatus = text => {
+const handleSyncStatus = async text => {
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
     if (toggle instanceof HTMLInputElement) {
       toggle.disabled = true
@@ -358,14 +369,16 @@ const handleSyncStatus = text => {
   const syncButton = document.getElementById('sync-decks')
   if (syncButton && syncButton instanceof HTMLButtonElement) {
     syncButton.textContent = text
-  }
-
-  const clearDataButton = document.getElementById('clear-data')
-  if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
-    clearDataButton.removeEventListener('click', clearData)
-    clearDataButton.addEventListener('click', cancelSync)
-    clearDataButton.textContent = 'Cancel Sync'
-    clearDataButton.disabled = false
+    const clearDataButton = document.getElementById('clear-data')
+    if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
+      await abortClearButton.abort()
+      abortClearButton = new AbortController()
+      clearDataButton.addEventListener('click', cancelSync, {
+        signal: abortClearButton.signal,
+      })
+      clearDataButton.textContent = 'Cancel Sync'
+      clearDataButton.disabled = false
+    }
   }
 
   // Randomly rotate the background gradients
@@ -391,50 +404,13 @@ const handleSyncStatus = text => {
  */
 const loadUsers = async settings => {
   const userPromises = []
-
-  // TODO: don't replace the sync button, just change the listeners
-  // MV user
-  userPromises.push(
-    (async () => {
-      console.debug(`KFA: POP: Getting MV username`)
-      const { username: userMv } = await getMvAuth()
-      if (userMv) {
-        const mvUsernameElem = document.getElementById('mv-username')
-        if (mvUsernameElem) {
-          mvUsernameElem.textContent = `: ${userMv}`
-          mvUsernameElem.style.display = 'inline'
-        }
-        console.debug(`KFA: POP: MV username: ${userMv}`)
-      } else {
-        console.error(`KFA: POP: Not logged in to MV`)
-        const syncButton = document.getElementById('sync-decks')
-        if (syncButton && syncButton instanceof HTMLButtonElement) {
-          syncButton.replaceWith(syncButton.cloneNode(true))
-          const newSyncButton = document.getElementById('sync-decks')
-          newSyncButton.addEventListener('click', () => {
-            chrome.tabs.create({ url: 'https://www.keyforgegame.com/my-decks' })
-          })
-          newSyncButton.textContent = 'Login to MV'
-          if (newSyncButton instanceof HTMLButtonElement) {
-            newSyncButton.disabled = false
-          }
-        }
-        const mvUsernameElem = document.getElementById('mv-username')
-        if (mvUsernameElem) {
-          mvUsernameElem.textContent = ``
-          mvUsernameElem.style.display = 'inline'
-        }
-        throw new Error('KFA: POP: Not logged into MV')
-      }
-    })(),
-  )
-
   if (settings.syncTco) {
     userPromises.push(
       (async () => {
         console.debug(`KFA: POP: Getting TCO username`)
         const token = await getTcoRefreshToken()
         if (token) {
+          // Show the TCO username element
           const { username } = await getTcoUser(token)
           const tcoUsernameElem = document.getElementById('tco-username')
           if (tcoUsernameElem) {
@@ -443,19 +419,23 @@ const loadUsers = async settings => {
           }
           console.debug(`KFA: POP: TCO username: ${username}`)
         } else {
-          console.error(`KFA: POP: Not logged in to TCO`)
+          console.debug(`KFA: POP: Not logged in to TCO`)
+          // Reset the sync button to open TCO login page
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
-            syncButton.replaceWith(syncButton.cloneNode(true))
-            const newSyncButton = document.getElementById('sync-decks')
-            newSyncButton.addEventListener('click', () => {
-              chrome.tabs.create({ url: 'https://thecrucible.online/' })
-            })
-            newSyncButton.textContent = 'Login to TCO'
-            if (newSyncButton instanceof HTMLButtonElement) {
-              newSyncButton.disabled = false
-            }
+            // await abortSyncButton.abort()
+            await syncButton.addEventListener(
+              'click',
+              () => {
+                chrome.tabs.create({ url: conf.tcoBaseUrl })
+              },
+              { signal: abortSyncButton.signal },
+            )
+            syncButton.textContent = 'Login to TCO'
+            syncButton.disabled = false
           }
+
+          // Hide the TCO username element
           const tcoUsernameElem = document.getElementById('tco-username')
           if (tcoUsernameElem) {
             tcoUsernameElem.textContent = ``
@@ -479,6 +459,7 @@ const loadUsers = async settings => {
         console.debug(`KFA: POP: Getting DoK username`)
         const token = await getDokToken()
         if (token) {
+          // Show the DoK username element
           const user = await getDokUser(token)
           const dokUsernameElem = document.getElementById('dok-username')
           if (dokUsernameElem) {
@@ -487,18 +468,23 @@ const loadUsers = async settings => {
           }
           console.debug(`KFA: POP: DoK username: ${user}`)
         } else {
+          console.debug(`KFA: POP: Not logged in to DoK`)
+          // Reset the sync button to open DoK login page
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
-            syncButton.replaceWith(syncButton.cloneNode(true))
-            const newSyncButton = document.getElementById('sync-decks')
-            newSyncButton.addEventListener('click', () => {
-              chrome.tabs.create({ url: 'https://decksofkeyforge.com/' })
-            })
-            newSyncButton.textContent = 'Login to DoK'
-            if (newSyncButton instanceof HTMLButtonElement) {
-              newSyncButton.disabled = false
-            }
+            // await abortSyncButton.abort()
+            syncButton.addEventListener(
+              'click',
+              () => {
+                chrome.tabs.create({ url: conf.dokBaseUrl })
+              },
+              { signal: abortSyncButton.signal },
+            )
+            syncButton.textContent = 'Login to DoK'
+            syncButton.disabled = false
           }
+
+          // Hide the DoK username element
           const dokUsernameElem = document.getElementById('dok-username')
           if (dokUsernameElem) {
             dokUsernameElem.textContent = ``
@@ -516,6 +502,46 @@ const loadUsers = async settings => {
     }
   }
 
+  userPromises.push(
+    (async () => {
+      console.debug(`KFA: POP: Getting MV username`)
+      const { username: userMv } = await getMvAuth()
+      if (userMv) {
+        // Show the MV username element
+        const mvUsernameElem = document.getElementById('mv-username')
+        if (mvUsernameElem) {
+          mvUsernameElem.textContent = `: ${userMv}`
+          mvUsernameElem.style.display = 'inline'
+        }
+        console.debug(`KFA: POP: MV username: ${userMv}`)
+      } else {
+        console.debug(`KFA: POP: Not logged in to MV`)
+        // Reset the sync button to open MV login page
+        const syncButton = document.getElementById('sync-decks')
+        if (syncButton && syncButton instanceof HTMLButtonElement) {
+          // await abortSyncButton.abort()
+          syncButton.addEventListener(
+            'click',
+            () => {
+              chrome.tabs.create({ url: `${conf.mvBaseUrl}/my-decks` })
+            },
+            { signal: abortSyncButton.signal },
+          )
+          syncButton.textContent = 'Login to MV'
+          syncButton.disabled = false
+        }
+
+        // Hide the MV username element
+        const mvUsernameElem = document.getElementById('mv-username')
+        if (mvUsernameElem) {
+          mvUsernameElem.textContent = ``
+          mvUsernameElem.style.display = 'inline'
+        }
+        throw new Error('KFA: POP: Not logged into MV')
+      }
+    })(),
+  )
+
   await Promise.allSettled(userPromises)
     .then(async results => {
       if (
@@ -523,9 +549,7 @@ const loadUsers = async settings => {
           return r.status === 'fulfilled'
         })
       ) {
-        return console.error(
-          `KFA POP: Error settling user promises: ${JSON.stringify(results)}`,
-        )
+        return console.debug(`KFA POP: Not logged in to all accounts`)
       }
       console.debug(`KFA: POP: Logged in to all accounts`)
       await checkSyncStatus()

@@ -1,9 +1,10 @@
 import { conf } from './conf.js'
 import { getDecksFromStorage } from './lib.js'
 
-// The Crucible Online API configuration
-const TCO_BASE_URL = 'https://thecrucible.online'
-
+/**
+ * Main entry point for The Crucible Online synchronization
+ * Imports decks from Master Vault to The Crucible Online
+ */
 export const handleTcoSync = async () => {
   const syncingTco = await chrome.storage.local
     .get('syncingTco')
@@ -69,6 +70,10 @@ export const handleTcoSync = async () => {
   await chrome.storage.local.remove('syncingTco')
 }
 
+/**
+ * Get The Crucible Online refresh token from storage
+ * @returns {Promise<string | null>} The refresh token or null if not logged in
+ */
 export const getTcoRefreshToken = async (): Promise<string | null> => {
   // Check for token in local storage
   let { tokenTco: refreshToken } = await chrome.storage.local.get('tokenTco')
@@ -81,6 +86,11 @@ export const getTcoRefreshToken = async (): Promise<string | null> => {
   return JSON.parse(refreshToken)
 }
 
+/**
+ * Get user information from The Crucible Online
+ * @param {string} token - Refresh token for authentication
+ * @returns {Promise<TcoUserResponse>} User data including username, token, and userId
+ */
 export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
   if (!token) {
     throw new Error('KFA: TCO: Token missing')
@@ -93,7 +103,7 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
   const body = JSON.stringify(t)
 
   console.debug(`KFA: TCO: Fetching user`)
-  const response = await fetch(`${TCO_BASE_URL}/api/account/token`, {
+  const response = await fetch(`${conf.tcoBaseUrl}/api/account/token`, {
     credentials: 'include',
     headers: {
       accept: 'application/json',
@@ -103,7 +113,7 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
       pragma: 'no-cache',
       'x-requested-with': 'XMLHttpRequest',
     },
-    referrer: 'https://www.thecrucible.online/decks',
+    referrer: `${conf.tcoBaseUrl}/decks`,
     referrerPolicy: 'no-referrer-when-downgrade',
     mode: 'cors',
     method: 'POST',
@@ -127,6 +137,11 @@ export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
   }
 }
 
+/**
+ * Import decks from Master Vault to The Crucible Online
+ * @param {Decks} mv - Master Vault deck collection
+ * @param {Decks} tco - The Crucible Online deck collection
+ */
 const importDecksToTco = async (mv: Decks, tco: Decks) => {
   let decksToImport = Object.entries(mv).filter(
     ([id, deck]) => deck === true && !tco[id],
@@ -137,9 +152,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     return
   }
 
-  const { libraryTco: libraryTco } = await chrome.storage.local.get([
-    'libraryTco',
-  ])
+  const { libraryTco } = await chrome.storage.local.get('libraryTco')
   if (!libraryTco) {
     console.debug(`KFA: TCO: Fetching TCO library`)
     chrome.storage.local.set({
@@ -147,7 +160,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     })
     const { token } = await getTcoUser(await getTcoRefreshToken())
     const { decks: tcoDecks } = await fetch(
-      `${TCO_BASE_URL}/api/decks?pageSize=100000&page=1`,
+      `${conf.tcoBaseUrl}/api/decks?pageSize=100000&page=1`,
       {
         credentials: 'include',
         headers: {
@@ -192,7 +205,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
       `KFA: TCO: Importing deck ${i + 1}/${decksToImport.length}: ${deck}`,
     )
     const { token } = await getTcoUser(await getTcoRefreshToken())
-    const response = await fetch(`${TCO_BASE_URL}/api/decks/`, {
+    const response = await fetch(`${conf.tcoBaseUrl}/api/decks/`, {
       credentials: 'include',
       headers: {
         accept: '*/*',
@@ -203,7 +216,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
         pragma: 'no-cache',
         'x-requested-with': 'XMLHttpRequest',
       },
-      referrer: 'https://www.thecrucible.online/decks/import',
+      referrer: `${conf.tcoBaseUrl}/decks/import`,
       referrerPolicy: 'no-referrer-when-downgrade',
       body: JSON.stringify({
         uuid: deck[0],
@@ -269,7 +282,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     }
 
     // console.debug(`KFA: TCO: Wait before next import`)
-    // TODO: get the timeout from lib and use the additive wait method
+    // TODO: get the timeout from conf and use the additive wait method
     for (let timeout = 0; timeout < 10; timeout++) {
       chrome.storage.local.set({ syncingTco: Date.now() })
       await new Promise(resolve => setTimeout(resolve, 1000))
