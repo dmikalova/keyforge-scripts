@@ -16,6 +16,7 @@ export const handleDokSync = async () => {
     return
   }
   await chrome.storage.local.set({ syncingDok: Date.now() })
+  await new Promise(r => setTimeout(r, conf.timeoutMs * 2))
   console.debug(`KFA: DoK: Sync starting`)
 
   let keepSyncing = true
@@ -40,7 +41,6 @@ export const handleDokSync = async () => {
       ([id, deck]) => deck == true && !dok[id],
     )
     if (decksToImport.length === 0) {
-      console.debug(`KFA: DoK: No new decks to import`)
       keepSyncing = false
     }
   }
@@ -52,8 +52,8 @@ export const handleDokSync = async () => {
   if (syncingMv && Date.now() - syncingMv < conf.staleSyncSeconds) {
     let waited = 0
     while (waited < conf.syncAgainSeconds) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      waited += 1000
+      await new Promise(resolve => setTimeout(resolve, conf.timeoutMs))
+      waited += conf.timeoutMs
       const stillSyncingMv = await chrome.storage.local
         .get('syncingMv')
         .then(r => r.syncingMv)
@@ -168,7 +168,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
         },
         body: JSON.stringify({
           page: page,
-          pageSize: 1000,
+          pageSize: conf.dokPageSize,
           sort: 'ADDED_DATE',
           sortDirection: 'DESC',
           owner: username,
@@ -190,7 +190,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
         })
       })
 
-      if (dokLibrary.length < 1000) {
+      if (dokLibrary.length < conf.dokPageSize) {
         nextPage = false
       }
       page++

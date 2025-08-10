@@ -193,7 +193,7 @@ const clearData = () => {
     setTimeout(() => {
       clearDataButton.textContent = 'Clear Data'
       clearDataButton.disabled = false
-    }, 1000)
+    }, conf.timeoutMs)
   }
 }
 
@@ -204,8 +204,14 @@ const clearData = () => {
  * @param {string} [message.error] - Error message if type is SYNC_ERROR
  * @param {number} [message.decks] - Deck count if type is SYNC_STATUS
  */
-const handleBackgroundMessage = message => {
+const handleBackgroundMessage = async message => {
   switch (message.type) {
+    case 'RELOAD_USERS':
+      console.debug(`KFA: POP: Reloading users`)
+      const state = await loadState()
+      await loadUsers(state.settings)
+      break
+
     case 'SYNC_COMPLETE':
       resetButtons()
       console.debug(`KFA: POP: Sync completed`)
@@ -338,11 +344,11 @@ const checkSyncStatus = async (wait: boolean = false) => {
       wait = false
     }
 
-    console.debug(
-      `KFA: POP: Syncing timestamps: MV: ${now - s.syncingMv || 0}ms DoK: ${
-        now - s.syncingDok || 0
-      }ms TCO: ${now - s.syncingTco || 0}ms Wait: ${wait}`,
-    )
+    // console.debug(
+    //   `KFA: POP: Check sync status: Syncing timestamps: MV: ${now - s.syncingMv || 0}ms DoK: ${
+    //     now - s.syncingDok || 0
+    //   }ms TCO: ${now - s.syncingTco || 0}ms Wait: ${wait}`,
+    // )
   }
   console.debug(`KFA: POP: Sync finished`)
 }

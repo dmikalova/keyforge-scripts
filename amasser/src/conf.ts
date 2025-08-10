@@ -5,6 +5,7 @@ export const conf = {
     syncAuto: false,
   },
   dokBaseUrl: 'https://decksofkeyforge.com',
+  dokPageSize: 1000,
   iconRotations: [
     '../icons/amasser-128-0.png',
     '../icons/amasser-128-30.png',
@@ -56,5 +57,7 @@ export const conf = {
     '. Syncing..',
   ],
   rotateAgainSeconds: 500,
+  timeoutMs: 1000,
   tcoBaseUrl: 'https://thecrucible.online',
+  tcoThrottleMs: 10 * 1000,
 }

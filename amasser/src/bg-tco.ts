@@ -16,6 +16,7 @@ export const handleTcoSync = async () => {
     return
   }
   await chrome.storage.local.set({ syncingTco: Date.now() })
+  await new Promise(r => setTimeout(r, conf.timeoutMs * 2))
   console.debug(`KFA: TCO: Sync starting`)
   // TODO: sync in separate fn and set syncing status only here, try catch
   let keepSyncing = true
@@ -40,7 +41,6 @@ export const handleTcoSync = async () => {
       ([id, deck]) => deck == true && !tco[id],
     )
     if (decksToImport.length === 0) {
-      console.debug(`KFA: TCO: No new decks to import`)
       keepSyncing = false
     }
   }
@@ -52,8 +52,8 @@ export const handleTcoSync = async () => {
   if (syncingMv && Date.now() - syncingMv < conf.staleSyncSeconds) {
     let waited = 0
     while (waited < conf.syncAgainSeconds) {
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      waited += 1000
+      await new Promise(r => setTimeout(r, conf.timeoutMs))
+      waited += conf.timeoutMs
       const stillSyncingMv = await chrome.storage.local
         .get('syncingMv')
         .then(r => r.syncingMv)
@@ -270,7 +270,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
       console.debug(`KFA: TCO: Rate limit hit, pausing`)
       for (let timeout = 0; timeout < 60; timeout++) {
         chrome.storage.local.set({ syncingTco: Date.now() })
-        await new Promise(resolve => setTimeout(resolve, 1000))
+        await new Promise(resolve => setTimeout(resolve, conf.timeoutMs))
       }
     } else {
       console.debug(
@@ -282,10 +282,11 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
     }
 
     // console.debug(`KFA: TCO: Wait before next import`)
-    // TODO: get the timeout from conf and use the additive wait method
-    for (let timeout = 0; timeout < 10; timeout++) {
+    let wait = 0
+    while (wait < conf.tcoThrottleMs) {
       chrome.storage.local.set({ syncingTco: Date.now() })
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, conf.timeoutMs))
+      wait += conf.timeoutMs
     }
   }
 }

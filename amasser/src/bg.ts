@@ -67,6 +67,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.debug(
           `KFA: BG: DoK auth token saved to storage from content script`,
         )
+        chrome.runtime.sendMessage({ type: 'RELOAD_USERS' })
         sendResponse({ success: true })
       })
       return true
@@ -88,6 +89,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         console.debug(
           `KFA: BG: TCO refresh token saved to storage from content script`,
         )
+        chrome.runtime.sendMessage({ type: 'RELOAD_USERS' })
         sendResponse({ success: true })
       })
       return true
@@ -119,16 +121,13 @@ const handleDeckSync = async () => {
 
     // Notify popup that sync is complete
     console.debug(`KFA: BG: Deck sync settled: ${JSON.stringify(results)}`)
+    await chrome.action.setIcon({ path: conf.iconRotations[0] })
     chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
   } catch (error) {
     console.error(`KFA: BG: Error during deck sync: ${error}`)
     throw error // Re-throw so the message handler can also handle it
   }
 }
-
-/**
- * Array of icon paths for rotation animation during sync
- */
 
 /**
  * Rotates the extension icon during sync operations
@@ -143,12 +142,6 @@ const handleRotateIcon = async () => {
     'syncingTco',
   ])
   let now = Date.now()
-  console.debug(
-    `KFA: BG: Syncing timestamps: MV: ${now - s.syncingMv || 0}ms DoK: ${
-      now - s.syncingDok || 0
-    }ms TCO: ${now - s.syncingTco || 0}ms`,
-  )
-
   if (
     (typeof s.syncingDok === 'number' &&
       now - s.syncingDok > conf.staleSyncSeconds) ||
@@ -165,10 +158,11 @@ const handleRotateIcon = async () => {
     rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({
-      path: conf.iconRotations[rotation % conf.iconRotations.length],
+      path: conf.iconRotations[rotation],
     })
 
     await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
+    now = Date.now()
     s = await chrome.storage.local.get([
       'syncingDok',
       'syncingMv',
@@ -187,20 +181,20 @@ const handleRotateIcon = async () => {
     rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({
-      path: conf.iconRotations.length[rotation % conf.iconRotations.length],
+      path: conf.iconRotations[rotation],
     })
 
     // Wait for a short interval before checking again
     await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
+    now = Date.now()
     s = await chrome.storage.local.get([
       'syncingDok',
       'syncingMv',
       'syncingTco',
     ])
-    now = Date.now()
   }
 
-  await chrome.action.setIcon({ path: conf.iconRotations.length[0] })
+  await chrome.action.setIcon({ path: conf.iconRotations[0] })
 }
 
 /**
