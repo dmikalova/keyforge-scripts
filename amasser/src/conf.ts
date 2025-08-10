@@ -1,8 +1,8 @@
 export const conf = {
   defaults: {
-    'sync-dok': true,
-    'sync-tco': false,
-    'sync-auto': false,
+    syncDok: true,
+    syncTco: false,
+    syncAuto: false,
   },
   dokBaseUrl: 'https://decksofkeyforge.com',
   iconRotations: [

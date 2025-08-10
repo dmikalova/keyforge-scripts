@@ -4,6 +4,9 @@ import { getTcoRefreshToken, getTcoUser } from './bg-tco.js'
 import { conf } from './conf.js'
 import { getDecksFromStorage } from './lib.js'
 
+let abortClearButton = new AbortController()
+let abortSyncButton = new AbortController()
+
 /**
  * Main entry point for the KeyForge Amasser extension popup
  * Initializes event listeners, loads quotes, state, and user information
@@ -37,7 +40,7 @@ const setupEventListeners = async () => {
   if (syncDokToggle) {
     syncDokToggle.addEventListener('change', async () => {
       await chrome.storage.sync.set({
-        'sync-dok':
+        syncDok:
           syncDokToggle instanceof HTMLInputElement && syncDokToggle.checked,
       })
       loadState().then(state => loadUsers(state.settings))
@@ -47,7 +50,7 @@ const setupEventListeners = async () => {
   if (syncTcoToggle) {
     syncTcoToggle.addEventListener('change', async () => {
       await chrome.storage.sync.set({
-        'sync-tco':
+        syncTco:
           syncTcoToggle instanceof HTMLInputElement && syncTcoToggle.checked,
       })
       loadState().then(state => loadUsers(state.settings))
@@ -57,7 +60,7 @@ const setupEventListeners = async () => {
   if (syncAutoToggle) {
     syncAutoToggle.addEventListener('change', async () => {
       await chrome.storage.sync.set({
-        'sync-auto':
+        syncAuto:
           syncAutoToggle instanceof HTMLInputElement && syncAutoToggle.checked,
       })
     })
@@ -66,11 +69,15 @@ const setupEventListeners = async () => {
   // Button event listeners
   const syncDecksBtn = document.getElementById('sync-decks')
   if (syncDecksBtn) {
-    syncDecksBtn.addEventListener('click', syncDecks)
+    syncDecksBtn.addEventListener('click', syncDecks, {
+      signal: abortSyncButton.signal,
+    })
   }
   const clearDataBtn = document.getElementById('clear-data')
   if (clearDataBtn) {
-    clearDataBtn.addEventListener('click', clearData)
+    clearDataBtn.addEventListener('click', clearData, {
+      signal: abortClearButton.signal,
+    })
   }
 
   // Background gradient effect
@@ -121,35 +128,35 @@ const loadState = async () => {
     return
   }
   // Set toggle states based on stored data
-  if (settings['sync-dok'] === undefined) {
+  if (settings.syncDok === undefined) {
     // Default to true if not set
-    settings['sync-dok'] = conf.defaults['sync-dok']
+    settings.syncDok = conf.defaults.syncDok
   }
-  if (settings['sync-tco'] === undefined) {
+  if (settings.syncTco === undefined) {
     // Default to true if not set
-    settings['sync-tco'] = conf.defaults['sync-tco']
+    settings.syncTco = conf.defaults.syncTco
   }
-  if (settings['sync-auto'] === undefined) {
+  if (settings.syncAuto === undefined) {
     // Default to true if not set
-    settings['sync-auto'] = conf.defaults['sync-auto']
+    settings.syncAuto = conf.defaults.syncAuto
   }
   // Update toggle states
   console.debug(
-    `KFA: POP: Setting sync toggles: DoK: ${settings['sync-dok']}, TCO: ${settings['sync-tco']}, Auto: ${settings['sync-auto']}`,
+    `KFA: POP: Setting sync toggles: DoK: ${settings.syncDok}, TCO: ${settings.syncTco}, Auto: ${settings.syncAuto}`,
   )
 
   // Set toggle states
   if (syncDokToggle) {
     syncDokToggle instanceof HTMLInputElement &&
-      (syncDokToggle.checked = settings['sync-dok'] || false)
+      (syncDokToggle.checked = settings.syncDok || false)
   }
   if (syncTcoToggle) {
     syncTcoToggle instanceof HTMLInputElement &&
-      (syncTcoToggle.checked = settings['sync-tco'] || false)
+      (syncTcoToggle.checked = settings.syncTco || false)
   }
   if (syncAutoToggle) {
     syncAutoToggle instanceof HTMLInputElement &&
-      (syncAutoToggle.checked = settings['sync-auto'] || false)
+      (syncAutoToggle.checked = settings.syncAuto || false)
   }
 
   console.debug(`KFA: POP: Deck count: ${Object.keys(decks || {}).length}`)
@@ -242,7 +249,7 @@ const updateDeckCount = count => {
 const cancelSync = () => {
   console.debug(`KFA: POP: Cancelling sync`)
   chrome.storage.local
-    .remove(['syncing-mv', 'syncing-dok', 'syncing-tco'])
+    .remove(['syncingMv', 'syncingDok', 'syncingTco'])
     .then(() => {
       console.debug(`KFA: POP: Sync cancelled and buttons reset`)
       chrome.runtime.reload()
@@ -281,8 +288,12 @@ const resetButtons = async () => {
     if (clearDataButton.textContent !== 'Clear Data') {
       clearDataButton.disabled = true
       clearDataButton.textContent = 'Sync Finished'
-      clearDataButton.removeEventListener('click', cancelSync)
-      clearDataButton.addEventListener('click', clearData)
+      await abortClearButton.abort()
+      // Create a new AbortController for the next event listener
+      abortClearButton = new AbortController()
+      clearDataButton.addEventListener('click', clearData, {
+        signal: abortClearButton.signal,
+      })
       await new Promise(resolve => setTimeout(resolve, 1500))
     }
     clearDataButton.textContent = 'Clear Data'
@@ -300,18 +311,18 @@ const checkSyncStatus = async (wait: boolean = false) => {
   let now = Date.now()
   let shift = 0
   let s = await chrome.storage.local.get([
-    'syncing-dok',
-    'syncing-mv',
-    'syncing-tco',
+    'syncingDok',
+    'syncingMv',
+    'syncingTco',
   ])
   while (
     wait ||
-    (typeof s['syncing-dok'] === 'number' &&
-      now - s['syncing-dok'] < conf.staleSyncSeconds) ||
-    (typeof s['syncing-mv'] === 'number' &&
-      now - s['syncing-mv'] < conf.staleSyncSeconds) ||
-    (typeof s['syncing-tco'] === 'number' &&
-      now - s['syncing-tco'] < conf.staleSyncSeconds)
+    (typeof s.syncingDok === 'number' &&
+      now - s.syncingDok < conf.staleSyncSeconds) ||
+    (typeof s.syncingMv === 'number' &&
+      now - s.syncingMv < conf.staleSyncSeconds) ||
+    (typeof s.syncingTco === 'number' &&
+      now - s.syncingTco < conf.staleSyncSeconds)
   ) {
     handleSyncStatus(conf.syncMessages[shift])
 
@@ -319,9 +330,9 @@ const checkSyncStatus = async (wait: boolean = false) => {
     await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
 
     s = await chrome.storage.local.get([
-      'syncing-dok',
-      'syncing-mv',
-      'syncing-tco',
+      'syncingDok',
+      'syncingMv',
+      'syncingTco',
     ])
     now = Date.now()
     if (Object.keys(s).length !== 0) {
@@ -329,9 +340,9 @@ const checkSyncStatus = async (wait: boolean = false) => {
     }
 
     console.debug(
-      `KFA: POP: Syncing timestamps: MV: ${now - s['syncing-mv'] || 0}ms DoK: ${
-        now - s['syncing-dok'] || 0
-      }ms TCO: ${now - s['syncing-tco'] || 0}ms Wait: ${wait}`,
+      `KFA: POP: Syncing timestamps: MV: ${now - s.syncingMv || 0}ms DoK: ${
+        now - s.syncingDok || 0
+      }ms TCO: ${now - s.syncingTco || 0}ms Wait: ${wait}`,
     )
   }
   console.debug(`KFA: POP: Sync finished`)
@@ -342,7 +353,7 @@ const checkSyncStatus = async (wait: boolean = false) => {
  * Disables controls and shows animated sync text
  * @param {string} text - The sync status text to display
  */
-const handleSyncStatus = text => {
+const handleSyncStatus = async text => {
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
     if (toggle instanceof HTMLInputElement) {
       toggle.disabled = true
@@ -358,14 +369,16 @@ const handleSyncStatus = text => {
   const syncButton = document.getElementById('sync-decks')
   if (syncButton && syncButton instanceof HTMLButtonElement) {
     syncButton.textContent = text
-  }
-
-  const clearDataButton = document.getElementById('clear-data')
-  if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
-    clearDataButton.removeEventListener('click', clearData)
-    clearDataButton.addEventListener('click', cancelSync)
-    clearDataButton.textContent = 'Cancel Sync'
-    clearDataButton.disabled = false
+    const clearDataButton = document.getElementById('clear-data')
+    if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
+      await abortClearButton.abort()
+      abortClearButton = new AbortController()
+      clearDataButton.addEventListener('click', cancelSync, {
+        signal: abortClearButton.signal,
+      })
+      clearDataButton.textContent = 'Cancel Sync'
+      clearDataButton.disabled = false
+    }
   }
 
   // Randomly rotate the background gradients
@@ -391,44 +404,7 @@ const handleSyncStatus = text => {
  */
 const loadUsers = async settings => {
   const userPromises = []
-  // MV user
-  userPromises.push(
-    (async () => {
-      console.debug(`KFA: POP: Getting MV username`)
-      const { username: userMv } = await getMvAuth()
-      if (userMv) {
-        // Show the MV username element
-        const mvUsernameElem = document.getElementById('mv-username')
-        if (mvUsernameElem) {
-          mvUsernameElem.textContent = `: ${userMv}`
-          mvUsernameElem.style.display = 'inline'
-        }
-        console.debug(`KFA: POP: MV username: ${userMv}`)
-      } else {
-        console.debug(`KFA: POP: Not logged in to MV`)
-        // Reset the sync button to open MV login page
-        const syncButton = document.getElementById('sync-decks')
-        if (syncButton && syncButton instanceof HTMLButtonElement) {
-          syncButton.removeEventListener('click', syncDecks)
-          syncButton.addEventListener('click', () => {
-            chrome.tabs.create({ url: `${conf.mvBaseUrl}/my-decks` })
-          })
-          syncButton.textContent = 'Login to MV'
-          syncButton.disabled = false
-        }
-
-        // Hide the MV username element
-        const mvUsernameElem = document.getElementById('mv-username')
-        if (mvUsernameElem) {
-          mvUsernameElem.textContent = ``
-          mvUsernameElem.style.display = 'inline'
-        }
-        throw new Error('KFA: POP: Not logged into MV')
-      }
-    })(),
-  )
-
-  if (settings['sync-tco']) {
+  if (settings.syncTco) {
     userPromises.push(
       (async () => {
         console.debug(`KFA: POP: Getting TCO username`)
@@ -447,10 +423,14 @@ const loadUsers = async settings => {
           // Reset the sync button to open TCO login page
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
-            syncButton.removeEventListener('click', syncDecks)
-            syncButton.addEventListener('click', () => {
-              chrome.tabs.create({ url: conf.tcoBaseUrl })
-            })
+            // await abortSyncButton.abort()
+            await syncButton.addEventListener(
+              'click',
+              () => {
+                chrome.tabs.create({ url: conf.tcoBaseUrl })
+              },
+              { signal: abortSyncButton.signal },
+            )
             syncButton.textContent = 'Login to TCO'
             syncButton.disabled = false
           }
@@ -473,7 +453,7 @@ const loadUsers = async settings => {
     }
   }
 
-  if (settings['sync-dok']) {
+  if (settings.syncDok) {
     userPromises.push(
       (async () => {
         console.debug(`KFA: POP: Getting DoK username`)
@@ -492,10 +472,14 @@ const loadUsers = async settings => {
           // Reset the sync button to open DoK login page
           const syncButton = document.getElementById('sync-decks')
           if (syncButton && syncButton instanceof HTMLButtonElement) {
-            syncButton.removeEventListener('click', syncDecks)
-            syncButton.addEventListener('click', () => {
-              chrome.tabs.create({ url: conf.dokBaseUrl })
-            })
+            // await abortSyncButton.abort()
+            syncButton.addEventListener(
+              'click',
+              () => {
+                chrome.tabs.create({ url: conf.dokBaseUrl })
+              },
+              { signal: abortSyncButton.signal },
+            )
             syncButton.textContent = 'Login to DoK'
             syncButton.disabled = false
           }
@@ -517,6 +501,47 @@ const loadUsers = async settings => {
       dokUsernameElem.style.display = 'inline'
     }
   }
+
+  // MV user
+  userPromises.push(
+    (async () => {
+      console.debug(`KFA: POP: Getting MV username`)
+      const { username: userMv } = await getMvAuth()
+      if (userMv) {
+        // Show the MV username element
+        const mvUsernameElem = document.getElementById('mv-username')
+        if (mvUsernameElem) {
+          mvUsernameElem.textContent = `: ${userMv}`
+          mvUsernameElem.style.display = 'inline'
+        }
+        console.debug(`KFA: POP: MV username: ${userMv}`)
+      } else {
+        console.debug(`KFA: POP: Not logged in to MV`)
+        // Reset the sync button to open MV login page
+        const syncButton = document.getElementById('sync-decks')
+        if (syncButton && syncButton instanceof HTMLButtonElement) {
+          // await abortSyncButton.abort()
+          syncButton.addEventListener(
+            'click',
+            () => {
+              chrome.tabs.create({ url: `${conf.mvBaseUrl}/my-decks` })
+            },
+            { signal: abortSyncButton.signal },
+          )
+          syncButton.textContent = 'Login to MV'
+          syncButton.disabled = false
+        }
+
+        // Hide the MV username element
+        const mvUsernameElem = document.getElementById('mv-username')
+        if (mvUsernameElem) {
+          mvUsernameElem.textContent = ``
+          mvUsernameElem.style.display = 'inline'
+        }
+        throw new Error('KFA: POP: Not logged into MV')
+      }
+    })(),
+  )
 
   await Promise.allSettled(userPromises)
     .then(async results => {

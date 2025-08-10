@@ -7,8 +7,8 @@
 /**
  * Check if TCO sync is enabled and monitor for login state
  */
-chrome.storage.sync.get(['sync-tco'], result => {
-  if (result['sync-tco']) {
+chrome.storage.sync.get('syncTco', result => {
+  if (result.syncTco) {
     /**
      * Observer for detecting user login state
      * Looks for the profile navigation button to confirm login
@@ -23,7 +23,7 @@ chrome.storage.sync.get(['sync-tco'], result => {
               chrome.runtime.sendMessage(
                 {
                   type: 'SAVE_TCO_REFRESH_TOKEN',
-                  'token-tco': tcoRefreshToken,
+                  tokenTco: tcoRefreshToken,
                 },
                 response => {
                   if (response && response.success) {

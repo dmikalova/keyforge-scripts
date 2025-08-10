@@ -7,15 +7,15 @@ import { getDecksFromStorage } from './lib.js'
  */
 export const handleMvSync = async () => {
   const syncingMv = await chrome.storage.local
-    .get(['syncing-dok'])
-    .then(r => r['syncing-dok'])
+    .get('syncingMv')
+    .then(r => r.syncingMv)
   if (syncingMv && Date.now() - syncingMv < conf.staleSyncSeconds) {
     console.debug(
       `KFA: MV: Sync already in progress: ${Date.now() - syncingMv}ms`,
     )
     return
   }
-  await chrome.storage.local.set({ 'syncing-mv': Date.now() })
+  await chrome.storage.local.set({ syncingMv: Date.now() })
   console.debug(`KFA: MV: Sync starting`)
 
   try {
@@ -23,7 +23,7 @@ export const handleMvSync = async () => {
     await getDecksFromMv(decks)
   } catch (error) {
     console.error(`KFA: MV: Error syncing: ${error}`)
-    await chrome.storage.local.remove(['syncing-mv'])
+    await chrome.storage.local.remove('syncingMv')
     chrome.runtime
       .sendMessage({
         type: 'SYNC_ERROR',
@@ -32,7 +32,7 @@ export const handleMvSync = async () => {
       .catch(() => {})
   }
 
-  await chrome.storage.local.remove(['syncing-mv'])
+  await chrome.storage.local.remove('syncingMv')
 }
 
 /**
@@ -118,7 +118,7 @@ const getDecksFromMv = async (decks = {}) => {
     decks = {}
   }
 
-  await chrome.storage.local.set({ 'syncing-mv': Date.now() })
+  await chrome.storage.local.set({ syncingMv: Date.now() })
 
   const { token, userId } = await getMvAuth()
 
@@ -146,7 +146,7 @@ const getDecksFromMv = async (decks = {}) => {
       decks[deck.id] = true
       await chrome.storage.local.set({
         [`zmv.${deck.id}`]: true,
-        'syncing-mv': Date.now(),
+        syncingMv: Date.now(),
       })
     })
 

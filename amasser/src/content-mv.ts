@@ -9,8 +9,8 @@
 /**
  * Check if automatic sync is enabled and set up deck scan monitoring
  */
-chrome.storage.sync.get(['sync-auto'], result => {
-  if (result['sync-auto']) {
+chrome.storage.sync.get('syncAuto', result => {
+  if (result.syncAuto) {
     console.debug(`KFA: CMV: Automatic sync enabled`)
     chrome.runtime.sendMessage({
       type: 'SYNC_START',

@@ -2,9 +2,9 @@
 
 // Settings interface
 interface Settings {
-  'sync-auto'?: boolean
-  'sync-dok'?: boolean
-  'sync-tco'?: boolean
+  syncAuto?: boolean
+  syncDok?: boolean
+  syncTco?: boolean
 }
 
 // Auth interfaces
@@ -51,9 +51,9 @@ interface StorageData {
     tco?: Decks
   }
   settings?: Settings
-  'token-mv'?: string
-  'token-dok'?: string
-  'token-tco'?: string
+  tokenMv?: string
+  tokenDok?: string
+  tokenTco?: string
 }
 
 // Message types
