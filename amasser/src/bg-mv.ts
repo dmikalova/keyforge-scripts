@@ -2,20 +2,29 @@ import { conf } from './conf.js'
 import { getDecksFromStorage } from './lib.js'
 
 /**
- * Main entry point for Master Vault synchronization
- * Fetches decks from Master Vault and stores them locally
+ * Base URL for the Master Vault API
+ * @constant {string}
+ */
+const MV_BASE_URL = 'https://www.keyforgegame.com'
+
+/**
+ * Main entry point for Master Vault synchronization.
+ * - Prevents overlapping syncs using a timestamp flag in storage
+ * - Fetches MV decks and updates local storage and popup state
+ * - Sends SYNC_ERROR to the popup on failure
+ * @returns {Promise<void>}
  */
 export const handleMvSync = async () => {
   const syncingMv = await chrome.storage.local
-    .get('syncingMv')
-    .then(r => r.syncingMv)
+    .get(['syncing-dok'])
+    .then(r => r['syncing-dok'])
   if (syncingMv && Date.now() - syncingMv < conf.staleSyncSeconds) {
     console.debug(
       `KFA: MV: Sync already in progress: ${Date.now() - syncingMv}ms`,
     )
     return
   }
-  await chrome.storage.local.set({ syncingMv: Date.now() })
+  await chrome.storage.local.set({ 'syncing-mv': Date.now() })
   console.debug(`KFA: MV: Sync starting`)
 
   try {
@@ -23,7 +32,7 @@ export const handleMvSync = async () => {
     await getDecksFromMv(decks)
   } catch (error) {
     console.error(`KFA: MV: Error syncing: ${error}`)
-    await chrome.storage.local.remove('syncingMv')
+    await chrome.storage.local.remove(['syncing-mv'])
     chrome.runtime
       .sendMessage({
         type: 'SYNC_ERROR',
@@ -32,12 +41,14 @@ export const handleMvSync = async () => {
       .catch(() => {})
   }
 
-  await chrome.storage.local.remove('syncingMv')
+  await chrome.storage.local.remove(['syncing-mv'])
 }
 
 /**
- * Gets Master Vault authentication information
- * @returns {Promise<MvAuth | {token: null, userId: null, username: null}>} Auth data or null values if not logged in
+ * Retrieve Master Vault authentication details.
+ * Reads the 'auth' cookie and fetches the current user; when not logged in,
+ * returns null values for token, userId, and username.
+ * @returns {Promise<MvAuth | { token: null; userId: null; username: null }>}
  */
 export const getMvAuth = async (): Promise<
   MvAuth | { token: null; userId: null; username: null }
@@ -54,8 +65,8 @@ export const getMvAuth = async (): Promise<
 }
 
 /**
- * Get authentication cookie from Master Vault
- * @returns {Promise<chrome.cookies.Cookie | null>} The auth cookie or null if not available
+ * Get authentication cookie from Master Vault.
+ * @returns {Promise<chrome.cookies.Cookie | null>} Resolves with the MV auth cookie or null if unavailable.
  */
 const getMvAuthCookie = (): Promise<chrome.cookies.Cookie | null> => {
   return new Promise(resolve => {
@@ -67,7 +78,7 @@ const getMvAuthCookie = (): Promise<chrome.cookies.Cookie | null> => {
 
     chrome.cookies.get(
       {
-        url: conf.mvBaseUrl,
+        url: MV_BASE_URL,
         name: 'auth',
       },
       resolve,
@@ -76,7 +87,7 @@ const getMvAuthCookie = (): Promise<chrome.cookies.Cookie | null> => {
 }
 
 /**
- * Create request configuration with authentication
+ * Create request configuration with authentication.
  * @param {string} token - Authentication token
  * @returns {RequestInit} Fetch request configuration
  */
@@ -91,13 +102,14 @@ const createMvRequestConfig = (token: string): RequestInit => ({
 })
 
 /**
- * Fetch current user information from Master Vault
- * @param {string} token - Authentication token
- * @returns {Promise<MvUser>} User information containing id and username
+ * Fetch current user information from Master Vault.
+ * @param {string} token - MV authentication token
+ * @returns {Promise<MvUser>} Resolves with the MV user details
+ * @throws {Error} If the user fetch response is not ok
  */
 const getMvUser = async (token: string): Promise<MvUser> => {
   const response = await fetch(
-    `${conf.mvBaseUrl}/api/users/self/`,
+    `${MV_BASE_URL}/api/users/self/`,
     createMvRequestConfig(token),
   )
 
@@ -110,15 +122,18 @@ const getMvUser = async (token: string): Promise<MvUser> => {
 }
 
 /**
- * Fetch new decks from Master Vault API
- * @param {object} [decks={}] - Existing deck collection to update
+ * Fetch pages of decks from Master Vault and update local storage.
+ * Also notifies the popup with SYNC_STATUS updates as decks are discovered.
+ * @param {Record<string, boolean>} [decks={}] - Mutable map of deck IDs already known/owned
+ * @returns {Promise<void>}
+ * @throws {Error} If a page fetch response is not ok
  */
 const getDecksFromMv = async (decks = {}) => {
   if (typeof decks !== 'object' || decks === null) {
     decks = {}
   }
 
-  await chrome.storage.local.set({ syncingMv: Date.now() })
+  await chrome.storage.local.set({ 'syncing-mv': Date.now() })
 
   const { token, userId } = await getMvAuth()
 
@@ -129,7 +144,7 @@ const getDecksFromMv = async (decks = {}) => {
   let hasMorePages = true
 
   while (hasMorePages) {
-    const url = `${conf.mvBaseUrl}/api/users/v2/${userId}/decks/?page=${page}&page_size=${pageSize}&search=&ordering=-date`
+    const url = `${MV_BASE_URL}/api/users/v2/${userId}/decks/?page=${page}&page_size=${pageSize}&search=&ordering=-date`
     const response = await fetch(url, requestConfig)
 
     if (!response.ok) {
@@ -146,7 +161,7 @@ const getDecksFromMv = async (decks = {}) => {
       decks[deck.id] = true
       await chrome.storage.local.set({
         [`zmv.${deck.id}`]: true,
-        syncingMv: Date.now(),
+        'syncing-mv': Date.now(),
       })
     })
 

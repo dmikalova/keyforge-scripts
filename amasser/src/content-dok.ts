@@ -1,18 +1,6 @@
-/**
- * Decks of KeyForge Content Script
- * Monitors for user login state and extracts authentication token
- * Sends auth token to background script when user is logged in
- */
-
-/**
- * Check if DoK sync is enabled and monitor for login state
- */
-chrome.storage.sync.get('syncDok', result => {
-  if (result.syncDok) {
-    /**
-     * Observer for detecting user login state
-     * Looks for the "MY DOK" profile link to confirm login
-     */
+// When the "MY DOK" button appears on the page, send the auth token to the background script
+chrome.storage.sync.get(['sync-dok'], result => {
+  if (result['sync-dok']) {
     const dokObserver = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
@@ -21,7 +9,7 @@ chrome.storage.sync.get('syncDok', result => {
             const dokAuth = window.localStorage.getItem('AUTH')
             if (dokAuth !== null) {
               chrome.runtime.sendMessage(
-                { type: 'SAVE_DOK_AUTH', tokenDok: dokAuth },
+                { type: 'SAVE_DOK_AUTH', 'token-dok': dokAuth },
                 response => {
                   if (response && response.success) {
                     console.debug(`KFA: CDoK: Auth token message succeeded`)
