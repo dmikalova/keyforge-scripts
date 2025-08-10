@@ -1,11 +1,12 @@
 import { getDokToken, getDokUser } from './bg-dok.js'
-import { getMvAuth } from './bg-mv.js'
+import { getCredsMv } from './bg-mv.js'
 import { getTcoAuth, getTcoUser } from './bg-tco.js'
 import { conf } from './conf.js'
 import { browser } from './lib-browser.js'
 import { getDecksFromStorage } from './lib.js'
 
-let abortClearButton = new AbortController()
+// Used to remove event listeners as buttons change functionality
+let abortClearDataButton = new AbortController()
 let abortSyncButton = new AbortController()
 
 /**
@@ -77,7 +78,7 @@ const setupEventListeners = async () => {
   const clearDataBtn = document.getElementById('clear-data')
   if (clearDataBtn) {
     clearDataBtn.addEventListener('click', clearData, {
-      signal: abortClearButton.signal,
+      signal: abortClearDataButton.signal,
     })
   }
 
@@ -299,10 +300,10 @@ const resetButtons = async () => {
     if (clearDataButton.textContent !== 'Clear Data') {
       clearDataButton.disabled = true
       clearDataButton.textContent = 'Sync Finished'
-      await abortClearButton.abort()
-      abortClearButton = new AbortController()
+      await abortClearDataButton.abort()
+      abortClearDataButton = new AbortController()
       clearDataButton.addEventListener('click', clearData, {
-        signal: abortClearButton.signal,
+        signal: abortClearDataButton.signal,
       })
       await new Promise(resolve => setTimeout(resolve, 1500))
     }
@@ -381,10 +382,10 @@ const handleSyncStatus = async text => {
     syncButton.textContent = text
     const clearDataButton = document.getElementById('clear-data')
     if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
-      await abortClearButton.abort()
-      abortClearButton = new AbortController()
+      await abortClearDataButton.abort()
+      abortClearDataButton = new AbortController()
       clearDataButton.addEventListener('click', cancelSync, {
-        signal: abortClearButton.signal,
+        signal: abortClearDataButton.signal,
       })
       clearDataButton.textContent = 'Cancel Sync'
       clearDataButton.disabled = false
@@ -418,7 +419,7 @@ const loadUsers = async settings => {
   userPromises.push(
     (async () => {
       console.debug(`KFA: POP: Getting MV username`)
-      const { username: userMv } = await getMvAuth()
+      const { username: userMv } = await getCredsMv()
       if (userMv) {
         // Show the MV username element
         const mvUsernameElem = document.getElementById('mv-username')

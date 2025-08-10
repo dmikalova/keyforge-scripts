@@ -5,11 +5,6 @@ import { storage } from './lib-storage.js'
  * Get decks from extension local storage
  */
 export const getDecksFromStorage = async () => {
-  type Decks = {
-    dok: Record<string, string>
-    mv: Record<string, string>
-    tco: Record<string, string>
-  }
   const decks: Decks = { dok: {}, tco: {}, mv: {} }
   await chrome.storage.local.get().then(data => {
     for (const [key, value] of Object.entries(data)) {

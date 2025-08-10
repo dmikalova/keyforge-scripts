@@ -44,7 +44,7 @@ const dokSync = async () => {
     }
 
     // Filter out decks that already have dok=true
-    const { mv, dok }: { mv: Decks; dok: Decks } = await getDecksFromStorage()
+    const { mv, dok }: Decks = await getDecksFromStorage()
     let decksToImport = Object.entries(mv).filter(
       ([id, deck]) => deck == true && !dok[id],
     )

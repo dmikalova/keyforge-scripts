@@ -21,6 +21,7 @@ export const conf = {
     '../icons/amasser-128-330.png',
   ],
   mvBaseUrl: 'https://www.keyforgegame.com',
+  mvPageSize: 25,
   quotes: [
     '“Always clear your search history.” -Dr. Escotera',
     "“As far as oblivions go, it's in my bottom three.” -Dr. Escotera",

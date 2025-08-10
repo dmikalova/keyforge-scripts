@@ -40,7 +40,7 @@ const syncTco = async () => {
     }
 
     // Filter out decks that already have tco=true
-    const { mv, tco }: { mv: Decks; tco: Decks } = await getDecksFromStorage()
+    const { mv, tco }: Decks = await getDecksFromStorage()
     let decksToImport = Object.entries(mv).filter(
       ([id, deck]) => deck == true && !tco[id],
     )
@@ -93,7 +93,7 @@ export const getTcoAuth = async (): Promise<string | null> => {
  * @param {string} token - Refresh token for authentication
  * @returns {Promise<TcoUserResponse>} User data including username, token, and userId
  */
-export const getTcoUser = async (token: string): Promise<TcoUserResponse> => {
+export const getTcoUser = async (token: string): Promise<credsTco> => {
   if (!token) {
     throw new Error('KFA: TCO: Token missing')
   }

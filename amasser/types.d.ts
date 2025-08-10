@@ -8,43 +8,35 @@ interface Settings {
 }
 
 // Auth interfaces
-interface MvAuth {
+interface credsDok {
+  token: string
+  username: string
+}
+
+interface credsMv {
   token: string
   userId: string
   username: string
 }
 
-interface TcoAuth {
-  refreshToken: string
-  username: string
-}
-
-interface TcoUserResponse {
-  username: string
+interface credsTco {
   token: string
+  username: string
   userId: string
-}
-
-// User interfaces
-interface MvUser {
-  id: string
-  username: string
-}
-
-interface DokUser {
-  username: string
-}
-
-interface TcoUser {
-  username: string
 }
 
 // Chrome storage
 type StorageData = any
 
-// Decks interface
-interface Decks {
+// StorageDecks interface
+interface StorageDecks {
   [key: `${'zdok.' | 'zmv.' | 'ztco.'}${string}`]: boolean | string
+}
+
+interface Decks {
+  dok?: Record<string, boolean | string>
+  mv?: Record<string, boolean | string>
+  tco?: Record<string, boolean | string>
 }
 
 // Timestamps interface
