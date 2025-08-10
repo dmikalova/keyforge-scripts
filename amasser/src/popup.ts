@@ -1,9 +1,9 @@
-import { getDokToken, getDokUser } from './bg-dok.js'
+import { getCredsDok } from './bg-dok.js'
 import { getCredsMv } from './bg-mv.js'
 import { getTcoAuth, getTcoUser } from './bg-tco.js'
 import { conf } from './conf.js'
 import { browser } from './lib-browser.js'
-import { getDecksFromStorage } from './lib.js'
+import { storage } from './lib-storage.js'
 
 // Used to remove event listeners as buttons change functionality
 let abortClearDataButton = new AbortController()
@@ -109,7 +109,7 @@ const setupEventListeners = async () => {
 const loadState = async () => {
   const settings: Settings = await chrome.storage.sync.get()
 
-  const { mv: decks } = await getDecksFromStorage()
+  const { mv: decks } = await storage.decks.get()
 
   const deckCountElem = document.getElementById('deck-count')
   if (deckCountElem) {
@@ -329,16 +329,14 @@ const checkSyncStatus = async (wait: boolean = false) => {
   while (
     wait ||
     (typeof s.syncingDok === 'number' &&
-      now - s.syncingDok < conf.staleSyncSeconds) ||
-    (typeof s.syncingMv === 'number' &&
-      now - s.syncingMv < conf.staleSyncSeconds) ||
-    (typeof s.syncingTco === 'number' &&
-      now - s.syncingTco < conf.staleSyncSeconds)
+      now - s.syncingDok < conf.staleSyncMs) ||
+    (typeof s.syncingMv === 'number' && now - s.syncingMv < conf.staleSyncMs) ||
+    (typeof s.syncingTco === 'number' && now - s.syncingTco < conf.staleSyncMs)
   ) {
     handleSyncStatus(conf.syncMessages[shift])
 
     shift = (shift + 1) % conf.syncMessages.length
-    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
+    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainMs))
 
     s = await chrome.storage.local.get([
       'syncingDok',
@@ -461,16 +459,16 @@ const loadUsers = async settings => {
     userPromises.push(
       (async () => {
         console.debug(`KFA: POP: Getting DoK username`)
-        const token = await getDokToken()
-        if (token) {
+        const { username } = await getCredsDok()
+
+        if (username) {
           // Show the DoK username element
-          const user = await getDokUser(token)
           const dokUsernameElem = document.getElementById('dok-username')
           if (dokUsernameElem) {
-            dokUsernameElem.textContent = `: ${user}`
+            dokUsernameElem.textContent = `: ${username}`
             dokUsernameElem.style.display = 'inline'
           }
-          console.debug(`KFA: POP: DoK username: ${user}`)
+          console.debug(`KFA: POP: DoK username: ${username}`)
         } else {
           console.debug(`KFA: POP: Not logged in to DoK`)
           // Reset the sync button to open DoK login page

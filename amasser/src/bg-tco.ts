@@ -1,5 +1,5 @@
 import { conf } from './conf.js'
-import { getDecksFromStorage } from './lib.js'
+import { storage } from './lib-storage.js'
 
 /**
  * Main entry point for The Crucible Online synchronization
@@ -9,7 +9,7 @@ export const handleSyncTco = async () => {
   const syncingTco = await chrome.storage.local
     .get('syncingTco')
     .then(r => r.syncingTco)
-  if (syncingTco && Date.now() - syncingTco < conf.staleSyncSeconds) {
+  if (syncingTco && Date.now() - syncingTco < conf.staleSyncMs) {
     console.debug(
       `KFA: TCO: sync already in progress: ${Date.now() - syncingTco}ms`,
     )
@@ -26,7 +26,7 @@ const syncTco = async () => {
   let keepSyncing = true
   while (keepSyncing) {
     try {
-      const { mv, tco } = await getDecksFromStorage()
+      const { mv, tco } = await storage.decks.get()
       await importDecksToTco(mv, tco)
     } catch (error) {
       console.warn(`KFA: TCO: Error syncing decks: ${error}`)
@@ -40,7 +40,7 @@ const syncTco = async () => {
     }
 
     // Filter out decks that already have tco=true
-    const { mv, tco }: Decks = await getDecksFromStorage()
+    const { mv, tco }: Decks = await storage.decks.get()
     let decksToImport = Object.entries(mv).filter(
       ([id, deck]) => deck == true && !tco[id],
     )
@@ -53,9 +53,9 @@ const syncTco = async () => {
   const syncingMv = await chrome.storage.local
     .get('syncingMv')
     .then(r => r.syncingMv)
-  if (syncingMv && Date.now() - syncingMv < conf.staleSyncSeconds) {
+  if (syncingMv && Date.now() - syncingMv < conf.staleSyncMs) {
     let waited = 0
-    while (waited < conf.syncAgainSeconds) {
+    while (waited < conf.syncAgainMs) {
       await new Promise(r => setTimeout(r, conf.timeoutMs))
       waited += conf.timeoutMs
       const stillSyncingMv = await chrome.storage.local
@@ -63,7 +63,7 @@ const syncTco = async () => {
         .then(r => r.syncingMv)
       if (
         !stillSyncingMv ||
-        Date.now() - stillSyncingMv >= conf.staleSyncSeconds
+        Date.now() - stillSyncingMv >= conf.staleSyncMs
       ) {
         break
       }
@@ -158,7 +158,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
   if (!libraryTco) {
     console.debug(`KFA: TCO: Fetching TCO library`)
     chrome.storage.local.set({
-      syncingTco: Date.now() + 4 * conf.staleSyncSeconds,
+      syncingTco: Date.now() + 4 * conf.staleSyncMs,
     })
 
     const auth = await getTcoAuth()

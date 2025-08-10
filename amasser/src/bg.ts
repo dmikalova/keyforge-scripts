@@ -97,19 +97,21 @@ const handleIconRotation = async () => {
   console.debug(`KFA: BG: Handling rotating icon`)
   let rotation = 0
   // Wait for sync to start
-  while (await lib.isStale(['syncingDok', 'syncingMv', 'syncingTco'])) {
+  while (await lib.timestampsStale(['syncingDok', 'syncingMv', 'syncingTco'])) {
     rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon (stale): ${rotation} `)
     await chrome.action.setIcon({ path: conf.iconRotations[rotation] })
-    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
+    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainMs))
   }
 
   // Wait for sync to finish
-  while (!(await lib.isStale(['syncingDok', 'syncingMv', 'syncingTco']))) {
+  while (
+    !(await lib.timestampsStale(['syncingDok', 'syncingMv', 'syncingTco']))
+  ) {
     rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({ path: conf.iconRotations[rotation] })
-    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
+    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainMs))
   }
 
   await chrome.action.setIcon({ path: conf.iconRotations[0] })

@@ -2,31 +2,17 @@ import { conf } from './conf.js'
 import { storage } from './lib-storage.js'
 
 /**
- * Get decks from extension local storage
- */
-export const getDecksFromStorage = async () => {
-  const decks: Decks = { dok: {}, tco: {}, mv: {} }
-  await chrome.storage.local.get().then(data => {
-    for (const [key, value] of Object.entries(data)) {
-      if (key.startsWith('zdok.')) {
-        decks.dok[key.replace('zdok.', '')] = value
-      } else if (key.startsWith('zmv.')) {
-        decks.mv[key.replace('zmv.', '')] = value
-      } else if (key.startsWith('ztco.')) {
-        decks.tco[key.replace('ztco.', '')] = value
-      }
-    }
-  })
-  return decks
-}
-
-/**
  * Checks if timestamps are stale
  */
-const isStale = async (keys: string[]): Promise<boolean> => {
+const timestampsStale = async (keys: string[]): Promise<boolean> => {
   let s: Timestamps = await storage.get(keys)
   let now = Date.now()
-  return Object.values(s).every(v => now - v > conf.staleSyncSeconds)
+  return Object.values(s).every(v => now - v > conf.staleSyncMs)
+}
+
+const unsyncedDecks = async (key: 'dok' | 'tco') => {
+  const { mv, [key]: decks } = await storage.decks.get()
+  return Object.entries(mv).filter(([id, deck]) => deck == true && !decks[id])
 }
 
 /**
@@ -45,6 +31,7 @@ const updateAlarms = async () => {
 }
 
 export const lib = {
-  isStale,
+  timestampsStale,
+  unsyncedDecks,
   updateAlarms,
 }
