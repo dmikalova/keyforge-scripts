@@ -43,6 +43,13 @@ Download the extension from the [Chrome Web Store](https://chromewebstore.google
 - Data can be cleared by the user at any time or by uninstalling the extension.
 - Extension settings are synced across browsers by Google or Firefox. This does not include deck or authentication data.
 
+## Code structure
+
+- `manifest.json`: Contains metadata about the extension, including permissions and script entrypoints.
+- `bg*.ts`: The core logic that run sync operations on a background service worker. Receives messages from content and popup scripts to trigger syncs or save auth tokens.
+- `content-*.ts`: Scripts that run within each page. These send auth tokens from DoK and TOC and trigger syncs when loading MV or scanning decks.
+- `popup.ts`: Manages the popup UI, including triggering syncs and clearing data.
+
 ## Contributing
 
 - Open an issue in GitHub to discuss your feature or bug fix.
@@ -50,4 +57,5 @@ Download the extension from the [Chrome Web Store](https://chromewebstore.google
   - Run `npm run install` and `npm run watch` to build the extension.
 - Test with both Chrome and Firefox.
   - Load the unpacked extension in Chrome by navigating to `chrome://extensions`, enabling "Developer mode", and clicking "Load unpacked".
+  - Load the unpacked extension in Firefox by navigating to `about:debugging#/runtime/this-firefox`, clicking "Load Temporary Add-on".
 - Submit a pull request.
