@@ -25,9 +25,9 @@ chrome.runtime.onInstalled.addListener(async () => {
 
   // Initialize default settings
   chrome.storage.sync.set({
-    'sync-dok': settings['sync-dok'] || true,
-    'sync-tco': settings['sync-tco'] || false,
-    'sync-auto': settings['sync-auto'] || false,
+    syncDok: settings.syncDok || conf.defaults.syncDok,
+    syncTco: settings.syncTco || conf.defaults.syncTco,
+    syncAuto: settings.syncAuto || conf.defaults.syncAuto,
   })
 })
 
@@ -54,16 +54,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'SAVE_DOK_AUTH':
       console.debug(`KFA: BG: Received DoK auth token from content script`)
-      if (!message['token-dok']) {
-        console.warn(`KFA: BG: SAVE_DOK_AUTH message missing token-dok token`)
+      if (!message.tokenDok) {
+        console.warn(`KFA: BG: SAVE_DOK_AUTH message missing DoK token`)
         sendResponse({
           success: false,
-          error: `KFA: BG: Missing token-dok: ${message['token-dok']}`,
+          error: `KFA: BG: Missing DoK token: ${message.tokenDok}`,
         })
         return false
       }
 
-      chrome.storage.local.set({ 'token-dok': message['token-dok'] }, () => {
+      chrome.storage.local.set({ tokenDok: message.tokenDok }, () => {
         console.debug(
           `KFA: BG: DoK auth token saved to storage from content script`,
         )
@@ -73,18 +73,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     case 'SAVE_TCO_REFRESH_TOKEN':
       console.debug(`KFA: BG: Received TCO refresh token from content script`)
-      if (!message['token-tco']) {
+      if (!message.tokenTco) {
         console.warn(
           `KFA: BG: SAVE_TCO_REFRESH_TOKEN message missing TCO refresh token`,
         )
         sendResponse({
           success: false,
-          error: `KFA: BG: Missing token-tco: ${message['token-tco']}`,
+          error: `KFA: BG: Missing TCO refresh token: ${message.tokenTco}`,
         })
         return false
       }
 
-      chrome.storage.local.set({ 'token-tco': message['token-tco'] }, () => {
+      chrome.storage.local.set({ tokenTco: message.tokenTco }, () => {
         console.debug(
           `KFA: BG: TCO refresh token saved to storage from content script`,
         )
@@ -106,11 +106,11 @@ const handleDeckSync = async () => {
   console.debug(`KFA: BG: Handling deck sync`)
   const syncPromises = [handleMvSync()]
 
-  if ((await chrome.storage.sync.get('sync-dok'))['sync-dok']) {
+  if ((await chrome.storage.sync.get('syncDok')).syncDok) {
     syncPromises.push(handleDokSync())
   }
 
-  if ((await chrome.storage.sync.get('sync-tco'))['sync-tco']) {
+  if ((await chrome.storage.sync.get('syncTco')).syncTco) {
     syncPromises.push(handleTcoSync())
   }
 
@@ -152,24 +152,24 @@ const handleRotateIcon = async () => {
   console.debug(`KFA: BG: Handling rotating icon`)
   let rotation = 0
   let s = await chrome.storage.local.get([
-    'syncing-dok',
-    'syncing-mv',
-    'syncing-tco',
+    'syncingDok',
+    'syncingMv',
+    'syncingTco',
   ])
   let now = Date.now()
   console.debug(
-    `KFA: BG: Syncing timestamps: MV: ${now - s['syncing-mv'] || 0}ms DoK: ${
-      now - s['syncing-dok'] || 0
-    }ms TCO: ${now - s['syncing-tco'] || 0}ms`,
+    `KFA: BG: Syncing timestamps: MV: ${now - s.syncingMv || 0}ms DoK: ${
+      now - s.syncingDok || 0
+    }ms TCO: ${now - s.syncingTco || 0}ms`,
   )
 
   if (
-    (typeof s['syncing-dok'] === 'number' &&
-      now - s['syncing-dok'] > conf.staleSyncSeconds) ||
-    (typeof s['syncing-mv'] === 'number' &&
-      now - s['syncing-mv'] > conf.staleSyncSeconds) ||
-    (typeof s['syncing-tco'] === 'number' &&
-      now - s['syncing-tco'] > conf.staleSyncSeconds)
+    (typeof s.syncingDok === 'number' &&
+      now - s.syncingDok > conf.staleSyncSeconds) ||
+    (typeof s.syncingMv === 'number' &&
+      now - s.syncingMv > conf.staleSyncSeconds) ||
+    (typeof s.syncingTco === 'number' &&
+      now - s.syncingTco > conf.staleSyncSeconds)
   ) {
     console.debug(`KFA: BG: Syncs are stale`)
     s = {}
@@ -184,19 +184,19 @@ const handleRotateIcon = async () => {
 
     await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
     s = await chrome.storage.local.get([
-      'syncing-dok',
-      'syncing-mv',
-      'syncing-tco',
+      'syncingDok',
+      'syncingMv',
+      'syncingTco',
     ])
   }
 
   while (
-    (typeof s['syncing-dok'] === 'number' &&
-      now - s['syncing-dok'] < conf.staleSyncSeconds) ||
-    (typeof s['syncing-mv'] === 'number' &&
-      now - s['syncing-mv'] < conf.staleSyncSeconds) ||
-    (typeof s['syncing-tco'] === 'number' &&
-      now - s['syncing-tco'] < conf.staleSyncSeconds)
+    (typeof s.syncingDok === 'number' &&
+      now - s.syncingDok < conf.staleSyncSeconds) ||
+    (typeof s.syncingMv === 'number' &&
+      now - s.syncingMv < conf.staleSyncSeconds) ||
+    (typeof s.syncingTco === 'number' &&
+      now - s.syncingTco < conf.staleSyncSeconds)
   ) {
     rotation = (rotation + 1) % ICON_ROTATIONS.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
@@ -207,9 +207,9 @@ const handleRotateIcon = async () => {
     // Wait for a short interval before checking again
     await new Promise(resolve => setTimeout(resolve, conf.rotateAgainSeconds))
     s = await chrome.storage.local.get([
-      'syncing-dok',
-      'syncing-mv',
-      'syncing-tco',
+      'syncingDok',
+      'syncingMv',
+      'syncingTco',
     ])
     now = Date.now()
   }
@@ -241,7 +241,7 @@ chrome.alarms.onAlarm.addListener(onAlarm)
  * Creates or removes daily sync alarm as needed
  */
 const updateAutoSyncAlarm = async () => {
-  const syncAuto = (await chrome.storage.sync.get('sync-auto'))['sync-auto']
+  const syncAuto = (await chrome.storage.sync.get('syncAuto')).syncAuto
   console.debug(`KFA: BG: Checking auto-sync: ${syncAuto}`)
   if (syncAuto) {
     console.debug(`KFA: BG: Scheduling daily sync alarm`)

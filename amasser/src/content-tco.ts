@@ -1,6 +1,6 @@
 // When the user's profile button appears on the page, send the refresh token to the background script
-chrome.storage.sync.get(['sync-tco'], result => {
-  if (result['sync-tco']) {
+chrome.storage.sync.get('syncTco', result => {
+  if (result.syncTco) {
     const tcoObserver = new MutationObserver(mutations => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
@@ -11,7 +11,7 @@ chrome.storage.sync.get(['sync-tco'], result => {
               chrome.runtime.sendMessage(
                 {
                   type: 'SAVE_TCO_REFRESH_TOKEN',
-                  'token-tco': tcoRefreshToken,
+                  tokenTco: tcoRefreshToken,
                 },
                 response => {
                   if (response && response.success) {

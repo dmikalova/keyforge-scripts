@@ -6,15 +6,15 @@ const DOK_BASE_URL = 'https://decksofkeyforge.com'
 
 export const handleDokSync = async () => {
   const syncingDok = await chrome.storage.local
-    .get(['syncing-dok'])
-    .then(r => r['syncing-dok'])
+    .get('syncingDok')
+    .then(r => r.syncingDok)
   if (syncingDok && Date.now() - syncingDok < conf.staleSyncSeconds) {
     console.debug(
       `KFA: DoK: Sync already in progress: ${Date.now() - syncingDok}ms`,
     )
     return
   }
-  await chrome.storage.local.set({ 'syncing-dok': Date.now() })
+  await chrome.storage.local.set({ syncingDok: Date.now() })
   console.debug(`KFA: DoK: Sync starting`)
 
   let keepSyncing = true
@@ -24,7 +24,7 @@ export const handleDokSync = async () => {
       await importDecksToDok(mv, dok)
     } catch (error) {
       console.error(`KFA: DoK: Error syncing: ${error}`)
-      await chrome.storage.local.remove(['syncing-dok'])
+      await chrome.storage.local.remove('syncingDok')
       chrome.runtime
         .sendMessage({
           type: 'SYNC_ERROR',
@@ -46,16 +46,16 @@ export const handleDokSync = async () => {
 
   // If MV sync is in progress, trigger Dok sync again
   const syncingMv = await chrome.storage.local
-    .get(['syncing-mv'])
-    .then(r => r['syncing-mv'])
+    .get('syncingMv')
+    .then(r => r.syncingMv)
   if (syncingMv && Date.now() - syncingMv < conf.staleSyncSeconds) {
     let waited = 0
     while (waited < conf.syncAgainSeconds) {
       await new Promise(resolve => setTimeout(resolve, 1000))
       waited += 1000
       const stillSyncingMv = await chrome.storage.local
-        .get(['syncing-mv'])
-        .then(r => r['syncing-mv'])
+        .get('syncingMv')
+        .then(r => r.syncingMv)
       if (
         !stillSyncingMv ||
         Date.now() - stillSyncingMv >= conf.staleSyncSeconds
@@ -63,10 +63,10 @@ export const handleDokSync = async () => {
         break
       }
     }
-    await chrome.storage.local.remove(['syncing-dok'])
+    await chrome.storage.local.remove('syncingDok')
     await handleDokSync()
   }
-  await chrome.storage.local.remove(['syncing-dok'])
+  await chrome.storage.local.remove('syncingDok')
 }
 
 /**
@@ -74,7 +74,7 @@ export const handleDokSync = async () => {
  */
 export const getDokToken = async (): Promise<string | null> => {
   // Check for token in local storage
-  let { 'token-dok': token } = await chrome.storage.local.get(['token-dok'])
+  let { tokenDok: token } = await chrome.storage.local.get('tokenDok')
 
   if (!token) {
     console.debug(`KFA: DoK: Not logged in`)
@@ -96,7 +96,7 @@ export const getDokUser = async (token: string): Promise<string> => {
   })
 
   if (!response.ok) {
-    await chrome.storage.local.remove(['token-dok'])
+    await chrome.storage.local.remove('tokenDok')
     throw new Error(`KFA: DoK: Failed to fetch user: ${response.status}`)
   }
 
@@ -135,8 +135,8 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
     return
   }
 
-  const { 'library-dok': libraryDok } = await chrome.storage.local.get([
-    'library-dok',
+  const { libraryDok: libraryDok } = await chrome.storage.local.get([
+    'libraryDok',
   ])
   if (!libraryDok) {
     let nextPage = true
@@ -173,7 +173,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
         dok[dokDeck.keyforgeId] = true
         await chrome.storage.local.set({
           [`zdok.${dokDeck.keyforgeId}`]: true,
-          'syncing-dok': Date.now(),
+          syncingDok: Date.now(),
         })
       })
 
@@ -183,7 +183,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
       page++
     }
 
-    await chrome.storage.local.set({ 'library-dok': Date.now() })
+    await chrome.storage.local.set({ libraryDok: Date.now() })
 
     decksToImport = Object.entries(mv).filter(
       ([id, deck]) => deck === true && !dok[id],
@@ -210,7 +210,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
       dok[deck[0]] = true
       await chrome.storage.local.set({
         [`zdok.${deck[0]}`]: true,
-        'syncing-dok': Date.now(),
+        syncingDok: Date.now(),
       })
       console.debug(`KFA: DoK: Imported ${deck[0]}`)
     } else {
