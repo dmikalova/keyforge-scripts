@@ -13,7 +13,7 @@ chrome.storage.sync.get('syncAuto', result => {
     chrome.runtime.sendMessage({
       type: 'SYNC_START',
     }).catch(error => {
-      console.debug(`KFA: CMV: Error sending initial sync message: ${error}`)
+      console.warn(`KFA: CMV: Error sending initial sync message: ${error}`)
     })
 
     // Track the last processed scan to prevent duplicates

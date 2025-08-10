@@ -122,14 +122,12 @@ const handleDeckSync = async () => {
   }
 
   try {
-    const results = await Promise.allSettled(syncPromises)
-
-    // Notify popup that sync is complete
-    console.debug(`KFA: BG: Deck sync settled: ${JSON.stringify(results)}`)
+    await Promise.allSettled(syncPromises)
+    console.debug(`KFA: BG: Deck sync settled`)
     await chrome.action.setIcon({ path: conf.iconRotations[0] })
     chrome.runtime.sendMessage({ type: 'SYNC_COMPLETE' }).catch(() => {})
   } catch (error) {
-    console.debug(`KFA: BG: Error during deck sync: ${error}`)
+    console.warn(`KFA: BG: Error during deck sync: ${error}`)
     throw error // Re-throw so the message handler can also handle it
   }
 }

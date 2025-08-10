@@ -33,7 +33,7 @@ const dokSync = async () => {
       const { mv, dok } = await getDecksFromStorage()
       await importDecksToDok(mv, dok)
     } catch (error) {
-      console.debug(`KFA: DoK: Error syncing: ${error}`)
+      console.warn(`KFA: DoK: Error syncing: ${error}`)
       await chrome.storage.local.remove('syncingDok')
       chrome.runtime
         .sendMessage({
@@ -190,7 +190,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
         .then(r => r.json())
         .then(r => r.decks)
         .catch(error => {
-          console.debug(`KFA: DoK: Error fetching library: ${error}`)
+          console.warn(`KFA: DoK: Error fetching library: ${error}`)
         })
 
       console.debug(`KFA: DoK: Fetched ${dokLibrary.length} library decks`)
@@ -239,7 +239,7 @@ const importDecksToDok = async (mv: Decks, dok: Decks) => {
       })
       console.debug(`KFA: DoK: Imported ${deck[0]}`)
     } else {
-      console.debug(`KFA: DoK: Import failed ${deck[0]}: ${response.status}`)
+      console.warn(`KFA: DoK: Import failed ${deck[0]}: ${response.status}`)
     }
   }
 }

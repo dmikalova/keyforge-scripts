@@ -29,7 +29,7 @@ const syncTco = async () => {
       const { mv, tco } = await getDecksFromStorage()
       await importDecksToTco(mv, tco)
     } catch (error) {
-      console.debug(`KFA: TCO: Error syncing decks: ${error}`)
+      console.warn(`KFA: TCO: Error syncing decks: ${error}`)
       chrome.storage.local.remove('syncingTco')
       chrome.runtime
         .sendMessage({

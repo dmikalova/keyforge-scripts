@@ -174,7 +174,7 @@ const syncDecks = () => {
   handleSyncStatus(conf.syncMessages[0])
   checkSyncStatus(true)
   chrome.runtime.sendMessage({ type: 'SYNC_START' }).catch(error => {
-    console.debug(`KFA: POP: Error sending sync message: ${error}`)
+    console.warn(`KFA: POP: Error sending sync message: ${error}`)
   })
 }
 
@@ -227,7 +227,7 @@ const handleBackgroundMessage = async message => {
 
     case 'SYNC_ERROR':
       resetButtons()
-      console.debug(`KFA: POP: Sync failed: ${message.error}`)
+      console.warn(`KFA: POP: Sync failed: ${message.error}`)
       break
 
     case 'SYNC_START':

@@ -22,7 +22,7 @@ export const handleMvSync = async () => {
     const { mv: decks } = await getDecksFromStorage()
     await getDecksFromMv(decks)
   } catch (error) {
-    console.debug(`KFA: MV: Error syncing: ${error}`)
+    console.warn(`KFA: MV: Error syncing: ${error}`)
     await chrome.storage.local.remove('syncingMv')
     chrome.runtime
       .sendMessage({
