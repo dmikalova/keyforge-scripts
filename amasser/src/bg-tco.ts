@@ -260,7 +260,7 @@ const importDecksToTco = async (mv: Decks, tco: Decks) => {
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     } else {
-      console.error(
+      console.debug(
         `KFA: TCO: Import failed with unknown error for deck: ${deck[0]}: ${
           response.status
         } ${JSON.stringify(respJson)}`,
