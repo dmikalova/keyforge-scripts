@@ -7,7 +7,7 @@ import { timer } from './lib-timer.js'
  * Main entry point for Decks of KeyForge synchronization
  * Imports decks from Master Vault to Decks of KeyForge
  */
-export const handleSyncDok = async (): Promise<void> => {
+export const handleSyncDok = async () => {
   if (!(await timer.stale(['syncingDok']))) {
     return console.debug(`KFA: DoK: Sync already in progress`)
   }
@@ -22,7 +22,7 @@ export const handleSyncDok = async (): Promise<void> => {
  * Main synchronization loop for Decks of KeyForge
  * Continuously imports decks until no new decks are available
  */
-const syncDok = async (): Promise<void> => {
+const syncDok = async () => {
   let syncing = true
   while (syncing) {
     try {
@@ -50,7 +50,7 @@ const syncDok = async (): Promise<void> => {
  * then processes all unsynced decks one by one with error handling.
  * Logs progress and handles API failures gracefully.
  */
-const importDecksDok = async (): Promise<void> => {
+const importDecksDok = async () => {
   const { token, username } = await getCredsDok()
   if (!token || !username) {
     console.debug(`KFA: DoK: Not logged in, skipping import`)
@@ -92,11 +92,11 @@ const importDecksDok = async (): Promise<void> => {
  * Fetches and stores the user's deck library from Decks of KeyForge.
  * Only runs once per session to avoid redundant API calls.
  * Paginates through all user decks and marks them as synchronized.
- * 
+ *
  * @param token - The authentication token for API access
  * @param username - The username to fetch decks for
  */
-const getDecksDok = async (token: string, username: string): Promise<void> => {
+const getDecksDok = async (token: string, username: string) => {
   const { libraryDok } = await storage.get('libraryDok')
   if (!libraryDok) {
     let page = 0
@@ -173,7 +173,7 @@ export const getCredsDok = async (): Promise<credsDok> => {
 /**
  * Creates a request configuration object for DoK API calls.
  * Includes standard headers, authentication, and optional body serialization.
- * 
+ *
  * @param token - The authorization token for API authentication
  * @param method - HTTP method (GET, POST, PUT, DELETE, etc.)
  * @param body - Optional request body data that will be JSON stringified

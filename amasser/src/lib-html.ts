@@ -53,7 +53,7 @@ const buttonUpdate = async (
   callback: () => void,
   text?: string,
   disabled?: boolean,
-): Promise<void> => {
+) => {
   const button = document.getElementById(buttonId)
   if (button && button instanceof HTMLButtonElement) {
     const controller = await buttonManager.resetController(buttonId)
@@ -131,7 +131,7 @@ const userLoad = async (
   url: string,
   authFn: () => Promise<{ username: string | null }>,
   text: string,
-): Promise<void> => {
+) => {
   console.debug(`KFA: POP: Getting username for ${elementId}`)
   const { username } = await authFn()
   if (username) {

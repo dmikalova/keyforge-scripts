@@ -7,7 +7,7 @@ import { timer } from './lib-timer.js'
  * Main entry point for The Crucible Online synchronization
  * Imports decks from Master Vault to The Crucible Online
  */
-export const handleSyncTco = async (): Promise<void> => {
+export const handleSyncTco = async () => {
   if (!(await timer.stale(['syncingTco']))) {
     return console.debug(`KFA: TCO: Sync already in progress`)
   }
@@ -23,7 +23,7 @@ export const handleSyncTco = async (): Promise<void> => {
  * Continuously imports decks until all are synchronized.
  * Waits for Master Vault sync to complete before continuing.
  */
-const syncTco = async (): Promise<void> => {
+const syncTco = async () => {
   let syncing = true
   while (syncing) {
     try {
@@ -50,7 +50,7 @@ const syncTco = async (): Promise<void> => {
  * Processes unsynced decks one by one with throttling and error handling.
  * Handles various import scenarios including existing decks and rate limits.
  */
-const importDecksTco = async (): Promise<void> => {
+const importDecksTco = async () => {
   await getDecksTco()
   const unsyncedDecks = await storage.decks.unsynced('tco')
   if (unsyncedDecks.length === 0) {
@@ -141,7 +141,7 @@ const importDecksTco = async (): Promise<void> => {
  * Only runs once per session to avoid redundant API calls.
  * Marks all existing decks as synchronized.
  */
-const getDecksTco = async (): Promise<void> => {
+const getDecksTco = async () => {
   const { libraryTco } = await storage.get('libraryTco')
   if (!libraryTco) {
     const { token } = await getCredsTco()
@@ -171,7 +171,7 @@ const getDecksTco = async (): Promise<void> => {
 /**
  * Get The Crucible Online refresh token from storage and validate user credentials.
  * Exchanges refresh token for access token and fetches user information.
- * 
+ *
  * @returns Promise containing token, userId, and username, or null values if not authenticated
  */
 export const getCredsTco = async (): Promise<credsTco> => {
@@ -208,7 +208,7 @@ export const getCredsTco = async (): Promise<credsTco> => {
 /**
  * Creates a request configuration object for The Crucible Online API calls.
  * Includes standard headers, optional authentication, and CORS settings.
- * 
+ *
  * @param method - HTTP method (GET, POST, PUT, DELETE, etc.)
  * @param token - Optional Bearer token for authentication
  * @param body - Optional request body data that will be JSON stringified

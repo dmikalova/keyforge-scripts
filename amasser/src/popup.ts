@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Sets up all event listeners for the popup interface
  * Includes message listeners, toggle controls, buttons, and mouse interactions
  */
-const setupListeners = async (): Promise<void> => {
+const setupListeners = async () => {
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener((message: SyncMessage) => {
     handleMessages(message)
@@ -64,7 +64,7 @@ const setupListeners = async (): Promise<void> => {
  * Loads the current state from storage and updates the UI.
  * Retrieves deck count and settings, then updates toggles and loads user information.
  */
-const loadState = async (): Promise<void> => {
+const loadState = async () => {
   const { mv } = await storage.decks.get()
   console.debug(`KFA: POP: Deck count: ${Object.keys(mv).length}`)
   const deckCountElement = document.getElementById('deck-count')
@@ -84,10 +84,10 @@ const loadState = async (): Promise<void> => {
  * Loads and displays user information for all enabled services.
  * Handles login states and updates UI accordingly.
  * Waits for all user authentication checks before enabling sync controls.
- * 
+ *
  * @param settings - The current extension settings
  */
-const loadUsers = async (settings: Settings): Promise<void> => {
+const loadUsers = async (settings: Settings) => {
   const userPromises = [
     html.userLoad(
       'mv-username',
@@ -140,7 +140,7 @@ const loadUsers = async (settings: Settings): Promise<void> => {
 /**
  * Handles messages from background script.
  * Processes various message types including sync events, errors, and deck count updates.
- * 
+ *
  * @param message - Message object from background script
  * @param message.type - Type of message (SYNC_COMPLETE, SYNC_ERROR, DECK_COUNT, etc.)
  * @param message.error - Error message if type is SYNC_ERROR
@@ -188,7 +188,7 @@ const cancelSync = (): void => {
 
 /**
  * Updates the deck count display in the UI.
- * 
+ *
  * @param count - The number of decks to display
  */
 const deckCount = (count: number): void => {
@@ -234,7 +234,7 @@ const loadQuotes = (): void => {
  * Resets all UI elements to their default non-syncing state.
  * Re-enables buttons and toggles, updates text content.
  */
-const resetButtons = async (): Promise<void> => {
+const resetButtons = async () => {
   console.debug(`KFA: POP: Resetting buttons`)
   html.toggleDisabled('sync-auto-toggle', false)
   html.toggleDisabled('sync-dok-toggle', false)
@@ -265,10 +265,10 @@ const syncDecks = (): void => {
 /**
  * Monitors sync status and updates UI accordingly.
  * Continues checking while any sync process is active.
- * 
+ *
  * @param wait - Whether to wait for sync to start
  */
-const syncStatus = async (wait: boolean): Promise<void> => {
+const syncStatus = async (wait: boolean) => {
   console.debug(`KFA: POP: Checking sync status`)
   await timer.monitorSync(conf.syncMessages, wait, syncStatusUpdate)
   console.debug(`KFA: POP: Sync finished`)
@@ -277,10 +277,10 @@ const syncStatus = async (wait: boolean): Promise<void> => {
 /**
  * Updates the UI to show sync is in progress.
  * Disables controls and shows animated sync text.
- * 
+ *
  * @param text - The sync status text to display
  */
-const syncStatusUpdate = async (text: string): Promise<void> => {
+const syncStatusUpdate = async (text: string) => {
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
     if (toggle instanceof HTMLInputElement) {
       toggle.disabled = true

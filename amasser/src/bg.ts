@@ -54,7 +54,7 @@ chrome.runtime.onMessage.addListener((message: SyncMessage) => {
  * @param alarm.name - Name of the alarm (e.g., 'DAILY_SYNC')
  * @returns Promise that resolves when alarm handling is complete
  */
-const handleAlarms = async (alarm: chrome.alarms.Alarm): Promise<void> => {
+const handleAlarms = async (alarm: chrome.alarms.Alarm) => {
   switch (alarm.name) {
     case 'DAILY_SYNC':
       console.debug(`KFA: BG: Daily sync triggered`)
@@ -78,7 +78,7 @@ chrome.alarms.onAlarm.addListener(handleAlarms)
  * @param auth.authTco - The Crucible Online authentication data
  * @returns Promise that resolves when auth handling is complete
  */
-const handleAuth = async (auth: AuthData): Promise<void> => {
+const handleAuth = async (auth: AuthData) => {
   if (
     !auth ||
     (!auth.hasOwnProperty('authDok') && !auth.hasOwnProperty('authTco'))
@@ -102,7 +102,7 @@ const handleAuth = async (auth: AuthData): Promise<void> => {
  * Resets to default icon when sync completes
  * @returns Promise that resolves when icon rotation is complete
  */
-const handleIconRotation = async (): Promise<void> => {
+const handleIconRotation = async () => {
   console.debug(`KFA: BG: Handling rotating icon`)
   await timer.monitorSync(conf.iconRotations, true, browser.setIcon)
   await chrome.action.setIcon({ path: conf.iconRotations[0] })
@@ -115,7 +115,7 @@ const handleIconRotation = async (): Promise<void> => {
  * Resets extension icon to default state after completion
  * @returns Promise that resolves when deck sync is complete
  */
-const handleSyncDecks = async (): Promise<void> => {
+const handleSyncDecks = async () => {
   console.debug(`KFA: BG: Handling deck sync`)
   const settings = await storage.settings.get()
   const syncPromises = [handleSyncMv()]
@@ -144,7 +144,7 @@ const handleSyncDecks = async (): Promise<void> => {
  * Entry point for all sync operations triggered by user or scheduled events
  * @returns Promise that resolves when sync start is complete
  */
-const handleSyncStart = async (): Promise<void> => {
+const handleSyncStart = async () => {
   console.debug(`KFA: BG: Sync starting`)
   handleSyncDecks()
   handleIconRotation()

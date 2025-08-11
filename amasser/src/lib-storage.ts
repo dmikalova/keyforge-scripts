@@ -5,7 +5,7 @@ import { conf } from './conf.js'
  * @param {string | string[]} keys - Storage keys to retrieve
  * @returns {Promise<StorageData>} Storage data object
  */
-const get: (keys: string | string[]) => Promise<StorageData> = async keys => {
+const get = async (keys: string | string[]): Promise<StorageData> => {
   return await chrome.storage.local.get(keys)
 }
 
@@ -15,10 +15,7 @@ const get: (keys: string | string[]) => Promise<StorageData> = async keys => {
  * @param {() => void} [callback] - Optional callback after storage
  * @returns {Promise<void>}
  */
-const set: (data: StorageData, callback?: () => void) => Promise<void> = async (
-  data,
-  callback,
-) => {
+const set = async (data: StorageData, callback?: () => void) => {
   return await chrome.storage.local.set(data, callback)
 }
 
@@ -27,7 +24,7 @@ const set: (data: StorageData, callback?: () => void) => Promise<void> = async (
  * @param {string | string[]} keys - Storage keys to remove
  * @returns {Promise<void>}
  */
-const remove: (keys: string | string[]) => Promise<void> = async keys => {
+const remove = async (keys: string | string[]) => {
   return await chrome.storage.local.remove(keys)
 }
 
@@ -36,7 +33,7 @@ const remove: (keys: string | string[]) => Promise<void> = async keys => {
  * Parses deck data from storage keys prefixed with 'zdok.', 'zmv.', 'ztco.'
  * @returns {Promise<Decks>} Object containing decks organized by service
  */
-const decksGet: () => Promise<Decks> = async () => {
+const decksGet = async (): Promise<Decks> => {
   const decks: Decks = { dok: {}, tco: {}, mv: {} }
   await chrome.storage.local.get().then(data => {
     for (const [key, value] of Object.entries(data)) {
@@ -59,11 +56,11 @@ const decksGet: () => Promise<Decks> = async () => {
  * @param {boolean | string} [value=true] - Deck status or metadata
  * @returns {Promise<void>}
  */
-const decksSet: (
+const decksSet = async (
   site: 'dok' | 'mv' | 'tco',
   deckId: string,
-  value?: boolean | string,
-) => Promise<void> = async (site, deckId, value = true) => {
+  value: boolean | string = true,
+) => {
   const sites = {
     dok: 'syncingDok',
     mv: 'syncingMv',
@@ -90,7 +87,7 @@ const decksUnsynced = async (key: 'dok' | 'tco'): Promise<[string, Deck][]> => {
  * Get extension settings from sync storage with defaults
  * @returns {Promise<Settings>} Settings object with all properties defined
  */
-const settingsGet: () => Promise<Settings> = async () => {
+const settingsGet = async () => {
   const settings = await chrome.storage.sync.get()
   return {
     syncAuto:
@@ -109,7 +106,7 @@ const settingsGet: () => Promise<Settings> = async () => {
  * @param {Settings} settings - Settings object to save
  * @returns {Promise<void>}
  */
-const settingsSet: (settings: Settings) => Promise<void> = async settings => {
+const settingsSet = async (settings: Settings) => {
   return await chrome.storage.sync.set(settings)
 }
 

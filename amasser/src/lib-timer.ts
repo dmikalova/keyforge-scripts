@@ -12,7 +12,7 @@ const monitorSync = async (
   list: string[],
   wait: boolean,
   callback: (message: string) => void,
-): Promise<void> => {
+) => {
   let i = 0
   // Wait for sync to start
   while (
@@ -38,7 +38,7 @@ const monitorSync = async (
  * @param {number} ms - Milliseconds to sleep
  * @returns {Promise<void>}
  */
-const sleep = async (ms: number): Promise<void> => {
+const sleep = async (ms: number) => {
   return new Promise(r => setTimeout(r, ms))
 }
 
@@ -58,7 +58,7 @@ const stale = async (keys: string | string[]): Promise<boolean> => {
  * Creates or removes daily sync alarm as needed
  * @returns Promise that resolves when alarm update is complete
  */
-const updateAlarms = async (): Promise<void> => {
+const updateAlarms = async () => {
   const syncAuto = (await storage.settings.get()).syncAuto
   if (syncAuto) {
     console.debug(`KFA: BG: Scheduling daily sync alarm`)
@@ -79,7 +79,7 @@ const updateAlarms = async (): Promise<void> => {
 const waitForSync = async (
   timestamps: string | string[],
   callback: () => void,
-): Promise<void> => {
+) => {
   if (!(await stale(timestamps))) {
     let waited = 0
     while (waited < conf.syncAgainMs) {
