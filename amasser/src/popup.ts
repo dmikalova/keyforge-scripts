@@ -3,12 +3,13 @@ import { getCredsMv } from './bg-mv.js'
 import { getCredsTco } from './bg-tco.js'
 import { conf } from './conf.js'
 import { browser } from './lib-browser.js'
+import { html } from './lib-html.js'
 import { storage } from './lib-storage.js'
 import { timer } from './lib-timer.js'
 
 // Used to remove event listeners as buttons change functionality
-let abortClearDataButton = new AbortController()
-let abortSyncButton = new AbortController()
+let abortClearData = new AbortController()
+let abortSync = new AbortController()
 
 /**
  * Main entry point for the KeyForge Amasser extension popup
@@ -16,10 +17,9 @@ let abortSyncButton = new AbortController()
  */
 document.addEventListener('DOMContentLoaded', async () => {
   try {
-    setupEventListeners()
+    setupListeners()
     loadQuotes()
-    const state = await loadState()
-    await loadUsers(state.settings)
+    await loadState()
   } catch (error) {
     console.error(`KFA: POP: Error initializing popup: ${error}`)
   }
@@ -29,56 +29,20 @@ document.addEventListener('DOMContentLoaded', async () => {
  * Sets up all event listeners for the popup interface
  * Includes message listeners, toggle controls, buttons, and mouse interactions
  */
-const setupEventListeners = async () => {
+const setupListeners = async () => {
   // Listen for messages from background script
   chrome.runtime.onMessage.addListener(message => {
     handleBackgroundMessage(message)
   })
 
-  // Toggle event listeners
-  const syncDokToggle = document.getElementById('sync-dok-toggle')
-  if (syncDokToggle) {
-    syncDokToggle.addEventListener('change', async () => {
-      await storage.settings.set({
-        syncDok:
-          syncDokToggle instanceof HTMLInputElement && syncDokToggle.checked,
-      })
-      loadState().then(state => loadUsers(state.settings))
-    })
-  }
-  const syncTcoToggle = document.getElementById('sync-tco-toggle')
-  if (syncTcoToggle) {
-    syncTcoToggle.addEventListener('change', async () => {
-      await storage.settings.set({
-        syncTco:
-          syncTcoToggle instanceof HTMLInputElement && syncTcoToggle.checked,
-      })
-      loadState().then(state => loadUsers(state.settings))
-    })
-  }
-  const syncAutoToggle = document.getElementById('sync-auto-toggle')
-  if (syncAutoToggle) {
-    syncAutoToggle.addEventListener('change', async () => {
-      await storage.settings.set({
-        syncAuto:
-          syncAutoToggle instanceof HTMLInputElement && syncAutoToggle.checked,
-      })
-    })
-  }
+  // Listen for toggle events
+  html.toggleListener('sync-dok-toggle', 'syncDok', loadState)
+  html.toggleListener('sync-tco-toggle', 'syncTco', loadState)
+  html.toggleListener('sync-auto-toggle', 'syncAuto')
 
   // Button event listeners
-  const syncDecksBtn = document.getElementById('sync-decks')
-  if (syncDecksBtn) {
-    syncDecksBtn.addEventListener('click', syncDecks, {
-      signal: abortSyncButton.signal,
-    })
-  }
-  const clearDataBtn = document.getElementById('clear-data')
-  if (clearDataBtn) {
-    clearDataBtn.addEventListener('click', clearData, {
-      signal: abortClearDataButton.signal,
-    })
-  }
+  html.buttonListener('clear-data', clearData, abortClearData.signal)
+  html.buttonListener('sync-decks', syncDecks, abortSync.signal)
 
   // Background gradient effect
   const body = document.querySelector('body')
@@ -160,7 +124,8 @@ const loadState = async () => {
   }
 
   console.debug(`KFA: POP: Deck count: ${Object.keys(decks || {}).length}`)
-  return { decks, settings }
+
+  await loadUsers(settings)
 }
 
 /**
@@ -185,7 +150,7 @@ const syncDecks = () => {
 const clearData = () => {
   chrome.storage.local.clear(() => {
     console.debug(`KFA: POP: All data cleared`)
-    loadState().then(state => loadUsers(state.settings))
+    loadState()
   })
 
   const clearDataButton = document.getElementById('clear-data')
@@ -217,8 +182,7 @@ const handleBackgroundMessage = async message => {
 
     case 'RELOAD_USERS':
       console.debug(`KFA: POP: Reloading users`)
-      const state = await loadState()
-      await loadUsers(state.settings)
+      await loadState()
       break
 
     case 'SYNC_COMPLETE':
@@ -283,10 +247,10 @@ const resetButtons = async () => {
 
   const syncButton = document.getElementById('sync-decks')
   if (syncButton && syncButton instanceof HTMLButtonElement) {
-    await abortSyncButton.abort()
-    abortSyncButton = new AbortController()
+    await abortSync.abort()
+    abortSync = new AbortController()
     syncButton.addEventListener('click', syncDecks, {
-      signal: abortSyncButton.signal,
+      signal: abortSync.signal,
     })
     syncButton.disabled = false
     syncButton.textContent = 'Sync Decks'
@@ -297,10 +261,10 @@ const resetButtons = async () => {
     if (clearDataButton.textContent !== 'Clear Data') {
       clearDataButton.disabled = true
       clearDataButton.textContent = 'Sync Finished'
-      await abortClearDataButton.abort()
-      abortClearDataButton = new AbortController()
+      await abortClearData.abort()
+      abortClearData = new AbortController()
       clearDataButton.addEventListener('click', clearData, {
-        signal: abortClearDataButton.signal,
+        signal: abortClearData.signal,
       })
       await timer.sleep(conf.clearDataButtonResetMs)
     }
@@ -377,10 +341,10 @@ const handleSyncStatus = async text => {
     syncButton.textContent = text
     const clearDataButton = document.getElementById('clear-data')
     if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
-      await abortClearDataButton.abort()
-      abortClearDataButton = new AbortController()
+      await abortClearData.abort()
+      abortClearData = new AbortController()
       clearDataButton.addEventListener('click', cancelSync, {
-        signal: abortClearDataButton.signal,
+        signal: abortClearData.signal,
       })
       clearDataButton.textContent = 'Cancel Sync'
       clearDataButton.disabled = false
@@ -428,14 +392,14 @@ const loadUsers = async settings => {
         // Reset the sync button to open MV login page
         const syncButton = document.getElementById('sync-decks')
         if (syncButton && syncButton instanceof HTMLButtonElement) {
-          await abortSyncButton.abort()
-          abortSyncButton = new AbortController()
+          await abortSync.abort()
+          abortSync = new AbortController()
           syncButton.addEventListener(
             'click',
             () => {
               chrome.tabs.create({ url: `${conf.mvBaseUrl}/my-decks` })
             },
-            { signal: abortSyncButton.signal },
+            { signal: abortSync.signal },
           )
           syncButton.textContent = 'Login to MV'
           syncButton.disabled = false
@@ -475,14 +439,14 @@ const loadUsers = async settings => {
             syncButton instanceof HTMLButtonElement &&
             syncButton.textContent !== 'Login to MV'
           ) {
-            await abortSyncButton.abort()
-            abortSyncButton = new AbortController()
+            await abortSync.abort()
+            abortSync = new AbortController()
             syncButton.addEventListener(
               'click',
               () => {
                 chrome.tabs.create({ url: conf.dokBaseUrl })
               },
-              { signal: abortSyncButton.signal },
+              { signal: abortSync.signal },
             )
             syncButton.textContent = 'Login to DoK'
             syncButton.disabled = false
@@ -529,14 +493,14 @@ const loadUsers = async settings => {
             syncButton.textContent !== 'Login to MV' &&
             syncButton.textContent !== 'Login to DoK'
           ) {
-            await abortSyncButton.abort()
-            abortSyncButton = new AbortController()
+            await abortSync.abort()
+            abortSync = new AbortController()
             await syncButton.addEventListener(
               'click',
               () => {
                 chrome.tabs.create({ url: conf.tcoBaseUrl })
               },
-              { signal: abortSyncButton.signal },
+              { signal: abortSync.signal },
             )
             syncButton.textContent = 'Login to TCO'
             syncButton.disabled = false
