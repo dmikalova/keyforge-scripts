@@ -45,7 +45,10 @@ const syncDok = async () => {
 }
 
 /**
- * Import decks from Master Vault to Decks of KeyForge
+ * Imports decks from Master Vault to Decks of KeyForge.
+ * First fetches the user's existing library to avoid duplicates,
+ * then processes all unsynced decks one by one with error handling.
+ * Logs progress and handles API failures gracefully.
  */
 const importDecksDok = async () => {
   const { token, username } = await getCredsDok()
@@ -85,6 +88,14 @@ const importDecksDok = async () => {
   }
 }
 
+/**
+ * Fetches and stores the user's deck library from Decks of KeyForge.
+ * Only runs once per session to avoid redundant API calls.
+ * Paginates through all user decks and marks them as synchronized.
+ * 
+ * @param token - The authentication token for API access
+ * @param username - The username to fetch decks for
+ */
 const getDecksDok = async (token: string, username: string) => {
   const { libraryDok } = await storage.get('libraryDok')
   if (!libraryDok) {
@@ -159,6 +170,15 @@ export const getCredsDok = async (): Promise<credsDok> => {
   return { token: authDok, username: username }
 }
 
+/**
+ * Creates a request configuration object for DoK API calls.
+ * Includes standard headers, authentication, and optional body serialization.
+ * 
+ * @param token - The authorization token for API authentication
+ * @param method - HTTP method (GET, POST, PUT, DELETE, etc.)
+ * @param body - Optional request body data that will be JSON stringified
+ * @returns RequestInit object ready for use with fetch()
+ */
 const requestInitDok = (
   token: string,
   method: string,

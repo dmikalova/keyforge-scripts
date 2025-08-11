@@ -28,8 +28,9 @@ export const handleSyncMv = async () => {
 }
 
 /**
- * Fetch new decks from Master Vault API
- * @param {object} [decks={}] - Existing deck collection to update
+ * Fetches new decks from Master Vault API with pagination.
+ * Processes all pages of user's deck collection and stores them locally.
+ * Updates popup with real-time deck count during sync.
  */
 const getDecksMv = async () => {
   const { token, userId } = await getCredsMv()
@@ -95,8 +96,10 @@ const getDecksMv = async () => {
 }
 
 /**
- * Gets Master Vault authentication information
- * @returns {Promise<MvAuth | {token: null, userId: null, username: null}>} Auth data or null values if not logged in
+ * Gets Master Vault authentication information from browser cookies.
+ * Validates auth token and fetches user profile data.
+ * 
+ * @returns Promise containing token, userId, and username, or null values if not authenticated
  */
 export const getCredsMv = async (): Promise<credsMv> => {
   if (!chrome.cookies) {
@@ -129,9 +132,11 @@ export const getCredsMv = async (): Promise<credsMv> => {
 }
 
 /**
- * Create request configuration with authentication
- * @param {string} token - Authentication token
- * @returns {RequestInit} Fetch request configuration
+ * Creates a request configuration object for Master Vault API calls.
+ * Includes authentication token and proper headers for API access.
+ * 
+ * @param token - Authentication token for API authorization
+ * @returns RequestInit object ready for use with fetch()
  */
 const requestInitMv = (token: string): RequestInit => ({
   credentials: 'include',

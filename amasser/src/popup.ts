@@ -61,8 +61,8 @@ const setupListeners = async () => {
 }
 
 /**
- * Loads the current state from storage and updates the UI
- * @returns {Promise<{decks: object, settings: Settings}>} The loaded decks and settings
+ * Loads the current state from storage and updates the UI.
+ * Retrieves deck count and settings, then updates toggles and loads user information.
  */
 const loadState = async () => {
   const { mv } = await storage.decks.get()
@@ -81,9 +81,11 @@ const loadState = async () => {
 }
 
 /**
- * Loads and displays user information for all enabled services
- * Handles login states and updates UI accordingly
- * @param {Settings} settings - The current extension settings
+ * Loads and displays user information for all enabled services.
+ * Handles login states and updates UI accordingly.
+ * Waits for all user authentication checks before enabling sync controls.
+ * 
+ * @param settings - The current extension settings
  */
 const loadUsers = async settings => {
   const userPromises = [
@@ -136,11 +138,13 @@ const loadUsers = async settings => {
 }
 
 /**
- * Handle messages from background script
- * @param {object} message - Message object from background script
- * @param {string} message.type - Type of message (SYNC_COMPLETE, SYNC_ERROR, etc.)
- * @param {string} [message.error] - Error message if type is SYNC_ERROR
- * @param {number} [message.decks] - Deck count if type is SYNC_STATUS
+ * Handles messages from background script.
+ * Processes various message types including sync events, errors, and deck count updates.
+ * 
+ * @param message - Message object from background script
+ * @param message.type - Type of message (SYNC_COMPLETE, SYNC_ERROR, DECK_COUNT, etc.)
+ * @param message.error - Error message if type is SYNC_ERROR
+ * @param message.decks - Deck count if type is DECK_COUNT
  */
 const handleMessages = async message => {
   switch (message.type) {
@@ -174,8 +178,8 @@ const handleMessages = async message => {
 }
 
 /**
- * Cancels ongoing synchronization processes
- * Removes sync flags from storage and reloads the extension runtime
+ * Cancels ongoing synchronization processes.
+ * Removes sync flags from storage and reloads the extension runtime.
  */
 const cancelSync = () => {
   console.debug(`KFA: POP: Reloading extension`)
@@ -183,8 +187,9 @@ const cancelSync = () => {
 }
 
 /**
- * Update the deck count display in the UI
- * @param {number} count - The number of decks to display
+ * Updates the deck count display in the UI.
+ * 
+ * @param count - The number of decks to display
  */
 const deckCount = count => {
   const deckCountElement = document.getElementById('deck-count')
@@ -194,8 +199,8 @@ const deckCount = count => {
 }
 
 /**
- * Clears all extension data from local storage
- * Updates UI to show confirmation and reloads state
+ * Clears all extension data from local storage.
+ * Updates UI to show confirmation and reloads state.
  */
 const clearData = () => {
   chrome.storage.local.clear(() => {
@@ -215,7 +220,7 @@ const clearData = () => {
 }
 
 /**
- * Loads and displays a random quote from the configuration
+ * Loads and displays a random quote from the configuration.
  */
 const loadQuotes = () => {
   const quoteElement = document.getElementById('quote')
@@ -226,8 +231,8 @@ const loadQuotes = () => {
 }
 
 /**
- * Reset all UI elements to their default non-syncing state
- * Re-enables buttons and toggles, updates text content
+ * Resets all UI elements to their default non-syncing state.
+ * Re-enables buttons and toggles, updates text content.
  */
 const resetButtons = async () => {
   console.debug(`KFA: POP: Resetting buttons`)
@@ -248,8 +253,8 @@ const resetButtons = async () => {
 }
 
 /**
- * Triggers a deck synchronization process
- * Updates UI state and sends sync start message to background script
+ * Triggers a deck synchronization process.
+ * Updates UI state and sends sync start message to background script.
  */
 const syncDecks = () => {
   console.debug(`KFA: POP: Sync starting`)
@@ -258,9 +263,10 @@ const syncDecks = () => {
 }
 
 /**
- * Monitors sync status and updates UI accordingly
- * Continues checking while any sync process is active
- * @param {boolean} [wait=false] - Whether to wait for sync to start
+ * Monitors sync status and updates UI accordingly.
+ * Continues checking while any sync process is active.
+ * 
+ * @param wait - Whether to wait for sync to start
  */
 const syncStatus = async (wait: boolean) => {
   console.debug(`KFA: POP: Checking sync status`)
@@ -269,9 +275,10 @@ const syncStatus = async (wait: boolean) => {
 }
 
 /**
- * Updates the UI to show sync is in progress
- * Disables controls and shows animated sync text
- * @param {string} text - The sync status text to display
+ * Updates the UI to show sync is in progress.
+ * Disables controls and shows animated sync text.
+ * 
+ * @param text - The sync status text to display
  */
 const syncStatusUpdate = async text => {
   document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {

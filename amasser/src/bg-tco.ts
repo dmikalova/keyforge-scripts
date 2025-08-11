@@ -18,6 +18,11 @@ export const handleSyncTco = async () => {
   await storage.remove('syncingTco')
 }
 
+/**
+ * Core synchronization loop for The Crucible Online.
+ * Continuously imports decks until all are synchronized.
+ * Waits for Master Vault sync to complete before continuing.
+ */
 const syncTco = async () => {
   let syncing = true
   while (syncing) {
@@ -41,9 +46,9 @@ const syncTco = async () => {
 }
 
 /**
- * Import decks from Master Vault to The Crucible Online
- * @param {Decks} mv - Master Vault deck collection
- * @param {Decks} tco - The Crucible Online deck collection
+ * Import decks from Master Vault to The Crucible Online.
+ * Processes unsynced decks one by one with throttling and error handling.
+ * Handles various import scenarios including existing decks and rate limits.
  */
 const importDecksTco = async () => {
   await getDecksTco()
@@ -131,6 +136,11 @@ const importDecksTco = async () => {
   }
 }
 
+/**
+ * Fetches and stores the user's deck library from The Crucible Online.
+ * Only runs once per session to avoid redundant API calls.
+ * Marks all existing decks as synchronized.
+ */
 const getDecksTco = async () => {
   const { libraryTco } = await storage.get('libraryTco')
   if (!libraryTco) {
@@ -159,8 +169,10 @@ const getDecksTco = async () => {
 }
 
 /**
- * Get The Crucible Online refresh token from storage
- * @returns {Promise<string | null>} The refresh token or null if not logged in
+ * Get The Crucible Online refresh token from storage and validate user credentials.
+ * Exchanges refresh token for access token and fetches user information.
+ * 
+ * @returns Promise containing token, userId, and username, or null values if not authenticated
  */
 export const getCredsTco = async (): Promise<credsTco> => {
   // Check for token in local storage
@@ -193,6 +205,15 @@ export const getCredsTco = async (): Promise<credsTco> => {
   }
 }
 
+/**
+ * Creates a request configuration object for The Crucible Online API calls.
+ * Includes standard headers, optional authentication, and CORS settings.
+ * 
+ * @param method - HTTP method (GET, POST, PUT, DELETE, etc.)
+ * @param token - Optional Bearer token for authentication
+ * @param body - Optional request body data that will be JSON stringified
+ * @returns RequestInit object ready for use with fetch()
+ */
 const requestInitTco = (
   method: string,
   token?: string,

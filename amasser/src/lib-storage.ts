@@ -1,9 +1,20 @@
 import { conf } from './conf.js'
 
+/**
+ * Get data from Chrome local storage
+ * @param {string | string[]} keys - Storage keys to retrieve
+ * @returns {Promise<StorageData>} Storage data object
+ */
 const get: (keys: string | string[]) => Promise<StorageData> = async keys => {
   return await chrome.storage.local.get(keys)
 }
 
+/**
+ * Set data in Chrome local storage
+ * @param {StorageData} data - Data to store
+ * @param {() => void} [callback] - Optional callback after storage
+ * @returns {Promise<void>}
+ */
 const set: (data: StorageData, callback?: () => void) => Promise<void> = async (
   data,
   callback,
@@ -11,12 +22,19 @@ const set: (data: StorageData, callback?: () => void) => Promise<void> = async (
   return await chrome.storage.local.set(data, callback)
 }
 
+/**
+ * Remove data from Chrome local storage
+ * @param {string | string[]} keys - Storage keys to remove
+ * @returns {Promise<void>}
+ */
 const remove: (keys: string | string[]) => Promise<void> = async keys => {
   return await chrome.storage.local.remove(keys)
 }
 
 /**
  * Get decks from extension local storage
+ * Parses deck data from storage keys prefixed with 'zdok.', 'zmv.', 'ztco.'
+ * @returns {Promise<Decks>} Object containing decks organized by service
  */
 const decksGet: () => Promise<Decks> = async () => {
   const decks: Decks = { dok: {}, tco: {}, mv: {} }
@@ -34,6 +52,13 @@ const decksGet: () => Promise<Decks> = async () => {
   return decks
 }
 
+/**
+ * Set deck data in storage with sync timestamp
+ * @param {'dok' | 'mv' | 'tco'} site - Service identifier
+ * @param {string} deckId - Unique deck identifier
+ * @param {boolean | string} [value=true] - Deck status or metadata
+ * @returns {Promise<void>}
+ */
 const decksSet: (
   site: 'dok' | 'mv' | 'tco',
   deckId: string,
@@ -50,11 +75,21 @@ const decksSet: (
   })
 }
 
+/**
+ * Get unsynced decks for a specific service
+ * Returns decks that exist in Master Vault but not in the specified service
+ * @param {'dok' | 'tco'} key - Service to check for unsynced decks
+ * @returns {Promise<[string, Deck][]>} Array of [deckId, deckData] tuples
+ */
 const decksUnsynced = async (key: 'dok' | 'tco'): Promise<[string, Deck][]> => {
   const { mv, [key]: decks } = await storage.decks.get()
   return Object.entries(mv).filter(([id, deck]) => deck == true && !decks[id])
 }
 
+/**
+ * Get extension settings from sync storage with defaults
+ * @returns {Promise<Settings>} Settings object with all properties defined
+ */
 const settingsGet: () => Promise<Settings> = async () => {
   const settings = await chrome.storage.sync.get()
   return {
@@ -69,6 +104,11 @@ const settingsGet: () => Promise<Settings> = async () => {
   }
 }
 
+/**
+ * Save extension settings to sync storage
+ * @param {Settings} settings - Settings object to save
+ * @returns {Promise<void>}
+ */
 const settingsSet: (settings: Settings) => Promise<void> = async settings => {
   return await chrome.storage.sync.set(settings)
 }

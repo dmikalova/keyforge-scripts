@@ -8,6 +8,7 @@ import { timer } from './lib-timer.js'
 
 /**
  * Enable debugging commands in development builds
+ * Allows Ctrl+I (or Cmd+I on Mac) to reload the extension
  */
 if (!('update_url' in chrome.runtime.getManifest())) {
   console.debug('KFA: BG: Enable debug commands')
@@ -21,6 +22,11 @@ if (!('update_url' in chrome.runtime.getManifest())) {
 
 /**
  * Handle messages from content scripts and popup
+ * Routes different message types to appropriate handlers
+ * @param {object} message - The message object from sender
+ * @param {string} message.type - Type of message (AUTH, SYNC_START, etc.)
+ * @param {AuthData} [message.auth] - Authentication data for AUTH messages
+ * @returns {boolean} Whether the sender should expect an async response
  */
 chrome.runtime.onMessage.addListener(message => {
   console.debug(`KFA: BG: Message received: ${message.type}`)
@@ -28,21 +34,25 @@ chrome.runtime.onMessage.addListener(message => {
   switch (message.type) {
     case 'AUTH':
       handleAuth(message.auth)
-      return false
+      break
 
     case 'SYNC_START':
       handleSyncStart()
-      return false
+      break
 
     default:
       console.warn(`KFA: BG: Unknown message type: ${message.type}`)
-      return false
+      break
   }
+  return false
 })
 
 /**
  * Handles alarm events for scheduled operations
+ * Currently supports DAILY_SYNC for automatic daily synchronization
  * @param {chrome.alarms.Alarm} alarm - The alarm that triggered
+ * @param {string} alarm.name - Name of the alarm (e.g., 'DAILY_SYNC')
+ * @returns {Promise<void>}
  */
 const handleAlarms = async alarm => {
   switch (alarm.name) {
@@ -60,7 +70,13 @@ const handleAlarms = async alarm => {
 chrome.alarms.onAlarm.addListener(handleAlarms)
 
 /**
- * Saves auth from content scripts to storage
+ * Saves authentication data from content scripts to storage
+ * Validates that auth contains either authDok or authTco properties
+ * Sends RELOAD_USERS message to popup after successful save
+ * @param {AuthData} auth - Authentication data object
+ * @param {string} [auth.authDok] - Decks of KeyForge authentication token
+ * @param {object} [auth.authTco] - The Crucible Online authentication data
+ * @returns {Promise<void>}
  */
 const handleAuth = async (auth: AuthData) => {
   if (
@@ -81,6 +97,10 @@ const handleAuth = async (auth: AuthData) => {
 
 /**
  * Rotates the extension icon during sync operations
+ * Provides visual feedback that synchronization is in progress
+ * Monitors sync status and rotates through icon frames
+ * Resets to default icon when sync completes
+ * @returns {Promise<void>}
  */
 const handleIconRotation = async () => {
   console.debug(`KFA: BG: Handling rotating icon`)
@@ -90,6 +110,10 @@ const handleIconRotation = async () => {
 
 /**
  * Handles deck synchronization for enabled services
+ * Runs sync processes in parallel for Master Vault and enabled optional services
+ * Sends SYNC_COMPLETE message to popup when finished
+ * Resets extension icon to default state after completion
+ * @returns {Promise<void>}
  */
 const handleSyncDecks = async () => {
   console.debug(`KFA: BG: Handling deck sync`)
@@ -116,6 +140,9 @@ const handleSyncDecks = async () => {
 
 /**
  * Starts the synchronization process
+ * Initiates deck sync, icon rotation, and alarm updates concurrently
+ * Entry point for all sync operations triggered by user or scheduled events
+ * @returns {Promise<void>}
  */
 const handleSyncStart = async () => {
   console.debug(`KFA: BG: Sync starting`)
