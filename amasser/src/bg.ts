@@ -21,6 +21,26 @@ if (!('update_url' in chrome.runtime.getManifest())) {
 }
 
 /**
+ * Initialize extension settings on installation
+ * Sets default values for sync preferences
+ */
+chrome.runtime.onInstalled.addListener(async () => {
+  const settings: Settings = await chrome.storage.sync.get()
+
+  // Initialize default settings
+  chrome.storage.sync.set({
+    syncAuto:
+      settings.syncAuto === undefined
+        ? conf.defaults.syncAuto
+        : settings.syncAuto,
+    syncDok:
+      settings.syncDok === undefined ? conf.defaults.syncDok : settings.syncDok,
+    syncTco:
+      settings.syncTco === undefined ? conf.defaults.syncTco : settings.syncTco,
+  })
+})
+
+/**
  * Handle messages from content scripts and popup
  * Routes different message types to appropriate handlers
  * @param {object} message - The message object from sender
