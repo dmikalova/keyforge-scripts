@@ -53,7 +53,7 @@ const buttonUpdate = async (
   callback: () => void,
   text?: string,
   disabled?: boolean,
-) => {
+): Promise<void> => {
   const button = document.getElementById(buttonId)
   if (button && button instanceof HTMLButtonElement) {
     const controller = await buttonManager.resetController(buttonId)
@@ -69,7 +69,7 @@ const buttonUpdate = async (
  * @param elementId - The ID of the input element
  * @param disabled - Whether the element should be disabled
  */
-const toggleDisabled = (elementId: string, disabled: boolean) => {
+const toggleDisabled = (elementId: string, disabled: boolean): void => {
   const element = document.getElementById(elementId)
   if (element instanceof HTMLInputElement) {
     element.disabled = disabled
@@ -88,7 +88,7 @@ const toggleListener = (
   elementId: string,
   settingKey: string,
   callback?: () => void,
-) => {
+): void => {
   document
     .getElementById(elementId)
     ?.addEventListener('change', async ({ target }) => {
@@ -108,7 +108,7 @@ const toggleListener = (
  * @param elementId - The ID of the toggle input element
  * @param state - Whether the toggle should be checked
  */
-const toggleState = (elementId: string, state: boolean) => {
+const toggleState = (elementId: string, state: boolean): void => {
   const element = document.getElementById(elementId)
   if (element instanceof HTMLInputElement) {
     element.checked = state
@@ -131,7 +131,7 @@ const userLoad = async (
   url: string,
   authFn: () => Promise<{ username: string | null }>,
   text: string,
-) => {
+): Promise<void> => {
   console.debug(`KFA: POP: Getting username for ${elementId}`)
   const { username } = await authFn()
   if (username) {

@@ -3,16 +3,16 @@ import { storage } from './lib-storage.js'
 
 /**
  * Monitor sync status and execute callback with rotation
- * @param {string[]} list - List of items to rotate through (e.g., icon paths)
- * @param {boolean} wait - Whether to wait for sync to start
- * @param {(message: string) => void} callback - Function to call with each rotation item
- * @returns {Promise<void>}
+ * @param list - List of items to rotate through (e.g., icon paths)
+ * @param wait - Whether to wait for sync to start
+ * @param callback - Function to call with each rotation item
+ * @returns Promise that resolves when monitoring is complete
  */
 const monitorSync = async (
   list: string[],
   wait: boolean,
   callback: (message: string) => void,
-) => {
+): Promise<void> => {
   let i = 0
   // Wait for sync to start
   while (
@@ -44,8 +44,8 @@ const sleep = async (ms: number): Promise<void> => {
 
 /**
  * Checks if timestamps are stale (older than staleSyncMs)
- * @param {string | string[]} keys - Storage keys to check
- * @returns {Promise<boolean>} True if all timestamps are stale
+ * @param keys - Storage keys to check
+ * @returns Promise resolving to true if all timestamps are stale
  */
 const stale = async (keys: string | string[]): Promise<boolean> => {
   let s: Timestamps = await storage.get(keys)
@@ -56,9 +56,9 @@ const stale = async (keys: string | string[]): Promise<boolean> => {
 /**
  * Updates the auto-sync alarm based on user settings
  * Creates or removes daily sync alarm as needed
- * @returns {Promise<void>}
+ * @returns Promise that resolves when alarm update is complete
  */
-const updateAlarms = async () => {
+const updateAlarms = async (): Promise<void> => {
   const syncAuto = (await storage.settings.get()).syncAuto
   if (syncAuto) {
     console.debug(`KFA: BG: Scheduling daily sync alarm`)
@@ -72,14 +72,14 @@ const updateAlarms = async () => {
 
 /**
  * Wait for sync to complete, then execute callback
- * @param {string | string[]} timestamps - Timestamp keys to monitor
- * @param {() => void} callback - Function to execute after sync completes
- * @returns {Promise<void>}
+ * @param timestamps - Timestamp keys to monitor
+ * @param callback - Function to execute after sync completes
+ * @returns Promise that resolves when wait and callback execution are complete
  */
 const waitForSync = async (
   timestamps: string | string[],
   callback: () => void,
-) => {
+): Promise<void> => {
   if (!(await stale(timestamps))) {
     let waited = 0
     while (waited < conf.syncAgainMs) {

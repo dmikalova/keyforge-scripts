@@ -7,12 +7,12 @@
 /**
  * Check if automatic sync is enabled and set up deck scan monitoring
  */
-chrome.storage.sync.get('syncAuto', result => {
+chrome.storage.sync.get('syncAuto', (result: { syncAuto?: boolean }) => {
   if (result.syncAuto) {
     console.debug(`KFA: CMV: Automatic sync enabled`)
     chrome.runtime.sendMessage({
       type: 'SYNC_START',
-    }).catch(error => {
+    }).catch((error: Error) => {
       console.warn(`KFA: CMV: Error sending initial sync message: ${error}`)
     })
 
@@ -24,7 +24,7 @@ chrome.storage.sync.get('syncAuto', result => {
      * Observer for detecting deck scan completions
      * Monitors DOM changes for successful deck import modals
      */
-    const mvObserver = new MutationObserver(mutations => {
+    const mvObserver = new MutationObserver((mutations: MutationRecord[]) => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
           const modalElement = document.querySelector<HTMLDivElement>(

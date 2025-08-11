@@ -6,7 +6,7 @@ import { timer } from './lib-timer.js'
  * Main entry point for Master Vault synchronization
  * Fetches decks from Master Vault and stores them locally
  */
-export const handleSyncMv = async () => {
+export const handleSyncMv = async (): Promise<void> => {
   if (!(await timer.stale(['syncingMv']))) {
     return console.debug(`KFA: MV: Sync already in progress`)
   }
@@ -32,7 +32,7 @@ export const handleSyncMv = async () => {
  * Processes all pages of user's deck collection and stores them locally.
  * Updates popup with real-time deck count during sync.
  */
-const getDecksMv = async () => {
+const getDecksMv = async (): Promise<void> => {
   const { token, userId } = await getCredsMv()
   if (!token || !userId) {
     console.debug(`KFA: MV: Not logged in, skipping sync`)

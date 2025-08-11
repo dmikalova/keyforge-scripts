@@ -7,13 +7,13 @@
 /**
  * Check if TCO sync is enabled and monitor for login state
  */
-chrome.storage.sync.get('syncTco', result => {
+chrome.storage.sync.get('syncTco', (result: { syncTco?: boolean }) => {
   if (result.syncTco) {
     /**
      * Observer for detecting user login state
      * Looks for the profile navigation button to confirm login
      */
-    const tcoObserver = new MutationObserver(mutations => {
+    const tcoObserver = new MutationObserver((mutations: MutationRecord[]) => {
       for (const mutation of mutations) {
         if (mutation.type === 'childList') {
           if (document.querySelector('a#nav-Profile')) {
@@ -25,7 +25,7 @@ chrome.storage.sync.get('syncTco', result => {
                   type: 'AUTH',
                   auth: { authTco: auth },
                 })
-                .catch(error => {
+                .catch((error: Error) => {
                   console.warn(`KFA: CDoK: Error sending message: ${error}`)
                 })
               tcoObserver.disconnect()

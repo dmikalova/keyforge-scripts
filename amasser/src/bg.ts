@@ -12,7 +12,7 @@ import { timer } from './lib-timer.js'
  */
 if (!('update_url' in chrome.runtime.getManifest())) {
   console.debug('KFA: BG: Enable debug commands')
-  chrome.commands.onCommand.addListener(shortcut => {
+  chrome.commands.onCommand.addListener((shortcut: string) => {
     if (shortcut.includes('+I')) {
       console.debug(`KFA: BG: Reloading extension`)
       browser.reload()
@@ -28,7 +28,7 @@ if (!('update_url' in chrome.runtime.getManifest())) {
  * @param {AuthData} [message.auth] - Authentication data for AUTH messages
  * @returns {boolean} Whether the sender should expect an async response
  */
-chrome.runtime.onMessage.addListener(message => {
+chrome.runtime.onMessage.addListener((message: SyncMessage) => {
   console.debug(`KFA: BG: Message received: ${message.type}`)
 
   switch (message.type) {
@@ -50,11 +50,11 @@ chrome.runtime.onMessage.addListener(message => {
 /**
  * Handles alarm events for scheduled operations
  * Currently supports DAILY_SYNC for automatic daily synchronization
- * @param {chrome.alarms.Alarm} alarm - The alarm that triggered
- * @param {string} alarm.name - Name of the alarm (e.g., 'DAILY_SYNC')
- * @returns {Promise<void>}
+ * @param alarm - The alarm that triggered
+ * @param alarm.name - Name of the alarm (e.g., 'DAILY_SYNC')
+ * @returns Promise that resolves when alarm handling is complete
  */
-const handleAlarms = async alarm => {
+const handleAlarms = async (alarm: chrome.alarms.Alarm): Promise<void> => {
   switch (alarm.name) {
     case 'DAILY_SYNC':
       console.debug(`KFA: BG: Daily sync triggered`)
@@ -73,12 +73,12 @@ chrome.alarms.onAlarm.addListener(handleAlarms)
  * Saves authentication data from content scripts to storage
  * Validates that auth contains either authDok or authTco properties
  * Sends RELOAD_USERS message to popup after successful save
- * @param {AuthData} auth - Authentication data object
- * @param {string} [auth.authDok] - Decks of KeyForge authentication token
- * @param {object} [auth.authTco] - The Crucible Online authentication data
- * @returns {Promise<void>}
+ * @param auth - Authentication data object
+ * @param auth.authDok - Decks of KeyForge authentication token
+ * @param auth.authTco - The Crucible Online authentication data
+ * @returns Promise that resolves when auth handling is complete
  */
-const handleAuth = async (auth: AuthData) => {
+const handleAuth = async (auth: AuthData): Promise<void> => {
   if (
     !auth ||
     (!auth.hasOwnProperty('authDok') && !auth.hasOwnProperty('authTco'))
@@ -100,9 +100,9 @@ const handleAuth = async (auth: AuthData) => {
  * Provides visual feedback that synchronization is in progress
  * Monitors sync status and rotates through icon frames
  * Resets to default icon when sync completes
- * @returns {Promise<void>}
+ * @returns Promise that resolves when icon rotation is complete
  */
-const handleIconRotation = async () => {
+const handleIconRotation = async (): Promise<void> => {
   console.debug(`KFA: BG: Handling rotating icon`)
   await timer.monitorSync(conf.iconRotations, true, browser.setIcon)
   await chrome.action.setIcon({ path: conf.iconRotations[0] })
@@ -113,9 +113,9 @@ const handleIconRotation = async () => {
  * Runs sync processes in parallel for Master Vault and enabled optional services
  * Sends SYNC_COMPLETE message to popup when finished
  * Resets extension icon to default state after completion
- * @returns {Promise<void>}
+ * @returns Promise that resolves when deck sync is complete
  */
-const handleSyncDecks = async () => {
+const handleSyncDecks = async (): Promise<void> => {
   console.debug(`KFA: BG: Handling deck sync`)
   const settings = await storage.settings.get()
   const syncPromises = [handleSyncMv()]
@@ -142,14 +142,11 @@ const handleSyncDecks = async () => {
  * Starts the synchronization process
  * Initiates deck sync, icon rotation, and alarm updates concurrently
  * Entry point for all sync operations triggered by user or scheduled events
- * @returns {Promise<void>}
+ * @returns Promise that resolves when sync start is complete
  */
-const handleSyncStart = async () => {
+const handleSyncStart = async (): Promise<void> => {
   console.debug(`KFA: BG: Sync starting`)
   handleSyncDecks()
   handleIconRotation()
   timer.updateAlarms()
 }
-
-// TODO: clean up types
-// TODO: jsdoc

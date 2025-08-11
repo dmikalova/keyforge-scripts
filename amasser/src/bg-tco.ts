@@ -7,7 +7,7 @@ import { timer } from './lib-timer.js'
  * Main entry point for The Crucible Online synchronization
  * Imports decks from Master Vault to The Crucible Online
  */
-export const handleSyncTco = async () => {
+export const handleSyncTco = async (): Promise<void> => {
   if (!(await timer.stale(['syncingTco']))) {
     return console.debug(`KFA: TCO: Sync already in progress`)
   }
@@ -23,7 +23,7 @@ export const handleSyncTco = async () => {
  * Continuously imports decks until all are synchronized.
  * Waits for Master Vault sync to complete before continuing.
  */
-const syncTco = async () => {
+const syncTco = async (): Promise<void> => {
   let syncing = true
   while (syncing) {
     try {
@@ -50,7 +50,7 @@ const syncTco = async () => {
  * Processes unsynced decks one by one with throttling and error handling.
  * Handles various import scenarios including existing decks and rate limits.
  */
-const importDecksTco = async () => {
+const importDecksTco = async (): Promise<void> => {
   await getDecksTco()
   const unsyncedDecks = await storage.decks.unsynced('tco')
   if (unsyncedDecks.length === 0) {
@@ -141,7 +141,7 @@ const importDecksTco = async () => {
  * Only runs once per session to avoid redundant API calls.
  * Marks all existing decks as synchronized.
  */
-const getDecksTco = async () => {
+const getDecksTco = async (): Promise<void> => {
   const { libraryTco } = await storage.get('libraryTco')
   if (!libraryTco) {
     const { token } = await getCredsTco()

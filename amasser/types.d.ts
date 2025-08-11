@@ -1,12 +1,3 @@
-// Type definitions for KeyForge Amasser Extension
-
-// Settings interface
-interface Settings {
-  syncAuto?: boolean
-  syncDok?: boolean
-  syncTco?: boolean
-}
-
 // Auth interfaces
 interface credsDok {
   token: string
@@ -23,6 +14,13 @@ interface credsTco {
   token: string
   username: string
   userId: string
+}
+
+// Settings interface
+interface Settings {
+  syncAuto?: boolean
+  syncDok?: boolean
+  syncTco?: boolean
 }
 
 // Chrome storage
@@ -58,7 +56,14 @@ interface AuthData {
 
 // Message types
 interface SyncMessage {
-  type: 'SYNC_START' | 'SYNC_COMPLETE' | 'SYNC_ERROR' | 'SYNC_STATUS' | 'AUTH'
+  type:
+    | 'AUTH'
+    | 'DECK_COUNT'
+    | 'RELOAD_USERS'
+    | 'SYNC_COMPLETE'
+    | 'SYNC_ERROR'
+    | 'SYNC_START'
+    | 'SYNC_STATUS'
   auth?: AuthData
   button?: string
   decks?: number

@@ -7,7 +7,7 @@ import { timer } from './lib-timer.js'
  * Main entry point for Decks of KeyForge synchronization
  * Imports decks from Master Vault to Decks of KeyForge
  */
-export const handleSyncDok = async () => {
+export const handleSyncDok = async (): Promise<void> => {
   if (!(await timer.stale(['syncingDok']))) {
     return console.debug(`KFA: DoK: Sync already in progress`)
   }
@@ -22,17 +22,17 @@ export const handleSyncDok = async () => {
  * Main synchronization loop for Decks of KeyForge
  * Continuously imports decks until no new decks are available
  */
-const syncDok = async () => {
+const syncDok = async (): Promise<void> => {
   let syncing = true
   while (syncing) {
     try {
       await importDecksDok()
-    } catch (error) {
+    } catch (error: unknown) {
       console.warn(`KFA: DoK: Error syncing: ${error}`)
       await storage.remove('syncingDok')
       browser.sendMessage({
         type: 'SYNC_ERROR',
-        error: error.message,
+        error: error instanceof Error ? error.message : String(error),
       })
     }
 
@@ -50,7 +50,7 @@ const syncDok = async () => {
  * then processes all unsynced decks one by one with error handling.
  * Logs progress and handles API failures gracefully.
  */
-const importDecksDok = async () => {
+const importDecksDok = async (): Promise<void> => {
   const { token, username } = await getCredsDok()
   if (!token || !username) {
     console.debug(`KFA: DoK: Not logged in, skipping import`)
@@ -96,7 +96,7 @@ const importDecksDok = async () => {
  * @param token - The authentication token for API access
  * @param username - The username to fetch decks for
  */
-const getDecksDok = async (token: string, username: string) => {
+const getDecksDok = async (token: string, username: string): Promise<void> => {
   const { libraryDok } = await storage.get('libraryDok')
   if (!libraryDok) {
     let page = 0
