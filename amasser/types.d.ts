@@ -33,10 +33,12 @@ interface StorageDecks {
   [key: `${'zdok.' | 'zmv.' | 'ztco.'}${string}`]: boolean | string
 }
 
+type Deck = boolean | string
+
 interface Decks {
-  dok?: Record<string, boolean | string>
-  mv?: Record<string, boolean | string>
-  tco?: Record<string, boolean | string>
+  dok?: Record<string, Deck>
+  mv?: Record<string, Deck>
+  tco?: Record<string, Deck>
 }
 
 // Timestamps interface

@@ -1,142 +1,43 @@
 import { conf } from './conf.js'
+import { browser } from './lib-browser.js'
 import { storage } from './lib-storage.js'
+import { lib } from './lib.js'
 
 /**
  * Main entry point for The Crucible Online synchronization
  * Imports decks from Master Vault to The Crucible Online
  */
 export const handleSyncTco = async () => {
-  const syncingTco = await chrome.storage.local
-    .get('syncingTco')
-    .then(r => r.syncingTco)
-  if (syncingTco && Date.now() - syncingTco < conf.staleSyncMs) {
-    console.debug(
-      `KFA: TCO: sync already in progress: ${Date.now() - syncingTco}ms`,
-    )
-    return
+  if (!(await lib.timestampsStale(['syncingTco']))) {
+    return console.debug(`KFA: TCO: Sync already in progress`)
   }
-  await chrome.storage.local.set({ syncingTco: Date.now() })
-  await new Promise(r => setTimeout(r, conf.timeoutMs * 2))
+  await storage.set({ syncingTco: Date.now() })
+  await lib.sleep(conf.timeoutMs * 2)
   console.debug(`KFA: TCO: Sync starting`)
   await syncTco()
-  await chrome.storage.local.remove('syncingTco')
+  await storage.remove('syncingTco')
 }
 
 const syncTco = async () => {
-  let keepSyncing = true
-  while (keepSyncing) {
+  let syncing = true
+  while (syncing) {
     try {
-      const { mv, tco } = await storage.decks.get()
-      await importDecksToTco(mv, tco)
+      await importDecksTco()
     } catch (error) {
       console.warn(`KFA: TCO: Error syncing decks: ${error}`)
-      chrome.storage.local.remove('syncingTco')
-      chrome.runtime
-        .sendMessage({
-          type: 'SYNC_ERROR',
-          error: error.message,
-        })
-        .catch(() => {})
+      storage.remove('syncingTco')
+      browser.sendMessage({
+        type: 'SYNC_ERROR',
+        error: error.message,
+      })
     }
 
-    // Filter out decks that already have tco=true
-    const { mv, tco }: Decks = await storage.decks.get()
-    let decksToImport = Object.entries(mv).filter(
-      ([id, deck]) => deck == true && !tco[id],
-    )
-    if (decksToImport.length === 0) {
-      keepSyncing = false
+    if ((await lib.unsyncedDecks('tco')).length === 0) {
+      syncing = false
     }
   }
 
-  // If MV sync is in progress, trigger TCO sync again
-  const syncingMv = await chrome.storage.local
-    .get('syncingMv')
-    .then(r => r.syncingMv)
-  if (syncingMv && Date.now() - syncingMv < conf.staleSyncMs) {
-    let waited = 0
-    while (waited < conf.syncAgainMs) {
-      await new Promise(r => setTimeout(r, conf.timeoutMs))
-      waited += conf.timeoutMs
-      const stillSyncingMv = await chrome.storage.local
-        .get('syncingMv')
-        .then(r => r.syncingMv)
-      if (
-        !stillSyncingMv ||
-        Date.now() - stillSyncingMv >= conf.staleSyncMs
-      ) {
-        break
-      }
-    }
-    await syncTco()
-  }
-}
-
-/**
- * Get The Crucible Online refresh token from storage
- * @returns {Promise<string | null>} The refresh token or null if not logged in
- */
-export const getTcoAuth = async (): Promise<string | null> => {
-  // Check for token in local storage
-  let { authTco: authTco } = await chrome.storage.local.get('authTco')
-
-  if (!authTco) {
-    console.debug(`KFA: TCO: Not logged in`)
-    return null
-  }
-
-  return JSON.parse(authTco)
-}
-
-/**
- * Get user information from The Crucible Online
- * @param {string} token - Refresh token for authentication
- * @returns {Promise<TcoUserResponse>} User data including username, token, and userId
- */
-export const getTcoUser = async (token: string): Promise<credsTco> => {
-  if (!token) {
-    throw new Error('KFA: TCO: Token missing')
-  }
-
-  const t = {
-    token: token,
-  }
-
-  const body = JSON.stringify(t)
-
-  console.debug(`KFA: TCO: Fetching user`)
-  const response = await fetch(`${conf.tcoBaseUrl}/api/account/token`, {
-    credentials: 'include',
-    headers: {
-      accept: 'application/json',
-      'accept-language': 'en-us',
-      'cache-control': 'no-cache',
-      'content-type': 'application/json',
-      pragma: 'no-cache',
-      'x-requested-with': 'XMLHttpRequest',
-    },
-    referrer: `${conf.tcoBaseUrl}/decks`,
-    referrerPolicy: 'no-referrer-when-downgrade',
-    mode: 'cors',
-    method: 'POST',
-    body: body,
-  })
-
-  if (!response.ok) {
-    throw new Error(`KFA: TCO: Failed to fetch user: ${response.status}`)
-  }
-
-  const respJson = await response.json()
-  if (!respJson.success) {
-    await chrome.storage.local.remove('tcoRefreshToken')
-    throw new Error(`KFA: TCO: Failed to fetch user: ${respJson.error}`)
-  }
-
-  return {
-    username: respJson.user.username,
-    token: respJson.token,
-    userId: respJson.user.id,
-  }
+  await lib.waitForSync('syncingMv', syncTco)
 }
 
 /**
@@ -144,164 +45,194 @@ export const getTcoUser = async (token: string): Promise<credsTco> => {
  * @param {Decks} mv - Master Vault deck collection
  * @param {Decks} tco - The Crucible Online deck collection
  */
-const importDecksToTco = async (mv: Decks, tco: Decks) => {
-  let decksToImport = Object.entries(mv).filter(
-    ([id, deck]) => deck === true && !tco[id],
-  )
-
-  if (decksToImport.length === 0) {
+const importDecksTco = async () => {
+  await getDecksTco()
+  const unsyncedDecks = await lib.unsyncedDecks('tco')
+  if (unsyncedDecks.length === 0) {
     console.debug(`KFA: TCO: No new decks to import`)
     return
   }
 
-  const { libraryTco } = await chrome.storage.local.get('libraryTco')
-  if (!libraryTco) {
-    console.debug(`KFA: TCO: Fetching TCO library`)
-    chrome.storage.local.set({
-      syncingTco: Date.now() + 4 * conf.staleSyncMs,
-    })
-
-    const auth = await getTcoAuth()
-    if (!auth) {
+  console.debug(`KFA: TCO: Importing ${unsyncedDecks.length} decks`)
+  for (const [i, deck] of unsyncedDecks.entries()) {
+    const { token } = await getCredsTco()
+    if (!token) {
       console.debug(`KFA: TCO: Not logged in, skipping import`)
       return
     }
 
-    const { token } = await getTcoUser(auth)
-    const { decks: tcoDecks } = await fetch(
+    console.debug(
+      `KFA: TCO: Importing deck ${i + 1}/${unsyncedDecks.length}: ${deck}`,
+    )
+    await fetch(
+      `${conf.tcoBaseUrl}/api/decks/`,
+      requestInitTco('POST', token, { uuid: deck[0] }),
+    )
+      .then(async r => {
+        if (!r.ok) {
+          throw new Error(
+            `KFA: TCO: Failed to import deck ${deck[0]}: ${r.status}`,
+          )
+        }
+        return r.json()
+      })
+      .then(async r => {
+        switch (true) {
+          case r.success:
+            console.debug(`KFA: TCO: Imported deck: ${deck[0]}`)
+            storage.set({
+              [`ztco.${deck[0]}`]: true,
+              syncingTco: Date.now(),
+            })
+            break
+
+          case !r.success && r.message === 'Deck already exists.':
+            console.debug(`KFA: TCO: Already imported deck: ${deck[0]}`)
+            storage.set({
+              [`ztco.${deck[0]}`]: true,
+              syncingTco: Date.now(),
+            })
+            break
+
+          case !r.success &&
+            [
+              "Cannot read properties of undefined (reading 'house')",
+              'This deck is from a future expansion and not currently supported',
+            ].some(msg => r.message.includes(msg)):
+            console.debug(
+              `KFA: TCO: Import failed with known error for deck: ${deck[0]}`,
+            )
+            storage.set({
+              [`ztco.${deck[0]}`]: 'import error',
+              syncingTco: Date.now(),
+            })
+            break
+
+          case !r.success &&
+            r.message === 'Invalid response from Api. Please try again later.':
+            console.debug(`KFA: TCO: Rate limit hit, pausing`)
+            let waited = 0
+            while (waited < conf.tcoTimeoutMs) {
+              storage.set({ syncingTco: Date.now() })
+              await lib.sleep(conf.timeoutMs)
+              waited += conf.timeoutMs
+            }
+            break
+
+          default:
+            console.debug(
+              `KFA: TCO: Import failed with unknown error for deck: ${deck[0]}: ${JSON.stringify(r)}`,
+            )
+            storage.set({ syncingTco: Date.now() })
+        }
+      })
+      .catch(error => {
+        console.warn(`KFA: TCO: Error importing deck ${deck[0]}: ${error}`)
+      })
+
+    // console.debug(`KFA: TCO: Wait before next import`)
+    let waited = 0
+    while (waited < conf.tcoThrottleMs) {
+      storage.set({ syncingTco: Date.now() })
+      await lib.sleep(conf.timeoutMs)
+      waited += conf.timeoutMs
+    }
+  }
+}
+
+const getDecksTco = async () => {
+  const { libraryTco } = await storage.get('libraryTco')
+  if (!libraryTco) {
+    const { token } = await getCredsTco()
+    if (!token) {
+      return console.debug(`KFA: TCO: Not logged in, skipping library import`)
+    }
+
+    storage.set({ syncingTco: Date.now() + 4 * conf.staleSyncMs })
+    const { decks } = await fetch(
       `${conf.tcoBaseUrl}/api/decks?pageSize=100000&page=1`,
-      {
-        credentials: 'include',
-        headers: {
-          accept: '*/*',
-          'accept-language': 'en-US',
-          authorization: `Bearer ${token}`,
-          'cache-control': 'no-cache',
-          'content-type': 'application/json',
-          pragma: 'no-cache',
-          'x-requested-with': 'XMLHttpRequest',
-        },
-        method: 'GET',
-      },
+      requestInitTco('GET', token),
     )
       .then(response => response.json())
       .catch(error => {
         throw new Error(`KFA: TCO: Error fetching library: ${error.message}`)
       })
-    tcoDecks.forEach(tcoDeck => {
-      tco[tcoDeck.uuid] = true
-      chrome.storage.local.set({
-        [`ztco.${tcoDeck.uuid}`]: true,
-        syncingTco: Date.now(),
-      })
-    })
-    chrome.storage.local.set({ libraryTco: Date.now() })
 
-    decksToImport = Object.entries(mv).filter(
-      ([id, deck]) => deck === true && !tco[id],
-    )
-
-    if (decksToImport.length === 0) {
-      console.debug(`KFA: TCO: No new decks to import`)
-      return
-    }
-  }
-  console.debug(`KFA: TCO: Importing ${decksToImport.length} decks`)
-
-  for (const [i, deck] of decksToImport.entries()) {
-    // Refresh token before each import to avoid unauthorized errors
-    console.debug(
-      `KFA: TCO: Importing deck ${i + 1}/${decksToImport.length}: ${deck}`,
-    )
-    const auth = await getTcoAuth()
-    if (!auth) {
-      console.debug(`KFA: TCO: Not logged in, skipping import`)
-      return
-    }
-
-    const { token } = await getTcoUser(auth)
-    const response = await fetch(`${conf.tcoBaseUrl}/api/decks/`, {
-      credentials: 'include',
-      headers: {
-        accept: '*/*',
-        'accept-language': 'en-US',
-        authorization: `Bearer ${token}`,
-        'cache-control': 'no-cache',
-        'content-type': 'application/json',
-        pragma: 'no-cache',
-        'x-requested-with': 'XMLHttpRequest',
-      },
-      referrer: `${conf.tcoBaseUrl}/decks/import`,
-      referrerPolicy: 'no-referrer-when-downgrade',
-      body: JSON.stringify({
-        uuid: deck[0],
+    console.debug(`KFA: TCO: Fetched ${decks.length} library decks`)
+    await Promise.all(
+      decks.map(deck => {
+        storage.set({
+          [`ztco.${deck.uuid}`]: true,
+          syncingTco: Date.now(),
+        })
       }),
-      method: 'POST',
+    )
+    await storage.set({ libraryTco: Date.now() })
+  }
+}
+
+/**
+ * Get The Crucible Online refresh token from storage
+ * @returns {Promise<string | null>} The refresh token or null if not logged in
+ */
+export const getCredsTco = async (): Promise<credsTco> => {
+  // Check for token in local storage
+  const { authTco } = await storage.get('authTco')
+  if (!authTco) {
+    console.debug(`KFA: TCO: Not logged in`)
+    return { token: null, userId: null, username: null }
+  }
+
+  console.debug(`KFA: TCO: Fetching user`)
+  const { user, token } = await fetch(
+    `${conf.tcoBaseUrl}/api/account/token`,
+    requestInitTco('POST', null, { token: JSON.parse(authTco) }),
+  )
+    .then(async r => {
+      if (!r.ok) {
+        await storage.remove('authTco')
+        throw new Error(`KFA: TCO: Failed to fetch user: ${r.status}`)
+      }
+      return r.json()
+    })
+    .catch(error => {
+      console.warn(`KFA: TCO: Error fetching user: ${error}`)
     })
 
-    const respJson = await response.json()
-
-    const tcoImportErrorMessages = [
-      "Cannot read properties of undefined (reading 'house')",
-      'This deck is from a future expansion and not currently supported',
-    ]
-
-    if (response.ok && respJson.success) {
-      console.debug(`KFA: TCO: Imported deck: ${deck[0]}`)
-      tco[deck[0]] = true
-      chrome.storage.local.set({
-        [`ztco.${deck[0]}`]: true,
-        syncingTco: Date.now(),
-      })
-    } else if (
-      response.ok &&
-      !respJson.success &&
-      respJson.message === 'Deck already exists.'
-    ) {
-      console.debug(`KFA: TCO: Already imported deck: ${deck[0]}`)
-      tco[deck[0]] = true
-      chrome.storage.local.set({
-        [`ztco.${deck[0]}`]: true,
-        syncingTco: Date.now(),
-      })
-    } else if (
-      response.ok &&
-      !respJson.success &&
-      tcoImportErrorMessages.some(msg => respJson.message.includes(msg))
-    ) {
-      console.debug(
-        `KFA: TCO: Import failed with known error for deck: ${deck[0]}`,
-      )
-      tco[deck[0]] = 'import error'
-      chrome.storage.local.set({
-        [`ztco.${deck[0]}`]: 'import error',
-        syncingTco: Date.now(),
-      })
-    } else if (
-      response.ok &&
-      !respJson.success &&
-      respJson.message === 'Invalid response from Api. Please try again later.'
-    ) {
-      console.debug(`KFA: TCO: Rate limit hit, pausing`)
-      for (let timeout = 0; timeout < 60; timeout++) {
-        chrome.storage.local.set({ syncingTco: Date.now() })
-        await new Promise(resolve => setTimeout(resolve, conf.timeoutMs))
-      }
-    } else {
-      console.debug(
-        `KFA: TCO: Import failed with unknown error for deck: ${deck[0]}: ${
-          response.status
-        } ${JSON.stringify(respJson)}`,
-      )
-      chrome.storage.local.set({ syncingTco: Date.now() })
-    }
-
-    // console.debug(`KFA: TCO: Wait before next import`)
-    let wait = 0
-    while (wait < conf.tcoThrottleMs) {
-      chrome.storage.local.set({ syncingTco: Date.now() })
-      await new Promise(resolve => setTimeout(resolve, conf.timeoutMs))
-      wait += conf.timeoutMs
-    }
+  return {
+    token: token,
+    userId: user.id,
+    username: user.username,
   }
+}
+
+const requestInitTco = (
+  method: string,
+  token?: string,
+  body?: any,
+): RequestInit => {
+  const headers: Record<string, string> = {
+    accept: 'application/json',
+    'accept-language': 'en-us',
+    'cache-control': 'no-cache',
+    'content-type': 'application/json',
+    pragma: 'no-cache',
+    'x-requested-with': 'XMLHttpRequest',
+  }
+  if (token) {
+    headers.authorization = `Bearer ${token}`
+  }
+
+  const config: RequestInit = {
+    credentials: 'include',
+    headers,
+    referrer: `${conf.tcoBaseUrl}/decks`,
+    referrerPolicy: 'no-referrer-when-downgrade',
+    mode: 'cors',
+    method: method,
+  }
+  if (body !== undefined) {
+    config.body = JSON.stringify(body)
+  }
+  return config
 }

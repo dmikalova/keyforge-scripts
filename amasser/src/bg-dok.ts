@@ -12,7 +12,7 @@ export const handleSyncDok = async () => {
     return console.debug(`KFA: DoK: Sync already in progress`)
   }
   await storage.set({ syncingDok: Date.now() })
-  await new Promise(r => setTimeout(r, conf.timeoutMs * 2))
+  await lib.sleep(conf.timeoutMs * 2)
   console.debug(`KFA: DoK: Sync starting`)
   await syncDok()
   await storage.remove('syncingDok')
@@ -41,50 +41,7 @@ const syncDok = async () => {
     }
   }
 
-  // If MV sync is in progress, trigger Dok sync again
-  if (!(await lib.timestampsStale(['syncingMv']))) {
-    let waited = 0
-    while (waited < conf.syncAgainMs) {
-      await storage.set({ syncingDok: Date.now() })
-      await new Promise(resolve => setTimeout(resolve, conf.timeoutMs))
-      waited += conf.timeoutMs
-      if (await lib.timestampsStale(['syncingMv'])) {
-        break
-      }
-    }
-    return await syncDok()
-  }
-}
-
-/**
- * Get authentication token from Decks of KeyForge
- * @returns {Promise<string | null>} The auth token or null if not logged in
- */
-export const getCredsDok = async (): Promise<credsDok> => {
-  let { authDok } = await storage.get('authDok')
-  if (!authDok) {
-    console.debug(`KFA: DoK: Not logged in`)
-    return { token: null, username: null }
-  }
-
-  const { username } = await fetch(
-    `${conf.dokBaseUrl}/api/users/secured/your-user`,
-    requestInitDok(authDok, 'GET'),
-  )
-    .then(async r => {
-      if (!r.ok) {
-        await storage.remove('authDok')
-        throw new Error(`KFA: DoK: Failed to fetch user: ${r.status}`)
-      }
-      return r.json()
-    })
-    .catch(error => {
-      console.warn(`KFA: DoK: Error fetching user: ${error}`)
-      storage.remove('authDok')
-      return { username: null }
-    })
-
-  return { token: authDok, username: username }
+  await lib.waitForSync('syncingMv', syncDok)
 }
 
 /**
@@ -131,29 +88,6 @@ const importDecksDok = async () => {
   }
 }
 
-const requestInitDok = (
-  token: string,
-  method: string,
-  body?: any,
-): RequestInit => {
-  const config: RequestInit = {
-    credentials: 'include',
-    headers: {
-      'accept-language': 'en-US',
-      accept: 'application/json, text/plain, */*',
-      authorization: token,
-      'cache-control': 'no-cache',
-      'content-type': 'application/json',
-      timezone: '0',
-    },
-    method: method,
-  }
-  if (body !== undefined) {
-    config.body = JSON.stringify(body)
-  }
-  return config
-}
-
 const getDecksDok = async (token: string, username: string) => {
   const { libraryDok } = await storage.get('libraryDok')
   if (!libraryDok) {
@@ -182,13 +116,15 @@ const getDecksDok = async (token: string, username: string) => {
         })
 
       console.debug(`KFA: DoK: Fetched ${decks.length} library decks`)
-      await decks.forEach(deck => {
-        decks[deck.keyforgeId] = true
-        storage.set({
-          [`zdok.${deck.keyforgeId}`]: true,
-          syncingDok: Date.now(),
-        })
-      })
+      await Promise.all(
+        decks.map(deck => {
+          decks[deck.keyforgeId] = true
+          storage.set({
+            [`zdok.${deck.keyforgeId}`]: true,
+            syncingDok: Date.now(),
+          })
+        }),
+      )
 
       if (decks.length < conf.dokPageSize) {
         morePages = false
@@ -197,4 +133,58 @@ const getDecksDok = async (token: string, username: string) => {
     }
     await storage.set({ libraryDok: Date.now() })
   }
+}
+
+/**
+ * Get authentication token from Decks of KeyForge
+ * @returns {Promise<string | null>} The auth token or null if not logged in
+ */
+export const getCredsDok = async (): Promise<credsDok> => {
+  let { authDok } = await storage.get('authDok')
+  if (!authDok) {
+    console.debug(`KFA: DoK: Not logged in`)
+    return { token: null, username: null }
+  }
+
+  const { username } = await fetch(
+    `${conf.dokBaseUrl}/api/users/secured/your-user`,
+    requestInitDok(authDok, 'GET'),
+  )
+    .then(async r => {
+      if (!r.ok) {
+        await storage.remove('authDok')
+        throw new Error(`KFA: DoK: Failed to fetch user: ${r.status}`)
+      }
+      return r.json()
+    })
+    .catch(error => {
+      console.warn(`KFA: DoK: Error fetching user: ${error}`)
+      storage.remove('authDok')
+      return { username: null }
+    })
+
+  return { token: authDok, username: username }
+}
+
+const requestInitDok = (
+  token: string,
+  method: string,
+  body?: any,
+): RequestInit => {
+  const config: RequestInit = {
+    credentials: 'include',
+    headers: {
+      'accept-language': 'en-US',
+      accept: 'application/json',
+      authorization: token,
+      'cache-control': 'no-cache',
+      'content-type': 'application/json',
+      timezone: '0',
+    },
+    method: method,
+  }
+  if (body !== undefined) {
+    config.body = JSON.stringify(body)
+  }
+  return config
 }

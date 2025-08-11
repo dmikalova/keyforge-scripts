@@ -1,9 +1,10 @@
 import { getCredsDok } from './bg-dok.js'
 import { getCredsMv } from './bg-mv.js'
-import { getTcoAuth, getTcoUser } from './bg-tco.js'
+import { getCredsTco } from './bg-tco.js'
 import { conf } from './conf.js'
 import { browser } from './lib-browser.js'
 import { storage } from './lib-storage.js'
+import { lib } from './lib.js'
 
 // Used to remove event listeners as buttons change functionality
 let abortClearDataButton = new AbortController()
@@ -194,6 +195,7 @@ const clearData = () => {
   if (clearDataButton && clearDataButton instanceof HTMLButtonElement) {
     clearDataButton.textContent = 'Data Cleared!'
     clearDataButton.disabled = true
+    // TODO: use lib.sleep?
     setTimeout(() => {
       clearDataButton.textContent = 'Clear Data'
       clearDataButton.disabled = false
@@ -305,7 +307,7 @@ const resetButtons = async () => {
       clearDataButton.addEventListener('click', clearData, {
         signal: abortClearDataButton.signal,
       })
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      await lib.sleep(conf.clearDataButtonResetMs)
     }
     clearDataButton.textContent = 'Clear Data'
     clearDataButton.disabled = false
@@ -336,7 +338,7 @@ const checkSyncStatus = async (wait: boolean = false) => {
     handleSyncStatus(conf.syncMessages[shift])
 
     shift = (shift + 1) % conf.syncMessages.length
-    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainMs))
+    await lib.sleep(conf.rotateAgainMs)
 
     s = await chrome.storage.local.get([
       'syncingDok',
@@ -513,10 +515,9 @@ const loadUsers = async settings => {
     userPromises.push(
       (async () => {
         console.debug(`KFA: POP: Getting TCO username`)
-        const token = await getTcoAuth()
-        if (token) {
+        const { username } = await getCredsTco()
+        if (username) {
           // Show the TCO username element
-          const { username } = await getTcoUser(token)
           const tcoUsernameElem = document.getElementById('tco-username')
           if (tcoUsernameElem) {
             tcoUsernameElem.textContent = `: ${username}`
@@ -592,3 +593,5 @@ const loadQuotes = () => {
       conf.quotes[Math.floor(Math.random() * conf.quotes.length)]
   }
 }
+
+// TODO: all the textContent to conf

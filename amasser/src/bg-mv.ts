@@ -28,53 +28,6 @@ export const handleSyncMv = async () => {
 }
 
 /**
- * Gets Master Vault authentication information
- * @returns {Promise<MvAuth | {token: null, userId: null, username: null}>} Auth data or null values if not logged in
- */
-export const getCredsMv = async (): Promise<credsMv> => {
-  if (!chrome.cookies) {
-    throw new Error(`KFA: MV: Cookies API is not available`)
-  }
-  const { value: token } = await chrome.cookies.get({
-    url: conf.mvBaseUrl,
-    name: 'auth',
-  })
-  if (!token) {
-    console.debug(`KFA: MV: Not logged in`)
-    return { token: null, userId: null, username: null }
-  }
-
-  const { userId, username } = await fetch(
-    `${conf.mvBaseUrl}/api/users/self/`,
-    requestInitMv(token),
-  )
-    .then(r => {
-      if (!r.ok) {
-        throw new Error(`KFA: MV: Failed to fetch user: ${r.status}`)
-      }
-      return r.json()
-    })
-    .then(r => {
-      return { userId: r.data.id, username: r.data.username }
-    })
-
-  return { token: token, userId: userId, username: username }
-}
-
-/**
- * Create request configuration with authentication
- * @param {string} token - Authentication token
- * @returns {RequestInit} Fetch request configuration
- */
-const requestInitMv = (token: string): RequestInit => ({
-  credentials: 'include',
-  headers: {
-    accept: 'application/json',
-    authorization: `Token ${token}`,
-  },
-})
-
-/**
  * Fetch new decks from Master Vault API
  * @param {object} [decks={}] - Existing deck collection to update
  */
@@ -143,3 +96,50 @@ const getDecksMv = async () => {
     )
   }
 }
+
+/**
+ * Gets Master Vault authentication information
+ * @returns {Promise<MvAuth | {token: null, userId: null, username: null}>} Auth data or null values if not logged in
+ */
+export const getCredsMv = async (): Promise<credsMv> => {
+  if (!chrome.cookies) {
+    throw new Error(`KFA: MV: Cookies API is not available`)
+  }
+  const { value: token } = await chrome.cookies.get({
+    url: conf.mvBaseUrl,
+    name: 'auth',
+  })
+  if (!token) {
+    console.debug(`KFA: MV: Not logged in`)
+    return { token: null, userId: null, username: null }
+  }
+
+  const { userId, username } = await fetch(
+    `${conf.mvBaseUrl}/api/users/self/`,
+    requestInitMv(token),
+  )
+    .then(r => {
+      if (!r.ok) {
+        throw new Error(`KFA: MV: Failed to fetch user: ${r.status}`)
+      }
+      return r.json()
+    })
+    .then(r => {
+      return { userId: r.data.id, username: r.data.username }
+    })
+
+  return { token: token, userId: userId, username: username }
+}
+
+/**
+ * Create request configuration with authentication
+ * @param {string} token - Authentication token
+ * @returns {RequestInit} Fetch request configuration
+ */
+const requestInitMv = (token: string): RequestInit => ({
+  credentials: 'include',
+  headers: {
+    accept: 'application/json',
+    authorization: `Token ${token}`,
+  },
+})

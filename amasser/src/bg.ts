@@ -101,7 +101,7 @@ const handleIconRotation = async () => {
     rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon (stale): ${rotation} `)
     await chrome.action.setIcon({ path: conf.iconRotations[rotation] })
-    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainMs))
+    await lib.sleep(conf.rotateAgainMs)
   }
 
   // Wait for sync to finish
@@ -111,7 +111,7 @@ const handleIconRotation = async () => {
     rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({ path: conf.iconRotations[rotation] })
-    await new Promise(resolve => setTimeout(resolve, conf.rotateAgainMs))
+    await lib.sleep(conf.rotateAgainMs)
   }
 
   await chrome.action.setIcon({ path: conf.iconRotations[0] })
@@ -156,3 +156,4 @@ const handleSyncStart = async () => {
 // TODO: code consistency
 // TODO: break out fns
 // TODO: clean up types
+// TODO: jsdoc

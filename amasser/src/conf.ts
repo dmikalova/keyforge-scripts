@@ -1,4 +1,5 @@
 export const conf = {
+  clearDataButtonResetMs: 1500,
   defaults: {
     syncDok: true,
     syncTco: false,
@@ -60,5 +61,6 @@ export const conf = {
   rotateAgainMs: 500,
   timeoutMs: 1000,
   tcoBaseUrl: 'https://thecrucible.online',
-  tcoThrottleMs: 10 * 1000,
+  tcoThrottleMs: 30 * 1000,
+  tcoTimeoutMs: 300 * 1000,
 }
