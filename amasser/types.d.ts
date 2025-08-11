@@ -1,19 +1,34 @@
 // Auth interfaces
-interface credsDok {
-  token: string
-  username: string
+interface DokCreds {
+  token: string | null
+  username: string | null
 }
 
-interface credsMv {
-  token: string
-  userId: string
-  username: string
+interface DokDeck {
+  keyforgeId: string
+  name?: string
 }
 
-interface credsTco {
-  token: string
-  username: string
-  userId: string
+interface MvCreds {
+  token: string | null
+  userId: string | null
+  username: string | null
+}
+
+interface MvDeck {
+  id: string
+  name?: string
+}
+
+interface TcoCreds {
+  token: string | null
+  username: string | null
+  userId: string | null
+}
+
+interface TcoDeck {
+  uuid: string
+  name?: string
 }
 
 // Settings interface

@@ -47,7 +47,7 @@ const getDecksMv = async () => {
   let page = 1
   let morePages = true
   while (morePages) {
-    const { count, decks } = await fetch(
+    const { count, decks }: { count: number; decks: MvDeck[] } = await fetch(
       `${conf.mvBaseUrl}/api/users/v2/${userId}/decks/?page=${page}&page_size=${conf.mvPageSize}&search=&ordering=-date`,
       requestInit,
     )
@@ -101,7 +101,7 @@ const getDecksMv = async () => {
  *
  * @returns Promise containing token, userId, and username, or null values if not authenticated
  */
-export const getCredsMv = async (): Promise<credsMv> => {
+export const getCredsMv = async (): Promise<MvCreds> => {
   if (!chrome.cookies) {
     throw new Error(`KFA: MV: Cookies API is not available`)
   }

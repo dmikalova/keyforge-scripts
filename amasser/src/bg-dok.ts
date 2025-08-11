@@ -103,7 +103,7 @@ const getDecksDok = async (token: string, username: string) => {
     let morePages = true
     while (morePages) {
       console.debug(`KFA: DoK: Fetching library page ${page}`)
-      const { decks } = await fetch(
+      const { decks }: { decks: DokDeck[] } = await fetch(
         `${conf.dokBaseUrl}/api/decks/filter`,
         requestInitDok(token, 'POST', {
           page: page,
@@ -143,7 +143,7 @@ const getDecksDok = async (token: string, username: string) => {
  * Get authentication token from Decks of KeyForge
  * @returns {Promise<string | null>} The auth token or null if not logged in
  */
-export const getCredsDok = async (): Promise<credsDok> => {
+export const getCredsDok = async (): Promise<DokCreds> => {
   let { authDok } = await storage.get('authDok')
   if (!authDok) {
     console.debug(`KFA: DoK: Not logged in`)

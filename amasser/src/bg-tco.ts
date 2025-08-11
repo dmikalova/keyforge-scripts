@@ -150,7 +150,7 @@ const getDecksTco = async () => {
     }
 
     storage.set({ syncingTco: Date.now() + 4 * conf.staleSyncMs })
-    const { decks } = await fetch(
+    const { decks }: { decks: TcoDeck[] } = await fetch(
       `${conf.tcoBaseUrl}/api/decks?pageSize=100000&page=1`,
       requestInitTco('GET', token),
     )
@@ -174,7 +174,7 @@ const getDecksTco = async () => {
  *
  * @returns Promise containing token, userId, and username, or null values if not authenticated
  */
-export const getCredsTco = async (): Promise<credsTco> => {
+export const getCredsTco = async (): Promise<TcoCreds> => {
   // Check for token in local storage
   const { authTco } = await storage.get('authTco')
   if (!authTco) {
