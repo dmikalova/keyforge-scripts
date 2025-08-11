@@ -1,6 +1,39 @@
 import { conf } from './conf.js'
 import { storage } from './lib-storage.js'
 
+const monitorSync = async (
+  list: string[],
+  wait: boolean,
+  callback: (message: string) => void,
+) => {
+  let i = 0
+  // Wait for sync to start
+  while (
+    wait ||
+    !(await timer.stale(['syncingDok', 'syncingMv', 'syncingTco']))
+  ) {
+    await callback(list[i])
+    console.debug(`KFA: Monitor sync stale: ${list[i]}`)
+    i = (i + 1) % list.length
+    await timer.sleep(conf.rotateMs)
+
+    if (
+      Object.keys(await storage.get(['syncingDok', 'syncingMv', 'syncingTco']))
+        .length !== 0
+    ) {
+      wait = false
+    }
+  }
+
+  // // Wait for sync to finish
+  // while (!(await timer.stale(['syncingDok', 'syncingMv', 'syncingTco']))) {
+  //   await callback(list[i])
+  //   console.debug(`KFA: Monitor sync: ${list[i]}`)
+  //   i = (i + 1) % list.length
+  //   await timer.sleep(conf.rotateMs)
+  // }
+}
+
 const sleep = async (ms: number): Promise<void> => {
   return new Promise(r => setTimeout(r, ms))
 }
@@ -48,6 +81,7 @@ const waitForSync = async (
 }
 
 export const timer = {
+  monitorSync,
   sleep,
   stale,
   updateAlarms,

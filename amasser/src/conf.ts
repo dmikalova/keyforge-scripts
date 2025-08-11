@@ -1,5 +1,14 @@
 export const conf = {
-  clearDataButtonResetMs: 1500,
+  btn: {
+    cancelSync: 'Cancel Sync',
+    clearData: 'Clear Data',
+    loginDok: 'Login to DoK',
+    loginMv: 'Login to MV',
+    loginTco: 'Login to TCO',
+    resetMs: 1500,
+    syncDecks: 'Sync Decks',
+    syncFinished: 'Sync Finished',
+  },
   defaults: {
     syncDok: true,
     syncTco: false,
@@ -58,7 +67,7 @@ export const conf = {
     '.. Syncing.',
     '. Syncing..',
   ],
-  rotateAgainMs: 500,
+  rotateMs: 500,
   timeoutMs: 1000,
   tcoBaseUrl: 'https://thecrucible.online',
   tcoThrottleMs: 30 * 1000,

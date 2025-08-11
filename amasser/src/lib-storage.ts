@@ -58,9 +58,14 @@ const decksUnsynced = async (key: 'dok' | 'tco'): Promise<[string, Deck][]> => {
 const settingsGet: () => Promise<Settings> = async () => {
   const settings = await chrome.storage.sync.get()
   return {
-    syncAuto: settings.syncAuto || conf.defaults.syncAuto,
-    syncDok: settings.syncDok || conf.defaults.syncDok,
-    syncTco: settings.syncTco || conf.defaults.syncTco,
+    syncAuto:
+      settings.syncAuto !== undefined
+        ? settings.syncAuto
+        : conf.defaults.syncAuto,
+    syncDok:
+      settings.syncDok !== undefined ? settings.syncDok : conf.defaults.syncDok,
+    syncTco:
+      settings.syncTco !== undefined ? settings.syncTco : conf.defaults.syncTco,
   }
 }
 

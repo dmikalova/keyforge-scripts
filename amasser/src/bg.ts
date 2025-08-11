@@ -13,6 +13,7 @@ if (!('update_url' in chrome.runtime.getManifest())) {
   console.debug('KFA: BG: Enable debug commands')
   chrome.commands.onCommand.addListener(shortcut => {
     if (shortcut.includes('+I')) {
+      console.debug(`KFA: BG: Reloading extension`)
       browser.reload()
     }
   })
@@ -83,23 +84,7 @@ const handleAuth = async (auth: AuthData) => {
  */
 const handleIconRotation = async () => {
   console.debug(`KFA: BG: Handling rotating icon`)
-  let rotation = 0
-  // Wait for sync to start
-  while (await timer.stale(['syncingDok', 'syncingMv', 'syncingTco'])) {
-    rotation = (rotation + 1) % conf.iconRotations.length
-    // console.debug(`KFA: BG: Rotating icon (stale): ${rotation} `)
-    await chrome.action.setIcon({ path: conf.iconRotations[rotation] })
-    await timer.sleep(conf.rotateAgainMs)
-  }
-
-  // Wait for sync to finish
-  while (!(await timer.stale(['syncingDok', 'syncingMv', 'syncingTco']))) {
-    rotation = (rotation + 1) % conf.iconRotations.length
-    // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
-    await chrome.action.setIcon({ path: conf.iconRotations[rotation] })
-    await timer.sleep(conf.rotateAgainMs)
-  }
-
+  await timer.monitorSync(conf.iconRotations, true, browser.setIcon)
   await chrome.action.setIcon({ path: conf.iconRotations[0] })
 }
 
@@ -139,7 +124,5 @@ const handleSyncStart = async () => {
   timer.updateAlarms()
 }
 
-// TODO: code consistency
-// TODO: break out fns
 // TODO: clean up types
 // TODO: jsdoc

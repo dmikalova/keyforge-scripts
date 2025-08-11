@@ -1,21 +1,49 @@
+import { conf } from './conf.js'
 import { storage } from './lib-storage.js'
 
-const buttonListener = (
-  elementId: string,
-  callback: () => void,
-  signal: AbortSignal,
-) => {
-  document
-    .getElementById(elementId)
-    ?.addEventListener('click', callback, { signal: signal })
+// Button manager to handle abort controllers
+const buttonManager = {
+  controllers: new Map<string, AbortController>(),
+
+  getController(buttonId: string): AbortController {
+    if (!this.controllers.has(buttonId)) {
+      this.controllers.set(buttonId, new AbortController())
+    }
+    return this.controllers.get(buttonId)!
+  },
+
+  async resetController(buttonId: string): Promise<AbortController> {
+    const existing = this.controllers.get(buttonId)
+    if (existing) {
+      await existing.abort()
+    }
+    const newController = new AbortController()
+    this.controllers.set(buttonId, newController)
+    return newController
+  },
 }
 
-//   const syncDecksBtn = document.getElementById('sync-decks')
-// if (syncDecksBtn) {
-//   syncDecksBtn.addEventListener('click', syncDecks, {
-//     signal: abortSyncButton.signal,
-//   })
-// }
+const buttonUpdate = async (
+  buttonId: string,
+  callback: () => void,
+  text?: string,
+  disabled?: boolean,
+) => {
+  const button = document.getElementById(buttonId)
+  if (button && button instanceof HTMLButtonElement) {
+    const controller = await buttonManager.resetController(buttonId)
+    button.addEventListener('click', callback, { signal: controller.signal })
+    if (text) button.textContent = text
+    if (disabled !== undefined) button.disabled = disabled
+  }
+}
+
+const toggleDisabled = (elementId: string, disabled: boolean) => {
+  const element = document.getElementById(elementId)
+  if (element instanceof HTMLInputElement) {
+    element.disabled = disabled
+  }
+}
 
 const toggleListener = (
   elementId: string,
@@ -46,44 +74,52 @@ const userLoad = async (
   elementId: string,
   url: string,
   authFn: () => Promise<{ username: string | null }>,
+  text: string,
 ) => {
-  console.debug(`KFA: POP: Getting MV username`)
+  console.debug(`KFA: POP: Getting username for ${elementId}`)
   const { username } = await authFn()
   if (username) {
-    const mvUsernameElem = document.getElementById(elementId)
-    if (mvUsernameElem) {
-      mvUsernameElem.textContent = `: ${username}`
-      mvUsernameElem.style.display = 'inline'
+    const usernameElem = document.getElementById(elementId)
+    if (usernameElem) {
+      usernameElem.textContent = `: ${username}`
+      usernameElem.style.display = 'inline'
     }
-    console.debug(`KFA: POP: MV username: ${username}`)
+    console.debug(`KFA: POP: Username for ${elementId}: ${username}`)
   } else {
     console.debug(`KFA: POP: Not logged in for ${elementId}`)
-    const syncButton = document.getElementById('sync-decks')
-    if (syncButton && syncButton instanceof HTMLButtonElement) {
-      await abortSync.abort()
-      abortSync = new AbortController()
-      syncButton.addEventListener(
-        'click',
-        () => {
-          chrome.tabs.create({ url: url })
-        },
-        { signal: abortSync.signal },
+
+    // Set the sync button to login action
+    const syncBtn = document.getElementById('sync-decks')
+    const shouldUpdate =
+      elementId === 'mv-username' ||
+      (elementId === 'dok-username' &&
+        syncBtn?.textContent !== conf.btn.loginMv) ||
+      (elementId === 'tco-username' &&
+        ![conf.btn.loginMv, conf.btn.loginDok].includes(
+          syncBtn?.textContent ?? '',
+        ))
+    if (shouldUpdate) {
+      await buttonUpdate(
+        'sync-decks',
+        () => chrome.tabs.create({ url }),
+        text,
+        false,
       )
-      syncButton.textContent = 'Login to MV'
-      syncButton.disabled = false
     }
 
-    const mvUsernameElem = document.getElementById(elementId)
-    if (mvUsernameElem) {
-      mvUsernameElem.textContent = ``
-      mvUsernameElem.style.display = 'inline'
+    // Hide the username element
+    const usernameElem = document.getElementById(elementId)
+    if (usernameElem) {
+      usernameElem.textContent = ``
+      usernameElem.style.display = 'inline'
     }
     throw new Error(`KFA: POP: Not logged into ${elementId}`)
   }
 }
 
 export const html = {
-  buttonListener,
+  buttonUpdate,
+  toggleDisabled,
   toggleListener,
   toggleState,
   userLoad,
