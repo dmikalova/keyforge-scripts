@@ -90,7 +90,9 @@ const loadState = async () => {
  * @param {Settings} settings - The current extension settings
  */
 const loadUsers = async settings => {
-  const userPromises = []
+  const userPromises = [
+    html.userLoad('mv-username', `${conf.mvBaseUrl}/my-decks`, getCredsMv),
+  ]
 
   userPromises.push(
     (async () => {
