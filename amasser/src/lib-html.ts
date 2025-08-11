@@ -1,6 +1,10 @@
 import { storage } from './lib-storage.js'
 
-const buttonListener = (elementId, callback, signal) => {
+const buttonListener = (
+  elementId: string,
+  callback: () => void,
+  signal: AbortSignal,
+) => {
   document
     .getElementById(elementId)
     ?.addEventListener('click', callback, { signal: signal })
@@ -13,7 +17,11 @@ const buttonListener = (elementId, callback, signal) => {
 //   })
 // }
 
-const toggleListener = (elementId, settingKey, callback?: () => void) => {
+const toggleListener = (
+  elementId: string,
+  settingKey: string,
+  callback?: () => void,
+) => {
   document
     .getElementById(elementId)
     ?.addEventListener('change', async ({ target }) => {
@@ -27,7 +35,15 @@ const toggleListener = (elementId, settingKey, callback?: () => void) => {
     })
 }
 
+const toggleState = (elementId: string, state: boolean) => {
+  const element = document.getElementById(elementId)
+  if (element instanceof HTMLInputElement) {
+    element.checked = state
+  }
+}
+
 export const html = {
   buttonListener,
   toggleListener,
+  toggleState,
 }

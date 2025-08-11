@@ -19,18 +19,6 @@ if (!('update_url' in chrome.runtime.getManifest())) {
 }
 
 /**
- * Initialize extension settings on installation
- */
-chrome.runtime.onInstalled.addListener(async () => {
-  const settings = await storage.settings.get()
-  storage.settings.set({
-    syncAuto: settings.syncAuto || conf.defaults.syncAuto,
-    syncDok: settings.syncDok || conf.defaults.syncDok,
-    syncTco: settings.syncTco || conf.defaults.syncTco,
-  })
-})
-
-/**
  * Handle messages from content scripts and popup
  */
 chrome.runtime.onMessage.addListener(message => {

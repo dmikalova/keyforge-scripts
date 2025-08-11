@@ -1,3 +1,5 @@
+import { conf } from './conf.js'
+
 const get: (keys: string | string[]) => Promise<StorageData> = async keys => {
   return await chrome.storage.local.get(keys)
 }
@@ -54,7 +56,12 @@ const decksUnsynced = async (key: 'dok' | 'tco'): Promise<[string, Deck][]> => {
 }
 
 const settingsGet: () => Promise<Settings> = async () => {
-  return await chrome.storage.sync.get()
+  const settings = await chrome.storage.sync.get()
+  return {
+    syncAuto: settings.syncAuto || conf.defaults.syncAuto,
+    syncDok: settings.syncDok || conf.defaults.syncDok,
+    syncTco: settings.syncTco || conf.defaults.syncTco,
+  }
 }
 
 const settingsSet: (settings: Settings) => Promise<void> = async settings => {
