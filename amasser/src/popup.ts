@@ -15,17 +15,14 @@ let abortSyncButton = new AbortController()
  * Initializes event listeners, loads quotes, state, and user information
  */
 document.addEventListener('DOMContentLoaded', async () => {
-  // Set up event listeners
-  setupEventListeners()
-
-  // Load quotes
-  loadQuotes()
-
-  // Load state from storage
-  const state = await loadState()
-
-  // Load user information for all enabled services
-  await loadUsers(state.settings)
+  try {
+    setupEventListeners()
+    loadQuotes()
+    const state = await loadState()
+    await loadUsers(state.settings)
+  } catch (error) {
+    console.error(`KFA: POP: Error initializing popup: ${error}`)
+  }
 })
 
 /**
@@ -42,7 +39,7 @@ const setupEventListeners = async () => {
   const syncDokToggle = document.getElementById('sync-dok-toggle')
   if (syncDokToggle) {
     syncDokToggle.addEventListener('change', async () => {
-      await chrome.storage.sync.set({
+      await storage.settings.set({
         syncDok:
           syncDokToggle instanceof HTMLInputElement && syncDokToggle.checked,
       })
@@ -52,7 +49,7 @@ const setupEventListeners = async () => {
   const syncTcoToggle = document.getElementById('sync-tco-toggle')
   if (syncTcoToggle) {
     syncTcoToggle.addEventListener('change', async () => {
-      await chrome.storage.sync.set({
+      await storage.settings.set({
         syncTco:
           syncTcoToggle instanceof HTMLInputElement && syncTcoToggle.checked,
       })
@@ -62,7 +59,7 @@ const setupEventListeners = async () => {
   const syncAutoToggle = document.getElementById('sync-auto-toggle')
   if (syncAutoToggle) {
     syncAutoToggle.addEventListener('change', async () => {
-      await chrome.storage.sync.set({
+      await storage.settings.set({
         syncAuto:
           syncAutoToggle instanceof HTMLInputElement && syncAutoToggle.checked,
       })
@@ -260,9 +257,7 @@ const updateDeckCount = count => {
  */
 const cancelSync = () => {
   console.debug(`KFA: POP: Cancelling sync`)
-  chrome.storage.local
-    .remove(['syncingMv', 'syncingDok', 'syncingTco'])
-    .then(() => browser.extensionReload())
+  browser.reload()
 }
 
 /**

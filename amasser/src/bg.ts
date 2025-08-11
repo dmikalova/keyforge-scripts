@@ -13,7 +13,7 @@ if (!('update_url' in chrome.runtime.getManifest())) {
   console.debug('KFA: BG: Enable debug commands')
   chrome.commands.onCommand.addListener(shortcut => {
     if (shortcut.includes('+I')) {
-      browser.extensionReload()
+      browser.reload()
     }
   })
 }

@@ -1,4 +1,4 @@
-const extensionReload = () => {
+const reload = () => {
   chrome.storage.local
     .remove(['syncingMv', 'syncingDok', 'syncingTco'])
     .then(() => {
@@ -12,6 +12,6 @@ const sendMessage = (message: any) => {
 }
 
 export const browser = {
-  extensionReload,
+  reload,
   sendMessage,
 }
