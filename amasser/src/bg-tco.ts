@@ -1,18 +1,18 @@
 import { conf } from './conf.js'
 import { browser } from './lib-browser.js'
 import { storage } from './lib-storage.js'
-import { lib } from './lib.js'
+import { timer } from './lib-timer.js'
 
 /**
  * Main entry point for The Crucible Online synchronization
  * Imports decks from Master Vault to The Crucible Online
  */
 export const handleSyncTco = async () => {
-  if (!(await lib.timestampsStale(['syncingTco']))) {
+  if (!(await timer.stale(['syncingTco']))) {
     return console.debug(`KFA: TCO: Sync already in progress`)
   }
   await storage.set({ syncingTco: Date.now() })
-  await lib.sleep(conf.timeoutMs * 2)
+  await timer.sleep(conf.timeoutMs * 2)
   console.debug(`KFA: TCO: Sync starting`)
   await syncTco()
   await storage.remove('syncingTco')
@@ -32,12 +32,12 @@ const syncTco = async () => {
       })
     }
 
-    if ((await lib.unsyncedDecks('tco')).length === 0) {
+    if ((await storage.decks.unsynced('tco')).length === 0) {
       syncing = false
     }
   }
 
-  await lib.waitForSync('syncingMv', syncTco)
+  await timer.waitForSync('syncingMv', syncTco)
 }
 
 /**
@@ -47,7 +47,7 @@ const syncTco = async () => {
  */
 const importDecksTco = async () => {
   await getDecksTco()
-  const unsyncedDecks = await lib.unsyncedDecks('tco')
+  const unsyncedDecks = await storage.decks.unsynced('tco')
   if (unsyncedDecks.length === 0) {
     console.debug(`KFA: TCO: No new decks to import`)
     return
@@ -105,7 +105,7 @@ const importDecksTco = async () => {
             let waited = 0
             while (waited < conf.tcoTimeoutMs) {
               storage.set({ syncingTco: Date.now() })
-              await lib.sleep(conf.timeoutMs)
+              await timer.sleep(conf.timeoutMs)
               waited += conf.timeoutMs
             }
             break
@@ -125,7 +125,7 @@ const importDecksTco = async () => {
     let waited = 0
     while (waited < conf.tcoThrottleMs) {
       storage.set({ syncingTco: Date.now() })
-      await lib.sleep(conf.timeoutMs)
+      await timer.sleep(conf.timeoutMs)
       waited += conf.timeoutMs
     }
   }

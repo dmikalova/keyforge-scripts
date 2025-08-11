@@ -1,13 +1,13 @@
 import { conf } from './conf.js'
 import { browser } from './lib-browser.js'
 import { storage } from './lib-storage.js'
-import { lib } from './lib.js'
+import { timer } from './lib-timer.js'
 /**
  * Main entry point for Master Vault synchronization
  * Fetches decks from Master Vault and stores them locally
  */
 export const handleSyncMv = async () => {
-  if (!(await lib.timestampsStale(['syncingMv']))) {
+  if (!(await timer.stale(['syncingMv']))) {
     return console.debug(`KFA: MV: Sync already in progress`)
   }
   await storage.set({ syncingMv: Date.now() })

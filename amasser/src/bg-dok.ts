@@ -1,18 +1,18 @@
 import { conf } from './conf.js'
 import { browser } from './lib-browser.js'
 import { storage } from './lib-storage.js'
-import { lib } from './lib.js'
+import { timer } from './lib-timer.js'
 
 /**
  * Main entry point for Decks of KeyForge synchronization
  * Imports decks from Master Vault to Decks of KeyForge
  */
 export const handleSyncDok = async () => {
-  if (!(await lib.timestampsStale(['syncingDok']))) {
+  if (!(await timer.stale(['syncingDok']))) {
     return console.debug(`KFA: DoK: Sync already in progress`)
   }
   await storage.set({ syncingDok: Date.now() })
-  await lib.sleep(conf.timeoutMs * 2)
+  await timer.sleep(conf.timeoutMs * 2)
   console.debug(`KFA: DoK: Sync starting`)
   await syncDok()
   await storage.remove('syncingDok')
@@ -36,12 +36,12 @@ const syncDok = async () => {
       })
     }
 
-    if ((await lib.unsyncedDecks('dok')).length === 0) {
+    if ((await storage.decks.unsynced('dok')).length === 0) {
       syncing = false
     }
   }
 
-  await lib.waitForSync('syncingMv', syncDok)
+  await timer.waitForSync('syncingMv', syncDok)
 }
 
 /**
@@ -55,7 +55,7 @@ const importDecksDok = async () => {
   }
 
   await getDecksDok(token, username)
-  const unsyncedDecks = await lib.unsyncedDecks('dok')
+  const unsyncedDecks = await storage.decks.unsynced('dok')
   if (unsyncedDecks.length === 0) {
     console.debug(`KFA: DoK: No new decks to import`)
     return

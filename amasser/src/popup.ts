@@ -4,7 +4,7 @@ import { getCredsTco } from './bg-tco.js'
 import { conf } from './conf.js'
 import { browser } from './lib-browser.js'
 import { storage } from './lib-storage.js'
-import { lib } from './lib.js'
+import { timer } from './lib-timer.js'
 
 // Used to remove event listeners as buttons change functionality
 let abortClearDataButton = new AbortController()
@@ -307,7 +307,7 @@ const resetButtons = async () => {
       clearDataButton.addEventListener('click', clearData, {
         signal: abortClearDataButton.signal,
       })
-      await lib.sleep(conf.clearDataButtonResetMs)
+      await timer.sleep(conf.clearDataButtonResetMs)
     }
     clearDataButton.textContent = 'Clear Data'
     clearDataButton.disabled = false
@@ -338,7 +338,7 @@ const checkSyncStatus = async (wait: boolean = false) => {
     handleSyncStatus(conf.syncMessages[shift])
 
     shift = (shift + 1) % conf.syncMessages.length
-    await lib.sleep(conf.rotateAgainMs)
+    await timer.sleep(conf.rotateAgainMs)
 
     s = await chrome.storage.local.get([
       'syncingDok',

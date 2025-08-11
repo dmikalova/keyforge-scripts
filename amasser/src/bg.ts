@@ -4,7 +4,7 @@ import { handleSyncTco } from './bg-tco.js'
 import { conf } from './conf.js'
 import { browser } from './lib-browser.js'
 import { storage } from './lib-storage.js'
-import { lib } from './lib.js'
+import { timer } from './lib-timer.js'
 
 /**
  * Enable debugging commands in development builds
@@ -97,21 +97,19 @@ const handleIconRotation = async () => {
   console.debug(`KFA: BG: Handling rotating icon`)
   let rotation = 0
   // Wait for sync to start
-  while (await lib.timestampsStale(['syncingDok', 'syncingMv', 'syncingTco'])) {
+  while (await timer.stale(['syncingDok', 'syncingMv', 'syncingTco'])) {
     rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon (stale): ${rotation} `)
     await chrome.action.setIcon({ path: conf.iconRotations[rotation] })
-    await lib.sleep(conf.rotateAgainMs)
+    await timer.sleep(conf.rotateAgainMs)
   }
 
   // Wait for sync to finish
-  while (
-    !(await lib.timestampsStale(['syncingDok', 'syncingMv', 'syncingTco']))
-  ) {
+  while (!(await timer.stale(['syncingDok', 'syncingMv', 'syncingTco']))) {
     rotation = (rotation + 1) % conf.iconRotations.length
     // console.debug(`KFA: BG: Rotating icon: ${rotation}`)
     await chrome.action.setIcon({ path: conf.iconRotations[rotation] })
-    await lib.sleep(conf.rotateAgainMs)
+    await timer.sleep(conf.rotateAgainMs)
   }
 
   await chrome.action.setIcon({ path: conf.iconRotations[0] })
@@ -150,7 +148,7 @@ const handleSyncStart = async () => {
   console.debug(`KFA: BG: Sync starting`)
   handleSyncDecks()
   handleIconRotation()
-  lib.updateAlarms()
+  timer.updateAlarms()
 }
 
 // TODO: code consistency

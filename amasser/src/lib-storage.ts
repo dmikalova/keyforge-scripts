@@ -32,7 +32,7 @@ const decksGet: () => Promise<Decks> = async () => {
   return decks
 }
 
-const deckSet: (
+const decksSet: (
   site: 'dok' | 'mv' | 'tco',
   deckId: string,
   value?: boolean | string,
@@ -46,6 +46,11 @@ const deckSet: (
     [`z${site}.${deckId}`]: value,
     [sites[site]]: Date.now(),
   })
+}
+
+const decksUnsynced = async (key: 'dok' | 'tco'): Promise<[string, Deck][]> => {
+  const { mv, [key]: decks } = await storage.decks.get()
+  return Object.entries(mv).filter(([id, deck]) => deck == true && !decks[id])
 }
 
 const settingsGet: () => Promise<Settings> = async () => {
@@ -62,7 +67,8 @@ export const storage = {
   set: set,
   decks: {
     get: decksGet,
-    set: deckSet,
+    set: decksSet,
+    unsynced: decksUnsynced,
   },
   settings: {
     get: settingsGet,

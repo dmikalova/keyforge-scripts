@@ -8,15 +8,10 @@ const sleep = async (ms: number): Promise<void> => {
 /**
  * Checks if timestamps are stale
  */
-const timestampsStale = async (keys: string | string[]): Promise<boolean> => {
+const stale = async (keys: string | string[]): Promise<boolean> => {
   let s: Timestamps = await storage.get(keys)
   let now = Date.now()
   return Object.values(s).every(v => now - v > conf.staleSyncMs)
-}
-
-const unsyncedDecks = async (key: 'dok' | 'tco'): Promise<[string, Deck][]> => {
-  const { mv, [key]: decks } = await storage.decks.get()
-  return Object.entries(mv).filter(([id, deck]) => deck == true && !decks[id])
 }
 
 /**
@@ -38,13 +33,13 @@ const waitForSync = async (
   timestamps: string | string[],
   callback: () => void,
 ) => {
-  if (!(await timestampsStale(timestamps))) {
+  if (!(await stale(timestamps))) {
     let waited = 0
     while (waited < conf.syncAgainMs) {
       await storage.set({ syncingDok: Date.now() })
       await sleep(conf.timeoutMs)
       waited += conf.timeoutMs
-      if (await timestampsStale(timestamps)) {
+      if (await stale(timestamps)) {
         break
       }
     }
@@ -52,10 +47,9 @@ const waitForSync = async (
   }
 }
 
-export const lib = {
+export const timer = {
   sleep,
-  timestampsStale,
-  unsyncedDecks,
+  stale,
   updateAlarms,
   waitForSync,
 }
