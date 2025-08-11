@@ -10,11 +10,13 @@
 chrome.storage.sync.get('syncAuto', (result: { syncAuto?: boolean }) => {
   if (result.syncAuto) {
     console.debug(`KFA: CMV: Automatic sync enabled`)
-    chrome.runtime.sendMessage({
-      type: 'SYNC_START',
-    }).catch((error: Error) => {
-      console.warn(`KFA: CMV: Error sending initial sync message: ${error}`)
-    })
+    chrome.runtime
+      .sendMessage({
+        type: 'SYNC_START',
+      })
+      .catch((error: Error) => {
+        console.warn(`KFA: CMV: Error sending initial sync message: ${error}`)
+      })
 
     // Track the last processed scan to prevent duplicates
     let lastProcessedScan: string | null = null
@@ -70,3 +72,5 @@ chrome.storage.sync.get('syncAuto', (result: { syncAuto?: boolean }) => {
     mvObserver.observe(document.body, { childList: true, subtree: true })
   }
 })
+
+// TODO: Add DoK links
