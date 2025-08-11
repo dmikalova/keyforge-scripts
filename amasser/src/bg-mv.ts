@@ -69,10 +69,7 @@ const getDecksMv = async () => {
     console.debug(`KFA: MV: Fetched page ${page} with ${decks.length} decks`)
     decks.forEach(async deck => {
       mv[deck.id] = true
-      await storage.set({
-        [`zmv.${deck.id}`]: true,
-        syncingMv: Date.now(),
-      })
+      await storage.decks.set('mv', deck.id)
     })
 
     // Notify popup of new decks added

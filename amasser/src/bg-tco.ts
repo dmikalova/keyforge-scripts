@@ -80,18 +80,12 @@ const importDecksTco = async () => {
         switch (true) {
           case r.success:
             console.debug(`KFA: TCO: Imported deck: ${deck[0]}`)
-            storage.set({
-              [`ztco.${deck[0]}`]: true,
-              syncingTco: Date.now(),
-            })
+            await storage.decks.set('tco', deck[0])
             break
 
           case !r.success && r.message === 'Deck already exists.':
             console.debug(`KFA: TCO: Already imported deck: ${deck[0]}`)
-            storage.set({
-              [`ztco.${deck[0]}`]: true,
-              syncingTco: Date.now(),
-            })
+            await storage.decks.set('tco', deck[0])
             break
 
           case !r.success &&
@@ -102,10 +96,7 @@ const importDecksTco = async () => {
             console.debug(
               `KFA: TCO: Import failed with known error for deck: ${deck[0]}`,
             )
-            storage.set({
-              [`ztco.${deck[0]}`]: 'import error',
-              syncingTco: Date.now(),
-            })
+            await storage.decks.set('tco', deck[0], 'import error')
             break
 
           case !r.success &&
@@ -160,14 +151,10 @@ const getDecksTco = async () => {
 
     console.debug(`KFA: TCO: Fetched ${decks.length} library decks`)
     await Promise.all(
-      decks.map(deck => {
-        storage.set({
-          [`ztco.${deck.uuid}`]: true,
-          syncingTco: Date.now(),
-        })
+      decks.map(async deck => {
+        await storage.decks.set('tco', deck.uuid)
       }),
     )
-    await storage.set({ libraryTco: Date.now() })
   }
 }
 

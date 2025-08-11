@@ -76,10 +76,7 @@ const importDecksDok = async () => {
             `KFA: DoK: Failed to import deck ${deck[0]}: ${r.status}`,
           )
         }
-        await storage.set({
-          [`zdok.${deck[0]}`]: true,
-          syncingDok: Date.now(),
-        })
+        await storage.decks.set('dok', deck[0])
         console.debug(`KFA: DoK: Imported ${deck[0]}`)
       })
       .catch(error => {
@@ -117,12 +114,8 @@ const getDecksDok = async (token: string, username: string) => {
 
       console.debug(`KFA: DoK: Fetched ${decks.length} library decks`)
       await Promise.all(
-        decks.map(deck => {
-          decks[deck.keyforgeId] = true
-          storage.set({
-            [`zdok.${deck.keyforgeId}`]: true,
-            syncingDok: Date.now(),
-          })
+        decks.map(async deck => {
+          await storage.decks.set('dok', deck.keyforgeId)
         }),
       )
 

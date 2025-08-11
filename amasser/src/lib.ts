@@ -57,6 +57,5 @@ export const lib = {
   timestampsStale,
   unsyncedDecks,
   updateAlarms,
-  wait,
   waitForSync,
 }

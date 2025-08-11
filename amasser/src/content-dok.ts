@@ -20,29 +20,17 @@ chrome.storage.sync.get('syncDok', result => {
             console.debug(`KFA: CDoK: User is logged in`)
             const auth = window.localStorage.getItem('AUTH')
             if (auth !== null) {
-              try {
-                chrome.runtime.sendMessage(
-                  { type: 'AUTH', auth: { authDok: auth } },
-                  response => {
-                    if (chrome.runtime.lastError) {
-                      console.warn(
-                        `KFA: CDoK: Runtime error: ${chrome.runtime.lastError.message}`,
-                      )
-                      return
-                    }
-                    if (response && response.success) {
-                      console.debug(`KFA: CDoK: Auth token message succeeded`)
-                    } else {
-                      console.warn(`KFA: CDoK: Auth token message failed`)
-                    }
-                  },
-                )
-              } catch (error) {
-                console.warn(`KFA: CDoK: Error sending message: ${error}`)
-              }
+              chrome.runtime
+                .sendMessage({
+                  type: 'AUTH',
+                  auth: { authDok: auth },
+                })
+                .catch(error => {
+                  console.warn(`KFA: CDoK: Error sending message: ${error}`)
+                })
+              dokObserver.disconnect()
+              break
             }
-            dokObserver.disconnect()
-            break
           }
         }
       }

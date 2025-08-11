@@ -32,6 +32,22 @@ const decksGet: () => Promise<Decks> = async () => {
   return decks
 }
 
+const deckSet: (
+  site: 'dok' | 'mv' | 'tco',
+  deckId: string,
+  value?: boolean | string,
+) => Promise<void> = async (site, deckId, value = true) => {
+  const sites = {
+    dok: 'syncingDok',
+    mv: 'syncingMv',
+    tco: 'syncingTco',
+  }
+  await storage.set({
+    [`z${site}.${deckId}`]: value,
+    [sites[site]]: Date.now(),
+  })
+}
+
 const settingsGet: () => Promise<Settings> = async () => {
   return await chrome.storage.sync.get()
 }
@@ -46,6 +62,7 @@ export const storage = {
   set: set,
   decks: {
     get: decksGet,
+    set: deckSet,
   },
   settings: {
     get: settingsGet,
