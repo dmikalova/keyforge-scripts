@@ -10,7 +10,7 @@ const buttonManager = {
 
   /**
    * Gets an existing abort controller or creates a new one for a button.
-   * 
+   *
    * @param buttonId - The ID of the button element
    * @returns The abort controller for the specified button
    */
@@ -24,7 +24,7 @@ const buttonManager = {
   /**
    * Resets the abort controller for a button, aborting any existing listeners.
    * Creates a new controller to replace the old one.
-   * 
+   *
    * @param buttonId - The ID of the button element
    * @returns Promise resolving to the new abort controller
    */
@@ -42,7 +42,7 @@ const buttonManager = {
 /**
  * Updates a button element with new event listener, text, and disabled state.
  * Properly manages event listeners using abort controllers to prevent memory leaks.
- * 
+ *
  * @param buttonId - The ID of the button element to update
  * @param callback - The click event handler function
  * @param text - Optional text content to set on the button
@@ -65,7 +65,7 @@ const buttonUpdate = async (
 
 /**
  * Sets the disabled state of an input element.
- * 
+ *
  * @param elementId - The ID of the input element
  * @param disabled - Whether the element should be disabled
  */
@@ -79,7 +79,7 @@ const toggleDisabled = (elementId: string, disabled: boolean) => {
 /**
  * Adds a change event listener to a toggle element that updates storage settings.
  * Automatically saves the toggle state to storage when changed.
- * 
+ *
  * @param elementId - The ID of the toggle input element
  * @param settingKey - The storage key to update with the toggle state
  * @param callback - Optional callback function to execute after setting is saved
@@ -104,7 +104,7 @@ const toggleListener = (
 
 /**
  * Sets the checked state of a toggle input element.
- * 
+ *
  * @param elementId - The ID of the toggle input element
  * @param state - Whether the toggle should be checked
  */
@@ -119,7 +119,7 @@ const toggleState = (elementId: string, state: boolean) => {
  * Loads and displays user authentication status for a service.
  * Updates UI elements based on login state - shows username if logged in,
  * or updates sync button to show login action if not logged in.
- * 
+ *
  * @param elementId - The ID of the element to display username in
  * @param url - The URL to open for login if user is not authenticated
  * @param authFn - Function that returns user authentication information
@@ -140,7 +140,6 @@ const userLoad = async (
       usernameElem.textContent = `: ${username}`
       usernameElem.style.display = 'inline'
     }
-    console.debug(`KFA: POP: Username for ${elementId}: ${username}`)
   } else {
     console.debug(`KFA: POP: Not logged in for ${elementId}`)
 

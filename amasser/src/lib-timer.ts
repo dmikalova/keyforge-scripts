@@ -20,7 +20,7 @@ const monitorSync = async (
     !(await timer.stale(['syncingDok', 'syncingMv', 'syncingTco']))
   ) {
     await callback(list[i])
-    console.debug(`KFA: Monitor sync stale: ${list[i]}`)
+    // console.debug(`KFA: Monitor sync stale: ${list[i]}`)
     i = (i + 1) % list.length
     await timer.sleep(conf.rotateMs)
 
