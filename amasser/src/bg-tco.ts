@@ -107,8 +107,20 @@ const importDecksTco = async () => {
             break
 
           case !r.success &&
+            r.message ===
+              'Invalid response from Api. Please try again later.' &&
+            !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(
+              deck[0],
+            ):
+            console.debug(`KFA: TCO: Invalid deck id format: ${deck[0]}`)
+            await storage.decks.set('tco', deck[0], 'invalid id')
+            break
+
+          case !r.success &&
             r.message === 'Invalid response from Api. Please try again later.':
-            console.debug(`KFA: TCO: Rate limit hit, pausing`)
+            console.debug(
+              `KFA: TCO: Rate limit hit, pausing: ${JSON.stringify(r)}`,
+            )
             let waited = 0
             while (waited < conf.tcoTimeoutMs) {
               storage.set({ syncingTco: Date.now() })
@@ -169,6 +181,7 @@ const getDecksTco = async () => {
         await storage.decks.set('tco', deck.uuid)
       }),
     )
+    await storage.set({ libraryTco: Date.now() })
   }
 }
 

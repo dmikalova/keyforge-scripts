@@ -78,7 +78,6 @@ const importDecksDok = async () => {
       .then(async r => {
         if (!r.ok) {
           const j = await r.json()
-          console.log('teesttt:', r.status, JSON.stringify(j))
           switch (true) {
             case r.status === 417 &&
               j.message ===
