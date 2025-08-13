@@ -71,6 +71,7 @@ export const conf = {
   rotateMs: 500,
   timeoutMs: 1000,
   tcoBaseUrl: 'https://thecrucible.online',
-  tcoThrottleMs: 8 * 1000,
+  tcoPageSize: 100000,
+  tcoThrottleMs: 30 * 1000,
   tcoTimeoutMs: 300 * 1000,
 }

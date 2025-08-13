@@ -167,7 +167,7 @@ const getDecksTco = async () => {
 
     storage.set({ syncingTco: Date.now() + 4 * conf.staleSyncMs })
     const { decks }: { decks: TcoDeck[] } = await fetch(
-      `${conf.tcoBaseUrl}/api/decks?pageSize=100000&page=1`,
+      `${conf.tcoBaseUrl}/api/decks?pageSize=${conf.tcoPageSize}&page=1`,
       requestInitTco('GET', token),
     )
       .then(response => response.json())
@@ -261,3 +261,5 @@ const requestInitTco = (
   }
   return config
 }
+
+// TODO: page TCO
