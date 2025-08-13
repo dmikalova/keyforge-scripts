@@ -24,6 +24,7 @@ MV has the following issues:
 
 - Legacy decks are not synced - scan your legacy decks to claim ownership!
 - Decks that are traded away won't be removed from stored data. Clear data in the extension to remove them.
+- Very rarely MV decks have invalid data and DoK or TCO will not accept them. Decks that return errors will be marked as such and skipped in future syncs. If the error is resolved then clear data in the extension and run a new sync.
 
 TCO has the following issues:
 
