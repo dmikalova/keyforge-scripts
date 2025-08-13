@@ -10,7 +10,7 @@ An unofficial browser extension for [Chrome](https://chromewebstore.google.com/d
 - The deck list is stored in the extension - after an initial sync only newly scanned decks are synced.
 - An initial sync of 1000 decks to DoK can take less than 5 minutes.
 - An initial sync of 1000 decks to TCO can take 12 hours due to rate limiting.
-- Syncs runs in the background - once started the extension popup can be closed without interrupting the sync.
+- Syncs run in the background - once started the extension popup can be closed without interrupting the sync.
 - Syncs are atomic - if an error occurs the next sync will pick up where it left off.
 - Syncs can automatically run daily while the browser is open and on each visit or deck scan in MV as long as you are logged in to each site.
 - Includes fun, inspiring, and thought-provoking quotes to ponder while waiting for the sync to complete.
