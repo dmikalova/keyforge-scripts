@@ -30,7 +30,7 @@
     "pack": "bash scripts/pack.sh",
     "watch": "npm-watch"
   },
-  "version": "1.0.3",
+  "version": "1.0.4",
   "watch": {
     "build": {
       "extensions": "css,html,png,ts,woff",
