@@ -80,7 +80,7 @@ const getDecksMv = async () => {
     })
 
     // Check if local deck count matches MV deck count
-    if (Object.keys(mv).length === count) {
+    if (Object.keys(mv).length >= count) {
       console.debug(
         `KFA: MV: Sync finished with ${Object.keys(mv).length}/${count} decks`,
       )

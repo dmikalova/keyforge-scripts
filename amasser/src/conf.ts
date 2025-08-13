@@ -30,6 +30,7 @@ export const conf = {
     '../icons/amasser-128-300.png',
     '../icons/amasser-128-330.png',
   ],
+  maxSyncFailures: 3,
   mvBaseUrl: 'https://www.keyforgegame.com',
   mvPageSize: 25,
   quotes: [

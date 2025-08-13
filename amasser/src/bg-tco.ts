@@ -25,10 +25,12 @@ export const handleSyncTco = async () => {
  */
 const syncTco = async () => {
   let syncing = true
-  while (syncing) {
+  let failures = 0
+  while (syncing && failures < conf.maxSyncFailures) {
     try {
       await importDecksTco()
     } catch (error) {
+      failures++
       console.warn(`KFA: TCO: Error syncing decks: ${error}`)
       storage.remove('syncingTco')
       browser.sendMessage({
@@ -113,17 +115,19 @@ const importDecksTco = async () => {
               await timer.sleep(conf.timeoutMs)
               waited += conf.timeoutMs
             }
-            break
+            throw new Error(`KFA: TCO: Rate limit hit`)
 
           default:
             console.debug(
               `KFA: TCO: Import failed with unknown error for deck: ${deck[0]}: ${JSON.stringify(r)}`,
             )
             storage.set({ syncingTco: Date.now() })
+            break
         }
       })
       .catch(error => {
         console.warn(`KFA: TCO: Error importing deck ${deck[0]}: ${error}`)
+        throw new Error(`KFA: TCO: Failed to import deck ${deck[0]}: ${error}`)
       })
 
     // console.debug(`KFA: TCO: Wait before next import`)

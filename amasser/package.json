@@ -1,26 +1,6 @@
 {
-  "name": "keyforge-amasser",
-  "version": "1.0.0",
-  "description": "Sync KeyForge decks from the Master Vault to Decks of KeyForge",
-  "scripts": {
-    "build": "bash scripts/build.sh",
-    "clean": "rm -rf chrome dist firefox ./*.zip",
-    "generate-icons": "bash scripts/generate-icons.sh",
-    "pack": "bash scripts/pack.sh",
-    "watch": "npm-watch"
-  },
-  "keywords": [
-    "keyforge",
-    "browser-extension",
-    "chrome",
-    "firefox"
-  ],
   "author": "David Mikalova",
-  "license": "Apache-2.0",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/dmikalova/keyforge-scripts"
-  },
+  "description": "Sync KeyForge decks from the Master Vault to Decks of KeyForge",
   "devDependencies": {
     "@types/chrome": "^0.0.246",
     "@types/node": "^24.1.0",
@@ -31,15 +11,35 @@
   "engines": {
     "node": ">=16.0.0"
   },
+  "keywords": [
+    "keyforge",
+    "browser-extension",
+    "chrome",
+    "firefox"
+  ],
+  "license": "Apache-2.0",
+  "name": "keyforge-amasser",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/dmikalova/keyforge-scripts"
+  },
+  "scripts": {
+    "build": "bash scripts/build.sh",
+    "clean": "rm -rf chrome dist firefox ./*.zip",
+    "generate-icons": "bash scripts/generate-icons.sh",
+    "pack": "bash scripts/pack.sh",
+    "watch": "npm-watch"
+  },
+  "version": "1.0.3",
   "watch": {
     "build": {
+      "extensions": "css,html,png,ts,woff",
       "patterns": [
         "manifest.json",
         "fonts",
         "icons",
         "src"
-      ],
-      "extensions": "css,html,png,ts,woff"
+      ]
     }
   }
 }

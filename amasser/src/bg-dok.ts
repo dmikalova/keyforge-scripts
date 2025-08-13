@@ -24,10 +24,12 @@ export const handleSyncDok = async () => {
  */
 const syncDok = async () => {
   let syncing = true
-  while (syncing) {
+  let failures = 0
+  while (syncing && failures < conf.maxSyncFailures) {
     try {
       await importDecksDok()
     } catch (error: unknown) {
+      failures++
       console.warn(`KFA: DoK: Error syncing: ${error}`)
       await storage.remove('syncingDok')
       browser.sendMessage({
@@ -75,15 +77,46 @@ const importDecksDok = async () => {
     )
       .then(async r => {
         if (!r.ok) {
-          throw new Error(
-            `KFA: DoK: Failed to import deck ${deck[0]}: ${r.status}`,
-          )
+          const j = await r.json()
+          console.log('teesttt:', r.status, JSON.stringify(j))
+          switch (true) {
+            case r.status === 417 &&
+              j.message ===
+                `No deck found with Master Vault Deck Id: ${deck[0]}`:
+              await storage.decks.set('dok', deck[0], 'import error')
+              console.debug(
+                `KFA: DoK: Import failed with known error for deck: ${deck[0]}`,
+              )
+              break
+
+            case r.status === 417 &&
+              j.message ===
+                'DoK limits requests to Master Vault. Please be patient and try again.':
+              console.debug('KFA: DoK: Rate limit hit')
+              await timer.sleep(conf.timeoutMs)
+              break
+
+            case r.status === 500 && j.error === 'Internal Server Error':
+              await storage.decks.set('dok', deck[0], 'internal server error')
+              console.debug(
+                `KFA: DoK: Import failed with known error for deck: ${deck[0]}`,
+              )
+              break
+
+            default:
+              throw new Error(
+                `KFA: DoK: Failed to import deck ${deck[0]}: ${r.status}`,
+              )
+          }
+          return
         }
+
         await storage.decks.set('dok', deck[0])
         console.debug(`KFA: DoK: Imported ${deck[0]}`)
       })
       .catch(error => {
         console.warn(`KFA: DoK: Error importing deck ${deck[0]}: ${error}`)
+        throw new Error(`KFA: DoK: Failed to import deck ${deck[0]}: ${error}`)
       })
   }
 }

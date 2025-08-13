@@ -18,23 +18,32 @@
       "strict_min_version": "112.0"
     }
   },
+  "commands": {
+    "Ctrl+I": {
+      "description": "Restart the extension",
+      "suggested_key": {
+        "default": "Ctrl+I",
+        "mac": "Command+I"
+      }
+    }
+  },
   "content_scripts": [
     {
-      "matches": ["https://decksofkeyforge.com/"],
+      "all_frames": true,
       "js": ["dist/content-dok.js"],
-      "run_at": "document_idle",
-      "all_frames": true
-    },
-    {
-      "matches": ["https://*.keyforgegame.com/*"],
-      "js": ["dist/content-mv.js"],
+      "matches": ["https://decksofkeyforge.com/"],
       "run_at": "document_idle"
     },
     {
-      "matches": ["https://thecrucible.online/"],
+      "js": ["dist/content-mv.js"],
+      "matches": ["https://*.keyforgegame.com/*"],
+      "run_at": "document_idle"
+    },
+    {
+      "all_frames": true,
       "js": ["dist/content-tco.js"],
-      "run_at": "document_idle",
-      "all_frames": true
+      "matches": ["https://thecrucible.online/"],
+      "run_at": "document_idle"
     }
   ],
   "description": "An unofficial browser extension that collects KeyForge decks from MV and syncs them to DoK or TCO.",
@@ -51,14 +60,5 @@
   "manifest_version": 3,
   "name": "KeyForge Amasser",
   "permissions": ["alarms", "cookies", "storage"],
-  "version": "1.0.2",
-  "commands": {
-    "Ctrl+I": {
-      "suggested_key": {
-        "default": "Ctrl+I",
-        "mac": "Command+I"
-      },
-      "description": "Restart the extension"
-    }
-  }
+  "version": "1.0.3"
 }
