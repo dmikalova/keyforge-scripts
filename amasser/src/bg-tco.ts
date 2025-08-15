@@ -26,7 +26,7 @@ export const handleSyncTco = async () => {
 const syncTco = async () => {
   let syncing = true
   let failures = 0
-  while (syncing && failures < conf.maxSyncFailures) {
+  while (syncing && failures < conf.tcoMaxSyncFailures) {
     try {
       await importDecksTco()
     } catch (error) {
@@ -118,15 +118,8 @@ const importDecksTco = async () => {
 
           case !r.success &&
             r.message === 'Invalid response from Api. Please try again later.':
-            console.debug(
-              `KFA: TCO: Rate limit hit, pausing: ${JSON.stringify(r)}`,
-            )
-            let waited = 0
-            while (waited < conf.tcoTimeoutMs) {
-              storage.set({ syncingTco: Date.now() })
-              await timer.sleep(conf.timeoutMs)
-              waited += conf.timeoutMs
-            }
+            const backoffTco = (await storage.get('backoffTco')).backoffTco || 1
+            storage.set({ backoffTco: backoffTco * 2 })
             throw new Error(`KFA: TCO: Rate limit hit`)
 
           default:
@@ -138,13 +131,13 @@ const importDecksTco = async () => {
         }
       })
       .catch(error => {
-        console.warn(`KFA: TCO: Error importing deck ${deck[0]}: ${error}`)
         throw new Error(`KFA: TCO: Failed to import deck ${deck[0]}: ${error}`)
       })
 
     // console.debug(`KFA: TCO: Wait before next import`)
     let waited = 0
-    while (waited < conf.tcoThrottleMs) {
+    const backoffTco = (await storage.get('backoffTco')).backoffTco || 1
+    while (waited < conf.tcoThrottleMs * backoffTco) {
       storage.set({ syncingTco: Date.now() })
       await timer.sleep(conf.timeoutMs)
       waited += conf.timeoutMs

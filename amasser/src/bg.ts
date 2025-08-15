@@ -29,6 +29,8 @@ chrome.runtime.onInstalled.addListener(async () => {
 
   // Initialize default settings
   chrome.storage.sync.set({
+    linkDok:
+      settings.linkDok !== undefined ? settings.linkDok : conf.defaults.linkDok,
     syncAuto:
       settings.syncAuto === undefined
         ? conf.defaults.syncAuto
@@ -123,6 +125,7 @@ const handleAuth = async (auth: AuthData) => {
  * @returns Promise that resolves when icon rotation is complete
  */
 const handleIconRotation = async () => {
+  // TODO: This seems to stop after a long time? Maybe bc it was sleeping?
   console.debug(`KFA: BG: Handling rotating icon`)
   await timer.monitorSync(conf.iconRotations, true, browser.setIcon)
   await chrome.action.setIcon({ path: conf.iconRotations[0] })
@@ -139,7 +142,6 @@ const handleSyncDecks = async () => {
   console.debug(`KFA: BG: Handling deck sync`)
   const settings = await storage.settings.get()
   const syncPromises = [handleSyncMv()]
-
   if (settings.syncDok) {
     syncPromises.push(handleSyncDok())
   }

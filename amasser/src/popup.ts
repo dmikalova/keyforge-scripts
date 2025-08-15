@@ -32,6 +32,7 @@ const setupListeners = async () => {
   })
 
   // Listen for toggle events
+  html.toggleListener('link-dok-toggle', 'linkDok')
   html.toggleListener('sync-auto-toggle', 'syncAuto')
   html.toggleListener('sync-dok-toggle', 'syncDok', loadState)
   html.toggleListener('sync-tco-toggle', 'syncTco', loadState)
@@ -73,6 +74,7 @@ const loadState = async () => {
   }
 
   const settings = await storage.settings.get()
+  html.toggleState('link-dok-toggle', settings.linkDok)
   html.toggleState('sync-auto-toggle', settings.syncAuto)
   html.toggleState('sync-dok-toggle', settings.syncDok)
   html.toggleState('sync-tco-toggle', settings.syncTco)
@@ -236,6 +238,7 @@ const loadQuotes = (): void => {
  */
 const resetButtons = async () => {
   console.debug(`KFA: POP: Resetting buttons`)
+  html.toggleDisabled('link-dok-toggle', false)
   html.toggleDisabled('sync-auto-toggle', false)
   html.toggleDisabled('sync-dok-toggle', false)
   html.toggleDisabled('sync-tco-toggle', false)

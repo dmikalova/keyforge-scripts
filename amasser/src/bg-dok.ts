@@ -25,7 +25,7 @@ export const handleSyncDok = async () => {
 const syncDok = async () => {
   let syncing = true
   let failures = 0
-  while (syncing && failures < conf.maxSyncFailures) {
+  while (syncing && failures < conf.dokMaxSyncFailures) {
     try {
       await importDecksDok()
     } catch (error: unknown) {
@@ -114,7 +114,6 @@ const importDecksDok = async () => {
         console.debug(`KFA: DoK: Imported ${deck[0]}`)
       })
       .catch(error => {
-        console.warn(`KFA: DoK: Error importing deck ${deck[0]}: ${error}`)
         throw new Error(`KFA: DoK: Failed to import deck ${deck[0]}: ${error}`)
       })
   }

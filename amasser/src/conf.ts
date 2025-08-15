@@ -10,11 +10,13 @@ export const conf = {
     syncFinished: 'Sync Finished',
   },
   defaults: {
+    linkDok: false,
     syncDok: true,
     syncTco: false,
     syncAuto: false,
   },
   dokBaseUrl: 'https://decksofkeyforge.com',
+  dokMaxSyncFailures: 3,
   dokPageSize: 1000,
   iconRotations: [
     '../icons/amasser-128-0.png',
@@ -30,7 +32,6 @@ export const conf = {
     '../icons/amasser-128-300.png',
     '../icons/amasser-128-330.png',
   ],
-  maxSyncFailures: 3,
   mvBaseUrl: 'https://www.keyforgegame.com',
   mvPageSize: 25,
   quotes: [
@@ -71,7 +72,7 @@ export const conf = {
   rotateMs: 500,
   timeoutMs: 1000,
   tcoBaseUrl: 'https://thecrucible.online',
+  tcoMaxSyncFailures: 3,
   tcoPageSize: 100000,
-  tcoThrottleMs: 30 * 1000,
-  tcoTimeoutMs: 300 * 1000,
+  tcoThrottleMs: 300 * 1000,
 }

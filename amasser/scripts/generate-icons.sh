@@ -4,6 +4,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 rm "$SCRIPT_DIR/icons/"* || true
 
+# TODO: generate the right size
+cp "${SCRIPT_DIR}/assets/dok.png" "${SCRIPT_DIR}/icons/dok.png"
+
 for SIZE in 48 96 128; do
   magick "${SCRIPT_DIR}/assets/amasser.png" \
     -resize "${SIZE}x${SIZE}" \

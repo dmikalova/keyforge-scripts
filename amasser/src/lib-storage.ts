@@ -87,9 +87,11 @@ const decksUnsynced = async (key: 'dok' | 'tco'): Promise<[string, Deck][]> => {
  * Get extension settings from sync storage with defaults
  * @returns {Promise<Settings>} Settings object with all properties defined
  */
-const settingsGet = async () => {
+const settingsGet = async (): Promise<Settings> => {
   const settings = await chrome.storage.sync.get()
   return {
+    linkDok:
+      settings.linkDok !== undefined ? settings.linkDok : conf.defaults.linkDok,
     syncAuto:
       settings.syncAuto !== undefined
         ? settings.syncAuto

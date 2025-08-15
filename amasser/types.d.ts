@@ -33,6 +33,7 @@ interface TcoDeck {
 
 // Settings interface
 interface Settings {
+  linkDok?: boolean
   syncAuto?: boolean
   syncDok?: boolean
   syncTco?: boolean
