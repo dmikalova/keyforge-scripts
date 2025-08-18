@@ -73,4 +73,79 @@ chrome.storage.sync.get('syncAuto', (result: { syncAuto?: boolean }) => {
   }
 })
 
-// TODO: Add DoK links
+// TODO
+/**
+ * Add DoK links to decks in the MV
+ */
+// https://www.keyforgegame.com/
+// https://www.keyforgegame.com/my-decks
+// https://www.keyforgegame.com/my-decks-legacy
+// https://www.keyforgegame.com/deck-details/30937865-f079-4bee-915d-203e131c9747
+
+chrome.storage.sync.get('linkDok', (result: { linkDok?: boolean }) => {
+  if (result.linkDok) {
+    const pathname = window.location.pathname
+    switch (true) {
+      case /\/deck-details\/[a-zA-Z0-9-]+$/.test(pathname):
+        handleDeckDetails()
+        break
+
+      case /\/my-decks\/[a-zA-Z0-9-]+$/.test(pathname):
+        // handleMyDeckDetails()
+        break
+
+      case /\/my-decks(-legacy)?$/.test(pathname):
+        // handleMyDecks()
+        break
+
+      default:
+        return
+    }
+  }
+})
+
+const handleDeckDetails = () => {
+  let deckDetails: Element | null = null
+  const deckDetailsObserver = new MutationObserver(() => {
+    deckDetails = document.querySelector('.deck-details__action-btns')
+    if (deckDetails) {
+      deckDetailsObserver.disconnect()
+      console.log('found deckDetails')
+
+      const deckId = window.location.pathname.match(
+        /\/deck-details\/([a-zA-Z0-9-]+)$/,
+      )
+      if (!deckId) {
+        return
+      }
+      const dokLink = document.createElement('a')
+      dokLink.href = `https://decksofkeyforge.com/decks/${deckId[1]}`
+      dokLink.target = '_blank'
+      dokLink.rel = 'noopener noreferrer'
+      dokLink.className = 'deck-details__toggle-btn'
+      dokLink.style.display = 'flex'
+      dokLink.style.flexDirection = 'row'
+      dokLink.style.justifyContent = 'center'
+      deckDetails.appendChild(dokLink)
+
+      const dokImg = document.createElement('img')
+      dokImg.src = chrome.runtime.getURL('../icons/dok.png')
+      dokImg.alt = 'Open in Decks of KeyForge'
+      dokImg.style.height = '100%'
+      dokImg.style.verticalAlign = 'middle'
+      dokImg.className = 'icon-checkbox__icon'
+      dokLink.appendChild(dokImg)
+
+      const dokText = document.createElement('span')
+      dokText.textContent = 'Decks of Keyforge'
+      dokText.className = 'icon-checkbox__label'
+      dokText.style.verticalAlign = 'middle'
+      dokLink.appendChild(dokText)
+    }
+  })
+
+  deckDetailsObserver.observe(document.body, {
+    childList: true,
+    subtree: true,
+  })
+}

@@ -40,22 +40,3 @@ chrome.storage.sync.get('syncDok', (result: { syncDok?: boolean }) => {
     dokObserver.observe(document.body, { childList: true, subtree: true })
   }
 })
-
-/**
- * Add DoK links to decks in the MV
- */
-// https://www.keyforgegame.com/
-// https://www.keyforgegame.com/my-decks
-// https://www.keyforgegame.com/my-decks-legacy
-// https://www.keyforgegame.com/deck-details/30937865-f079-4bee-915d-203e131c9747
-
-chrome.storage.sync.get('linkDok', (result: { linkDok?: boolean }) => {
-  if (result.linkDok) {
-    const link = document.createElement('a')
-    link.href = 'https://decksofkeyforge.com'
-    link.textContent = 'Decks of KeyForge'
-    link.target = '_blank'
-    link.rel = 'noopener noreferrer'
-    document.body.appendChild(link)
-  }
-})

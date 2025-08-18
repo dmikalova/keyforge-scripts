@@ -60,5 +60,11 @@
   "manifest_version": 3,
   "name": "KeyForge Amasser",
   "permissions": ["alarms", "cookies", "storage"],
-  "version": "1.0.4"
+  "version": "1.0.4",
+  "web_accessible_resources": [
+    {
+      "resources": ["icons/dok.png"],
+      "matches": ["https://*.keyforgegame.com/*"]
+    }
+  ]
 }
