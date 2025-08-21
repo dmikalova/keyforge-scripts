@@ -17,6 +17,7 @@ if (!('update_url' in chrome.runtime.getManifest())) {
       console.debug(`KFA: BG: Reloading extension`)
       browser.reload()
     }
+    // TODO: add demo mode
   })
 }
 

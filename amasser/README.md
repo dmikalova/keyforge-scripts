@@ -1,6 +1,6 @@
 # KeyForge Amasser Browser Extension
 
-An unofficial browser extension for [Chrome](https://chromewebstore.google.com/detail/nmlpikoganplgciecgaboddhndemaohl) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/keyforge-amasser/) that collects KeyForge decks from [the Master Vault](https://www.keyforgegame.com/) and syncs them to [Decks of KeyForge](https://decksofkeyforge.com/) or [The Crucible Online](https://thecrucible.online/).
+An unofficial browser extension for [Chrome](https://chromewebstore.google.com/detail/nmlpikoganplgciecgaboddhndemaohl) and [Firefox](https://addons.mozilla.org/en-US/firefox/addon/keyforge-amasser/) that collects KeyForge decks from your [Master Vault](https://www.keyforgegame.com/) account and syncs them to your [Decks of KeyForge](https://decksofkeyforge.com/) or [The Crucible Online](https://thecrucible.online/) accounts.
 
 <!-- markdownlint-disable-next-line MD033 -->
 <img src="assets/screenshot.png" alt="KeyForge Amasser Extension Screenshot" height="400">
@@ -13,8 +13,9 @@ An unofficial browser extension for [Chrome](https://chromewebstore.google.com/d
 - Syncs run in the background - once started the extension popup can be closed without interrupting the sync.
 - Syncs are atomic - if an error occurs the next sync will pick up where it left off.
 - Syncs can automatically run daily while the browser is open and on each visit or deck scan in MV as long as you are logged in to each site.
+- Option to add DoK links to MV.
 - Includes fun, inspiring, and thought-provoking quotes to ponder while waiting for the sync to complete.
-- Brilliant graphic design that is bright enough to be seen across the Crucible all the way from Hub City to the Macis Swamps.
+- Brilliant graphic design that is bright enough to be seen across the Crucible all the way from Hub City to the Macis Swamp.
 
 ## Known issues
 
@@ -41,12 +42,12 @@ Download the extension from the [Chrome Web Store](https://chromewebstore.google
 - Deck and authentication data is gathered from Master Vault, Decks of KeyForge, and The Crucible Online and stored locally in the extension.
 - Deck data is sent to Decks of KeyForge or The Crucible Online based on sync settings.
 - Data can be cleared by the user at any time or by uninstalling the extension.
-- Extension settings are synced across browsers by Google or Firefox. This does not include deck or authentication data.
+- Extension settings are synced across browsers by Google or Mozilla. This does not include deck or authentication data.
 
 ## Code structure
 
 - `manifest.json`: Metadata about the extension, including permissions and script entrypoints.
-- `bg*.ts`: Core logic that run sync operations on a background service worker. Receives messages from content and popup scripts to trigger syncs or save auth tokens.
+- `bg*.ts`: Core logic that runs sync operations on a background service worker. Receives messages from content and popup scripts to trigger syncs or save auth tokens.
 - `content*.ts`: Scripts that run within each page. These send auth tokens from DoK and TOC and trigger syncs when loading MV or scanning decks.
 - `popup.ts`: Manages the popup UI, including triggering syncs and clearing data.
 

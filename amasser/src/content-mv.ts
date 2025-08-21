@@ -2,6 +2,8 @@
  * Master Vault Content Script
  * Monitors for deck scanning activities and triggers automatic sync when enabled
  * Observes DOM changes to detect successful deck imports
+ *
+ * If enabled, adds DoK links to deck details and deck list rows
  */
 
 /**
@@ -73,45 +75,28 @@ chrome.storage.sync.get('syncAuto', (result: { syncAuto?: boolean }) => {
   }
 })
 
-// TODO
 /**
  * Add DoK links to decks in the MV
  */
-// https://www.keyforgegame.com/
-// https://www.keyforgegame.com/my-decks
-// https://www.keyforgegame.com/my-decks-legacy
-// https://www.keyforgegame.com/deck-details/30937865-f079-4bee-915d-203e131c9747
-
 chrome.storage.sync.get('linkDok', (result: { linkDok?: boolean }) => {
   if (result.linkDok) {
-    const pathname = window.location.pathname
-    switch (true) {
-      case /\/deck-details\/[a-zA-Z0-9-]+$/.test(pathname):
-        handleDeckDetails()
-        break
-
-      case /\/my-decks\/[a-zA-Z0-9-]+$/.test(pathname):
-        // handleMyDeckDetails()
-        break
-
-      case /\/my-decks(-legacy)?$/.test(pathname):
-        // handleMyDecks()
-        break
-
-      default:
-        return
-    }
+    handleDeckDetails()
+    handleDeckTable()
   }
 })
 
+/**
+ * Handle deck details view updates
+ */
 const handleDeckDetails = () => {
-  let deckDetails: Element | null = null
   const deckDetailsObserver = new MutationObserver(() => {
-    deckDetails = document.querySelector('.deck-details__action-btns')
-    if (deckDetails) {
-      deckDetailsObserver.disconnect()
-      console.log('found deckDetails')
+    const dokBadge = document.querySelector('.dok-badge-link')
+    if (dokBadge) {
+      return
+    }
 
+    const deckDetails = document.querySelector('.deck-details__action-btns')
+    if (deckDetails) {
       const deckId = window.location.pathname.match(
         /\/deck-details\/([a-zA-Z0-9-]+)$/,
       )
@@ -122,30 +107,88 @@ const handleDeckDetails = () => {
       dokLink.href = `https://decksofkeyforge.com/decks/${deckId[1]}`
       dokLink.target = '_blank'
       dokLink.rel = 'noopener noreferrer'
-      dokLink.className = 'deck-details__toggle-btn'
+      dokLink.className = 'deck-details__toggle-btn dok-badge-link'
       dokLink.style.display = 'flex'
       dokLink.style.flexDirection = 'row'
       dokLink.style.justifyContent = 'center'
-      deckDetails.appendChild(dokLink)
 
       const dokImg = document.createElement('img')
       dokImg.src = chrome.runtime.getURL('../icons/dok.png')
       dokImg.alt = 'Open in Decks of KeyForge'
       dokImg.style.height = '100%'
-      dokImg.style.verticalAlign = 'middle'
       dokImg.className = 'icon-checkbox__icon'
-      dokLink.appendChild(dokImg)
 
       const dokText = document.createElement('span')
       dokText.textContent = 'Decks of Keyforge'
       dokText.className = 'icon-checkbox__label'
-      dokText.style.verticalAlign = 'middle'
+
+      dokLink.appendChild(dokImg)
       dokLink.appendChild(dokText)
+      deckDetails.appendChild(dokLink)
     }
   })
 
   deckDetailsObserver.observe(document.body, {
     childList: true,
     subtree: true,
+  })
+}
+
+/**
+ * Handle deck table updates
+ */
+const handleDeckTable = () => {
+  const observer = new MutationObserver(() => {
+    const rows = document.querySelectorAll('.deck-list__data-row')
+    rows.forEach(row => {
+      const nameCell = row.querySelector('.deck-list__deck-name a')
+      if (!nameCell) return
+
+      const href = nameCell.getAttribute('href')
+      const match = href?.match(/\/deck-details\/([a-zA-Z0-9-]+)/)
+      if (!match) return
+      const deckId = match[1]
+
+      // Update existing badge
+      const dokBadge = row.querySelector('.dok-badge-link')
+      if (dokBadge instanceof HTMLAnchorElement) {
+        const href = `https://decksofkeyforge.com/decks/${deckId}`
+        if (dokBadge.href === href) {
+          return
+        }
+        dokBadge.remove()
+      }
+
+      // Create badge for row
+      const dokLink = document.createElement('a')
+      dokLink.className = 'dok-badge-link deck-list__house'
+      dokLink.href = `https://decksofkeyforge.com/decks/${deckId}`
+      dokLink.rel = 'noopener noreferrer'
+      dokLink.style.justifyContent = 'center'
+      dokLink.style.verticalAlign = 'middle'
+      dokLink.target = '_blank'
+      dokLink.title = 'Open in Decks of KeyForge'
+
+      const dokImg = document.createElement('img')
+      dokImg.alt = 'DoK'
+      dokImg.className = 'icon-checkbox__icon'
+      dokImg.src = chrome.runtime.getURL('../icons/dok.png')
+      dokImg.style.aspectRatio = '386 / 512'
+      dokImg.style.height = '100%'
+      dokImg.style.verticalAlign = 'middle'
+      dokLink.appendChild(dokImg)
+
+      const housesCell = row.querySelector('.deck-list__houses-list')
+      if (housesCell) {
+        housesCell.appendChild(dokLink)
+      }
+    })
+  })
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['href'],
   })
 }
