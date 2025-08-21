@@ -8,7 +8,7 @@
  * Check if DoK sync is enabled and monitor for login state
  */
 chrome.storage.sync.get('syncDok', (result: { syncDok?: boolean }) => {
-  console.log(`KFA: CDoK: Monitoring for user login state`)
+  console.debug(`KFA: CDoK: Monitoring for user login state`)
   if (result.syncDok) {
     /**
      * Observer for detecting user login state
