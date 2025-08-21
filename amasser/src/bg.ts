@@ -17,7 +17,10 @@ if (!('update_url' in chrome.runtime.getManifest())) {
       console.debug(`KFA: BG: Reloading extension`)
       browser.reload()
     }
-    // TODO: add demo mode
+    if (shortcut.includes('+J')) {
+      console.debug(`KFA: BG: Starting demo mode`)
+      browser.sendMessage({ type: 'DECK_COUNT', decks: 1234 })
+    }
   })
 }
 
@@ -126,7 +129,6 @@ const handleAuth = async (auth: AuthData) => {
  * @returns Promise that resolves when icon rotation is complete
  */
 const handleIconRotation = async () => {
-  // TODO: This seems to stop after a long time? Maybe bc it was sleeping?
   console.debug(`KFA: BG: Handling rotating icon`)
   await timer.monitorSync(conf.iconRotations, true, browser.setIcon)
   await chrome.action.setIcon({ path: conf.iconRotations[0] })

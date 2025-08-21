@@ -25,6 +25,13 @@
         "default": "Ctrl+I",
         "mac": "Command+I"
       }
+    },
+    "Ctrl+J": {
+      "description": "Start demo mode",
+      "suggested_key": {
+        "default": "Ctrl+J",
+        "mac": "Command+J"
+      }
     }
   },
   "content_scripts": [
