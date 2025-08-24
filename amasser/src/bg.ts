@@ -9,7 +9,8 @@ import { timer } from './lib-timer.js'
 /**
  * Enable debugging commands in development builds
  */
-if ('commands' in chrome.runtime.getManifest()) {
+const manifest = chrome.runtime.getManifest()
+if (manifest.commands && typeof manifest.commands === 'object') {
   console.debug('KFA: BG: Enable debug commands')
   chrome.commands.onCommand.addListener((shortcut: string) => {
     if (shortcut.includes('+I')) {
