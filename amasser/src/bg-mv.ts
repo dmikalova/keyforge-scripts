@@ -109,11 +109,10 @@ export const getCredsMv = async (): Promise<MvCreds> => {
   console.debug('KFA: MV: Fetching token')
   let token
   try {
-    ({value: token} = await chrome.cookies.get({
+    ;({ value: token } = await chrome.cookies.get({
       url: conf.mvBaseUrl,
       name: 'auth',
     }))
-    console.log('mv token:', token)
   } catch {
     console.debug(`KFA: MV: Error fetching token`)
   }

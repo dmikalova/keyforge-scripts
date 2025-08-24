@@ -8,9 +8,8 @@ import { timer } from './lib-timer.js'
 
 /**
  * Enable debugging commands in development builds
- * Allows Ctrl+I (or Cmd+I on Mac) to reload the extension
  */
-if (!('update_url' in chrome.runtime.getManifest())) {
+if ('commands' in chrome.runtime.getManifest()) {
   console.debug('KFA: BG: Enable debug commands')
   chrome.commands.onCommand.addListener((shortcut: string) => {
     if (shortcut.includes('+I')) {
