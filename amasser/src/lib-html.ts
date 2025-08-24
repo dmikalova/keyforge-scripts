@@ -134,6 +134,7 @@ const userLoad = async (
 ) => {
   console.debug(`KFA: POP: Getting username for ${elementId}`)
   const { username } = await authFn()
+  console.debug(`KFA: POP: Username for ${elementId}: ${username}`)
   if (username) {
     const usernameElem = document.getElementById(elementId)
     if (usernameElem) {

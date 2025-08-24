@@ -105,10 +105,18 @@ export const getCredsMv = async (): Promise<MvCreds> => {
   if (!chrome.cookies) {
     throw new Error(`KFA: MV: Cookies API is not available`)
   }
-  const { value: token } = await chrome.cookies.get({
-    url: conf.mvBaseUrl,
-    name: 'auth',
-  })
+
+  console.debug('KFA: MV: Fetching token')
+  let token
+  try {
+    ({value: token} = await chrome.cookies.get({
+      url: conf.mvBaseUrl,
+      name: 'auth',
+    }))
+    console.log('mv token:', token)
+  } catch {
+    console.debug(`KFA: MV: Error fetching token`)
+  }
   if (!token) {
     console.debug(`KFA: MV: Not logged in`)
     return { token: null, userId: null, username: null }
@@ -120,13 +128,23 @@ export const getCredsMv = async (): Promise<MvCreds> => {
   )
     .then(r => {
       if (!r.ok) {
-        throw new Error(`KFA: MV: Failed to fetch user: ${r.status}`)
+        console.debug(`KFA: MV: Failed to fetch user: ${r.status}`)
+        return { userId: null, username: null }
       }
       return r.json()
     })
     .then(r => {
       return { userId: r.data.id, username: r.data.username }
     })
+    .catch(error => {
+      console.debug(`KFA: MV: Token is invalid: ${error}`)
+      return { userId: null, username: null }
+    })
+
+  if (!userId || !username) {
+    console.debug(`KFA: MV: Not logged in`)
+    return { token: null, userId: null, username: null }
+  }
 
   return { token: token, userId: userId, username: username }
 }

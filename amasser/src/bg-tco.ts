@@ -204,8 +204,10 @@ export const getCredsTco = async (): Promise<TcoCreds> => {
       }
       return r.json()
     })
-    .catch(error => {
+    .catch(async error => {
+      await storage.remove('authTco')
       console.warn(`KFA: TCO: Error fetching user: ${error}`)
+      return { user: { id: null, username: null }, token: null }
     })
 
   return {
