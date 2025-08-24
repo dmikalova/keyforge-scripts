@@ -67,7 +67,7 @@
   "manifest_version": 3,
   "name": "KeyForge Amasser",
   "permissions": ["alarms", "cookies", "storage"],
-  "version": "1.0.7",
+  "version": "1.0.8",
   "web_accessible_resources": [
     {
       "resources": ["icons/dok.png"],
