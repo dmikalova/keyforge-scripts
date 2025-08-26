@@ -16,8 +16,8 @@ const io = {stdio: ['inherit', 'inherit', 'inherit']}
 
 // prepare spots data
 let gen = false
-// gen = true
-const boardCount = 50
+gen = true
+const boardCount = 5
 const spots = data.spots.map((spot, i) => ({...spot, id: i.toString().padStart(4, '0')}))
 const squareSize = 512
 const margin = 25

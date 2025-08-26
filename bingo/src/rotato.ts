@@ -5,7 +5,7 @@ const wolves = ['blep', 'cool', 'grrr']
 const imageSize = 1500
 const offset = imageSize / 2 - imageSize / 10
 let gen: boolean = false
-// gen = true
+gen = true
 
 const outputs: Record<(typeof wolves)[number], string[]> = {
   cool: [],
@@ -67,4 +67,4 @@ args.push(...['-loop', '0'])
 args.push(...['stamp.gif'])
 spawn.sync('magick', args, io)
 
-2884 6188 6449
+// 2884 6188 6449
