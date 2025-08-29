@@ -1,0 +1,24 @@
+# Distribution files
+dist/
+*.zip
+
+# Node modules
+node_modules/
+yarn.lock
+
+# Development files
+.DS_Store
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+
+# IDE files
+.idea/
+*.swp
+*.swo
+
+# OS files
+Thumbs.db
+ehthumbs.db

@@ -1,0 +1,74 @@
+{
+  "author": "David Mikalova",
+  "bin": "./bin/run.js",
+  "bugs": "https://github.com/dmikalova/keyforge-format-generator/issues",
+  "dependencies": {
+    "@inquirer/select": "^1.3.1",
+    "@oclif/core": "^3",
+    "@oclif/plugin-help": "^5",
+    "@oclif/plugin-plugins": "^4"
+  },
+  "description": "A KeyForge random format generator",
+  "devDependencies": {
+    "@oclif/prettier-config": "^0.2.1",
+    "@oclif/test": "^3",
+    "@types/chai": "^4",
+    "@types/mocha": "^10",
+    "@types/node": "^18",
+    "chai": "^4",
+    "eslint": "^8",
+    "eslint-config-oclif": "^5",
+    "eslint-config-oclif-typescript": "^3",
+    "eslint-config-prettier": "^9.0.0",
+    "gts": "^5.2.0",
+    "mocha": "^10",
+    "oclif": "^4.0.4",
+    "shx": "^0.3.4",
+    "ts-node": "^10.9.1",
+    "tsx": "^4.6.2",
+    "typescript": "^5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "exports": "./lib/index.js",
+  "files": [
+    "/bin",
+    "/dist",
+    "/oclif.manifest.json"
+  ],
+  "homepage": "https://github.com/dmikalova/keyforge-format-generator",
+  "keywords": [
+    "oclif"
+  ],
+  "license": "Apache-2.0",
+  "main": "src/index.ts",
+  "name": "keyforge-format-generator",
+  "oclif": {
+    "bin": "keyforge-format-generator",
+    "commands": "./dist/commands",
+    "default": ".",
+    "dirname": "keyforge-format-generator",
+    "plugins": [
+      "@oclif/plugin-help",
+      "@oclif/plugin-plugins"
+    ],
+    "topicSeparator": " "
+  },
+  "packageManager": "yarn@4.0.2",
+  "repository": "git@github.com:dmikalova/kf-format-generator.git",
+  "scripts": {
+    "build": "shx rm -rf dist && tsc -b",
+    "lint": "eslint . --ext .ts",
+    "postpack": "shx rm -f oclif.manifest.json",
+    "posttest": "yarn lint",
+    "prepack": "yarn build && oclif manifest && oclif readme",
+    "prepare": "yarn build",
+    "test": "mocha --forbid-only \"test/**/*.test.ts\"",
+    "version": "oclif readme && git add README.md",
+    "gen": "yarn build && ./bin/run.js"
+  },
+  "type": "module",
+  "types": "dist/index.d.ts",
+  "version": "0.0.0"
+}

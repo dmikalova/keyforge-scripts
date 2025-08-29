@@ -1,0 +1,32 @@
+# Prettier ignore file for KeyForge Amasser extension
+
+# Distribution files
+dist/
+*.zip
+
+# Generated files
+icons/*.png
+icons/*.svg
+
+# Third-party libraries
+node_modules/
+
+# Build outputs
+*.min.js
+*.min.css
+
+# Large data files
+*.json.bak
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+
+# Temporary files
+*.tmp
+*.temp
