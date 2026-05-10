@@ -23,11 +23,14 @@ function removePrefix(dirs: string[], prefix: string) {
   return dirs
 }
 
-const implPath = `${process.env.HOME}/Code/github.com/dmikalova/keyteki/server/game/cards/`
+const implPath = `${process.env.HOME}/Code/github.com/keyteki/keyteki/server/game/cards/`
 const implFiles = removePrefix(readFilesRecursively(implPath), implPath)
 
-const testPath = `${process.env.HOME}/Code/github.com/dmikalova/keyteki/test/server/cards/`
+const testPath = `${process.env.HOME}/Code/github.com/keyteki/keyteki/test/server/cards/`
 const testFiles = removePrefix(readFilesRecursively(testPath), testPath)
 
 const missingTests = implFiles.filter((f) => !testFiles.includes(f))
 console.log(JSON.stringify(missingTests, null, 2))
+
+const mmissingImpls = testFiles.filter((f) => !implFiles.includes(f))
+console.log(JSON.stringify(mmissingImpls, null, 2))
