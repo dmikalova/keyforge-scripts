@@ -3,6 +3,8 @@
 // TODO: add 1 night vs weekend mode
 // TODO: 1 night: only 1 medium and extra easy and half the hard spots
 // TODO: img2pdf half page and cpdf merge: cpdf -twoup-stack ./bingo-boards.pdf -o out.pdf
+// TODO: generate html instead
+// TODO: cut pdf into 40 per file for easier printing
 
 import spawn from "cross-spawn";
 import fs from "fs";
@@ -159,11 +161,11 @@ function generateBoard(index: number) {
     }
 
     // Add one "medium", "hard", or "impossible" spot to the row
-    let difficulty = "medium";
+    let difficulty = "hard";
     // 50/50 chance to replace hard with medium
-    if (Math.random() < 0.5) {
-      difficulty = "hard";
-    }
+    // if (Math.random() < 0.5) {
+    //   difficulty = "medium";
+    // }
     // If a spot in the row was already selected as impossible, override to impossible
     if (impossible === index) {
       difficulty = "impossible";
@@ -427,11 +429,9 @@ function assembleCard(index: number) {
   spawn.sync("magick", args.map(String), io);
 }
 
-// if (gen) {
 for (let i = 0; i < boardCount; i++) {
   assembleCard(i);
 }
-// }
 
 // convert to pdf
 const boardFiles = fs

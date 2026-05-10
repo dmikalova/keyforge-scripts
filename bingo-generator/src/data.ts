@@ -73,6 +73,7 @@ const data: {
       "High SAS",
       "Ix the cat's",
       "Xi the cat's",
+      "Viscous",
       "Mutated",
       "Next",
       "Non-Authorized",
@@ -220,7 +221,7 @@ const data: {
       "Set",
       "Shard of Bingo",
       "Signs Point to Bingo",
-      "Sir Bingo",
+      "Sir Bingows",
       "Skollenbingozz",
       "Skybingo Squadron",
       "Tails, You Bingo",
@@ -741,7 +742,7 @@ const data: {
       category: "trap-card",
       difficulty: "easy",
       events: ["day", "weekend"],
-      text: 'exclaim "You\'ve prophesized my trap card!"',
+      text: 'exclaim "You\'ve fulfilled my trap card!"',
     },
     {
       category: "trap-card",
@@ -844,6 +845,12 @@ const data: {
       difficulty: "easy",
       events: ["day", "weekend"],
       text: 'exclaim "You\'ve roused my trap card!"',
+    },
+    {
+      category: "trap-card",
+      difficulty: "easy",
+      events: ["day", "weekend"],
+      text: 'exclaim "You\'ve met the requirements of my trap card!"',
     },
     {
       category: "prophecies",
